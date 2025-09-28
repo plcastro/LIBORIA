@@ -23,3 +23,6 @@ button {
   border-radius: 5px;
   cursor: pointer;
 }
+a.active {
+  color: rgb(139, 12, 12);
+}
