@@ -1,20 +1,24 @@
 import React from "react";
 import "./Navbar.css";
-
+import logo_dark from "../../assets/liboria black.png";
+import { Link } from "react-router-dom";
 const Navbar = () => {
   return (
     <nav>
-      <h1>Library Management System</h1>
+      <img src={logo_dark} alt="" />
       <ul>
-        <li>
-          <a href="">Home</a>
-        </li>
-        <li>
-          <a href="">Library</a>
-        </li>
-        <li>
-          <a href="">Search</a>
-        </li>
+        <Link to="/">
+          <li>Login</li>
+        </Link>
+        <Link to="/books">
+          <li>Books</li>
+        </Link>
+        <Link to="/about">
+          <li>About</li>
+        </Link>
+        <Link to="/contact">
+          <li>Contact</li>
+        </Link>
       </ul>
     </nav>
   );
