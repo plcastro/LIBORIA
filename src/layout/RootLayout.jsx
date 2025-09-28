@@ -6,9 +6,7 @@ export const RootLayout = () => {
   return (
     <div>
       <Navbar />
-      <div className="container">
-        <h1>Welcome to Liboria</h1>
-      </div>
+      <div className="container"></div>
       <Outlet />
     </div>
   );
