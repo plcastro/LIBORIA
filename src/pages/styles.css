@@ -1,0 +1,19 @@
+.about-content,
+.contact-content {
+  margin-top: 20px;
+}
+
+h2 {
+  font-size: 36px;
+  margin-bottom: 20px;
+  font-weight: 800;
+}
+p {
+  font-size: 18px;
+  text-align: justify;
+  line-height: 1.6;
+  margin: 15px 0;
+}
+main {
+  margin-bottom: 20px;
+}

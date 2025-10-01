@@ -8,12 +8,12 @@ export const RootLayout = () => {
     <div className="layout">
       <Navbar />
 
-      {/* content grows to push footer down */}
       <main className="content">
         <Outlet />
       </main>
-
-      <FooterComp />
+      <footer>
+        <FooterComp />
+      </footer>
     </div>
   );
 };
