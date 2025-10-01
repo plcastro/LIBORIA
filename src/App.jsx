@@ -12,7 +12,7 @@ import { DashboardLayout } from "./layout/DashboardLayout";
 import { Books } from "./pages/Books";
 import { About } from "./pages/About";
 import { Contact } from "./pages/Contact";
-import NotFound from "./components/NotFound";
+import NotFound from "./pages/NotFound";
 
 function App() {
   const router = createBrowserRouter(
