@@ -1,0 +1,43 @@
+.dashboard-layout {
+  display: flex;
+  height: 100vh;
+}
+
+.sidebar {
+  z-index: 1;
+  background-color: #001529;
+  width: 256px;
+  min-height: 100vh;
+  position: fixed;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.sidebar-logo {
+  margin: 10px 0 20px;
+  display: block;
+}
+
+.profile-section {
+  text-align: left;
+  padding: 10px;
+}
+
+.logout-section {
+  margin-top: auto;
+}
+
+.topNav {
+  position: fixed;
+  left: 256px;
+  width: calc(100% - 256px);
+  z-index: 0;
+  height: 48px;
+  font-size: 34px;
+  background-color: white;
+  box-shadow: 0 2px 8px #0000007c;
+  text-align: center;
+  font-weight: 500;
+}

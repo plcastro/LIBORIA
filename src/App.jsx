@@ -8,6 +8,7 @@ import {
 import { Home } from "./pages/Home";
 import { Login } from "./pages/Login";
 import { RootLayout } from "./layout/RootLayout";
+import { DashboardLayout } from "./layout/DashboardLayout";
 import { Books } from "./pages/Books";
 import { About } from "./pages/About";
 import { Contact } from "./pages/Contact";
@@ -16,17 +17,26 @@ import NotFound from "./components/NotFound";
 function App() {
   const router = createBrowserRouter(
     createRoutesFromElements(
-      <Route path="/" element={<RootLayout />}>
-        <Route index element={<Home />} />
-        <Route path="login" element={<Login />} />
-        <Route path="books" element={<Books />} />
-        <Route path="about" element={<About />} />
-        <Route path="contact" element={<Contact />} />
-        {/* Catch-all for 404 */}
+      <>
+        {/* Public Layout */}
+        <Route path="/" element={<RootLayout />}>
+          <Route index element={<Home />} />
+          <Route path="books" element={<Books />} />
+          <Route path="about" element={<About />} />
+          <Route path="contact" element={<Contact />} />
+        </Route>
+
+        {/* Dashboard Layout */}
+        <Route path="/login" element={<DashboardLayout />}>
+          <Route index element={<Login />} />{" "}
+          {/* for checking lang if routing works */}
+        </Route>
+
         <Route path="*" element={<NotFound />} />
-      </Route>
+      </>
     )
   );
+
   return <RouterProvider router={router} />;
 }
 

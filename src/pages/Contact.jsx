@@ -9,13 +9,13 @@ export const Contact = () => {
   return (
     <div>
       <div className="contact-content">
-        <Button
+        {/* <Button
           icon={<ArrowLeftOutlined />}
           style={{ border: 0, width: "150px" }}
           onClick={() => navigate("/")}
         >
           Back
-        </Button>
+        </Button> */}
         <main>
           <h2>CONTACT</h2>
           <img src={numoabuilding} alt="NU MOA Building" width="100%" />

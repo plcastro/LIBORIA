@@ -11,13 +11,13 @@ export const About = () => {
   return (
     <div>
       <div className="about-content">
-        <Button
+        {/* <Button
           icon={<ArrowLeftOutlined />}
           style={{ border: 0, width: "150px" }}
           onClick={() => navigate("/")}
         >
           Back
-        </Button>
+        </Button> */}
         <main>
           <h2>ABOUT US</h2>
           <img src={bookshelf} alt="bookshelf black" width="100%" />

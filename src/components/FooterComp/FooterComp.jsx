@@ -1,6 +1,7 @@
 import React from "react";
 import "./FooterComp.css";
 import logo_light from "../../assets/liboria white.png";
+import { NavLink } from "react-router-dom";
 
 const FooterComp = () => {
   return (
@@ -30,7 +31,7 @@ const FooterComp = () => {
       <hr />
 
       <div className="footer-bottom">
-        <a href="#">Contact</a>
+        <NavLink to="/contact">Contact</NavLink>
         <a href="#">Privacy</a>
         <a href="#">Terms of use</a>
         <a href="#">Accessibility</a>
