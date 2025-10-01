@@ -4,10 +4,10 @@ import { Outlet } from "react-router-dom";
 
 export const DashboardLayout = () => {
   return (
-    <div className="layout">
+    <div className="dashboard-layout">
       <Sidebar />
 
-      <main className="content">
+      <main className="dashboard-content">
         <Outlet />
       </main>
     </div>

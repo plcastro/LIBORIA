@@ -13,6 +13,8 @@ import { Books } from "./pages/Books";
 import { About } from "./pages/About";
 import { Contact } from "./pages/Contact";
 import NotFound from "./pages/NotFound";
+import DashboardBooks from "./pages/DashboardPages/DashboardBooks";
+import BorrowBooks from "./pages/DashboardPages/BorrowBooks";
 
 function App() {
   const router = createBrowserRouter(
@@ -21,18 +23,22 @@ function App() {
         {/* Public Layout */}
         <Route path="/" element={<RootLayout />}>
           <Route index element={<Home />} />
+          <Route path="login" element={<Login />} />
           <Route path="books" element={<Books />} />
           <Route path="about" element={<About />} />
           <Route path="contact" element={<Contact />} />
+          <Route path="*" element={<NotFound />} />
         </Route>
 
         {/* Dashboard Layout */}
-        <Route path="/login" element={<DashboardLayout />}>
-          <Route index element={<Login />} />{" "}
-          {/* for checking lang if routing works */}
-        </Route>
+        <Route path="/dashboard" element={<DashboardLayout />}>
+          <Route index element={<DashboardBooks />} />
+          <Route path="show/books" element={<DashboardBooks />} />
 
-        <Route path="*" element={<NotFound />} />
+          <Route path="borrow" element={<BorrowBooks />} />
+
+          <Route path="*" element={<NotFound />} />
+        </Route>
       </>
     )
   );
