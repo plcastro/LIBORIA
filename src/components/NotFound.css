@@ -1,15 +1,13 @@
-.errorContainer {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  height: 100vh;
-  width: 100%;
-}
-#errorMessage {
-  margin-bottom: 20px;
-}
 button {
   width: 250px;
   height: 40px;
   cursor: pointer;
+}
+.first-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  margin: auto;
 }
