@@ -1,15 +1,31 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "antd";
+import { Button, Row, Col } from "antd";
+import BookBackground from "../assets/book-background.png";
 
 export const Home = () => {
   const navigate = useNavigate();
   return (
     <>
-      <header className="hero-section">
-        <div className="hero-text">
-          <h1 id="hero-title">FIND BOOKS THAT MATCH YOUR INTERESTS </h1>
-          <p id="hero-desc">
+      <Row
+        style={{
+          backgroundImage: `url(${BookBackground})`,
+          backgroundRepeat: "no-repeat",
+          backgroundPosition: "center center",
+          backgroundSize: "cover",
+          height: "100vh",
+          minHeight: "300px",
+        }}
+      >
+        <Col
+          xs={{ span: 22, offset: 1 }}
+          lg={{ span: 12, push: 2 }}
+          style={{ color: "white", alignContent: "center" }}
+        >
+          <h1 style={{ color: "white", fontSize: "90px" }}>
+            FIND BOOKS THAT MATCH YOUR INTERESTS{" "}
+          </h1>
+          <p>
             Liboria makes it easy to discover books that match your interests.
             From academic resources to novels and beyond, Liboria connects you
             with titles tailored to your preferences-helping you find your next
@@ -24,12 +40,16 @@ export const Home = () => {
           >
             Get Started
           </Button>
-        </div>
-      </header>
-      <div className="home-container">
+        </Col>
+      </Row>
+      <Row
+        justify="center"
+        align="middle"
+        style={{ margin: "50px 0", minHeight: "100vh" }}
+      >
         <h1>Available Books:</h1>
         {/* Dito ilalagay yung available books component */}
-      </div>
+      </Row>
     </>
   );
 };

@@ -1,20 +1,31 @@
 import React from "react";
-import "./FooterComp.css";
+
 import logo_light from "../../assets/liboria white.png";
+import { Col, Row } from "antd";
 
 const FooterComp = () => {
   return (
-    <footer className="footer">
-      <div className="footer-top">
-        <div className="footer-left">
-          <img src={logo_light} alt="Liboria Logo" className="footer-logo" />
+    <footer
+      className="footer"
+      style={{
+        backgroundColor: "black",
+        color: "white",
+        padding: "50px 10%",
+        width: "100%",
+      }}
+    >
+      <Row>
+        <img src={logo_light} alt="Liboria Logo" className="footer-logo" />
+      </Row>
+      <Row align="middle" justify="space-between">
+        <Col xs={22} sm={22} md={12} lg={12}>
           <p>
             Discover, read, and enjoy books <br />
             anywhere life takes you.
           </p>
-        </div>
+        </Col>
 
-        <div className="footer-right">
+        <Col xs={22} sm={22} md={12} lg={{ span: 6, offset: 2 }}>
           <p>
             <strong>PHONE:</strong> +63 09564569912
           </p>
@@ -27,15 +38,18 @@ const FooterComp = () => {
           <p>
             <strong>ADDRESS:</strong> Coral Way, Pasay City
           </p>
-        </div>
-      </div>
+        </Col>
+      </Row>
 
       <hr />
 
-      <div className="footer-bottom">
-        <p>©2025 Liboria. All rights reserved.</p>
-      </div>
+      <Row justify="center">
+        <Col span={24} style={{ textAlign: "left" }}>
+          <p>©2025 Liboria. All rights reserved.</p>
+        </Col>
+      </Row>
     </footer>
   );
 };
+
 export default FooterComp;
