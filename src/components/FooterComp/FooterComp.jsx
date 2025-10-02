@@ -19,7 +19,10 @@ const FooterComp = () => {
             <strong>PHONE:</strong> +63 09564569912
           </p>
           <p>
-            <strong>EMAIL:</strong> liboria@gmail.com
+            <strong>EMAIL:</strong>{" "}
+            <a href="mailto:liboria@gmail.com" style={{ color: "white" }}>
+              liboria@gmail.com
+            </a>
           </p>
           <p>
             <strong>ADDRESS:</strong> Coral Way, Pasay City

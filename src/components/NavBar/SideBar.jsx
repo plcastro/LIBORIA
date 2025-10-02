@@ -26,8 +26,12 @@ const items = [
     label: "User Management",
     icon: <UserOutlined />,
     children: [
-      { key: "5", label: "Borrower Information", path: "/dashboard/borrowers" },
-      { key: "6", label: "My Account", path: "/dashboard/account" },
+      {
+        key: "5",
+        label: "Borrower Information",
+        path: "/dashboard/show/borrowers",
+      },
+      { key: "6", label: "My Profile", path: "/dashboard/profile" },
     ],
   },
 ];

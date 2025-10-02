@@ -37,13 +37,26 @@ body {
   padding: 64px 20px 0 20px;
   margin-left: 256px;
 }
-/* 
-main {
-  flex: 1;
-  padding: 0 10% 10%;
-} */
+.contact-content,
+.about-content {
+  width: 80%;
+  margin: 40px auto;
+}
+.about-desc,
+.contact-desc {
+  margin: 20px auto 100px auto;
+}
+h2 {
+  font-size: 36px;
+  margin-bottom: 20px;
+  font-weight: 700;
+}
 h1 {
   font-size: 70px;
+}
+p {
+  font-size: 18px;
+  line-height: 1.6;
 }
 button {
   padding: 10px 20px;

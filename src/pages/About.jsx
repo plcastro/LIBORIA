@@ -1,26 +1,20 @@
 import React from "react";
-import { ArrowLeftOutlined } from "@ant-design/icons";
-import { Button } from "antd";
 import bookshelf from "../assets/bookshelf-black.png";
-import "./styles.css";
-import { useNavigate } from "react-router-dom";
-
+import "../App.css";
+import { Divider, Col, Row } from "antd";
 export const About = () => {
-  const navigate = useNavigate();
-
   return (
-    <div>
-      <div className="about-content">
-        {/* <Button
-          icon={<ArrowLeftOutlined />}
-          style={{ border: 0, width: "150px" }}
-          onClick={() => navigate("/")}
-        >
-          Back
-        </Button> */}
-        <main>
-          <h2>ABOUT US</h2>
+    <>
+      <Row justify="center" align="middle">
+        <Col span={18}>
+          <Divider>
+            <h2>ABOUT US</h2>
+          </Divider>
           <img src={bookshelf} alt="bookshelf black" width="100%" />
+        </Col>
+      </Row>
+      <Row justify="center" align="middle" style={{ marginBottom: "100px" }}>
+        <Col span={18}>
           <p>
             Welcome to <strong>Liboria</strong>, your digital library designed
             for readers of all ages and interests. From the hottest trending
@@ -33,9 +27,10 @@ export const About = () => {
             to explore more books without limits—anytime, anywhere.
           </p>
           <br />
-          <hr />
           <br />
-          <h2>Mission & Vision</h2>
+          <Divider>
+            <h2>MISSION AND VISION</h2>
+          </Divider>
           <p>
             At Liboria, our mission is simple: to make reading more accessible,
             enjoyable, and affordable for everyone. We combine the spirit of a
@@ -47,9 +42,9 @@ export const About = () => {
             in the power of sharing stories—because every book borrowed is a new
             world discovered.
           </p>
-          <hr />
-        </main>
-      </div>
-    </div>
+          <br />
+        </Col>
+      </Row>
+    </>
   );
 };

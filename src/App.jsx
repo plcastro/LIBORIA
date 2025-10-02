@@ -12,9 +12,11 @@ import { DashboardLayout } from "./layout/DashboardLayout";
 import { Books } from "./pages/Books";
 import { About } from "./pages/About";
 import { Contact } from "./pages/Contact";
+import ProfilePage from "./pages/DashboardPages/ProfilePage";
 import NotFound from "./pages/NotFound";
 import DashboardBooks from "./pages/DashboardPages/DashboardBooks";
 import BorrowBooks from "./pages/DashboardPages/BorrowBooks";
+import ReturnBooks from "./pages/DashboardPages/ReturnBooks";
 
 function App() {
   const router = createBrowserRouter(
@@ -34,9 +36,9 @@ function App() {
         <Route path="/dashboard" element={<DashboardLayout />}>
           <Route index element={<DashboardBooks />} />
           <Route path="show/books" element={<DashboardBooks />} />
-
           <Route path="borrow" element={<BorrowBooks />} />
-
+          <Route path="return" element={<ReturnBooks />} />
+          <Route path="profile" element={<ProfilePage />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </>
