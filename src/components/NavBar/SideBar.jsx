@@ -2,8 +2,8 @@ import "./SideBar.css";
 import logo_dark from "../../assets/liboria white.png";
 import React, { useState, useEffect } from "react";
 import {
-  AppstoreOutlined,
-  MailOutlined,
+  UserOutlined,
+  BookOutlined,
   ArrowLeftOutlined,
 } from "@ant-design/icons";
 import { Menu } from "antd";
@@ -13,17 +13,18 @@ const items = [
   {
     key: "sub1",
     label: "Book Management",
-    icon: <MailOutlined />,
+    icon: <BookOutlined />,
     children: [
       { key: "1", label: "Show Books", path: "/dashboard/show/books" },
-      { key: "2", label: "Borrow a Book", path: "/dashboard/borrow" },
-      { key: "3", label: "Return a Book", path: "/dashboard/return" },
+      { key: "2", label: "Add/Edit Books", path: "/dashboard/Add/books" },
+      { key: "3", label: "Borrow a Book", path: "/dashboard/borrow" },
+      { key: "4", label: "Return a Book", path: "/dashboard/return" },
     ],
   },
   {
     key: "sub2",
     label: "User Management",
-    icon: <AppstoreOutlined />,
+    icon: <UserOutlined />,
     children: [
       { key: "5", label: "Borrower Information", path: "/dashboard/borrowers" },
       { key: "6", label: "My Account", path: "/dashboard/account" },
@@ -47,7 +48,6 @@ const SideBar = () => {
       .find((child) => child.key === current)?.label || "Show Books"
   );
 
-  // Update current key and page text when route changes
   useEffect(() => {
     const newKey = getKeyByPath(location.pathname);
     setCurrent(newKey);

@@ -37,11 +37,11 @@ body {
   padding: 64px 20px 0 20px;
   margin-left: 256px;
 }
-
+/* 
 main {
   flex: 1;
-  padding: 0 10%;
-}
+  padding: 0 10% 10%;
+} */
 h1 {
   font-size: 70px;
 }
@@ -59,4 +59,40 @@ a {
 }
 a.active {
   color: rgb(0, 0, 0);
+}
+.home-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  text-align: center;
+}
+.hero-section {
+  height: 100vh;
+  width: 100%;
+  background: url("../src/assets/book-background.png") no-repeat center center;
+  background-size: cover;
+  display: flex;
+  align-items: center;
+  padding: 0 10%;
+  color: white;
+}
+.hero-text {
+  width: 60%;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+#hero-title {
+  flex: 100%;
+  font-size: 90px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+}
+
+#hero-desc {
+  flex: 100%;
+  font-size: 18px;
+  line-height: 1.6;
 }
