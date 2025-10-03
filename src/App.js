@@ -5,15 +5,15 @@ import {
   RouterProvider,
   Route,
 } from "react-router-dom";
-import { Home } from "./pages/Home";
-import { Login } from "./pages/Login";
+import { Home } from "./pages/MainWebPages/Home";
+import { Login } from "./pages/MainWebPages/Login";
 import { RootLayout } from "./layout/RootLayout";
 import { DashboardLayout } from "./layout/DashboardLayout";
-import { Books } from "./pages/Books";
-import { About } from "./pages/About";
-import { Contact } from "./pages/Contact";
+import { Books } from "./pages/MainWebPages/Books";
+import { About } from "./pages/MainWebPages/About";
+import { Contact } from "./pages/MainWebPages/Contact";
 import ProfilePage from "./pages/DashboardPages/ProfilePage";
-import NotFound from "./pages/NotFound";
+import NotFound from "./pages/MainWebPages/NotFound";
 import DashboardBooks from "./pages/DashboardPages/DashboardBooks";
 import BorrowBooks from "./pages/DashboardPages/BorrowBooks";
 import ReturnBooks from "./pages/DashboardPages/ReturnBooks";

@@ -1,13 +1,13 @@
 import "./SideBar.css";
 import logo_dark from "../../assets/liboria white.png";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   UserOutlined,
   BookOutlined,
   ArrowLeftOutlined,
 } from "@ant-design/icons";
 import { Menu } from "antd";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const items = [
   {
@@ -16,9 +16,10 @@ const items = [
     icon: <BookOutlined />,
     children: [
       { key: "1", label: "Show Books", path: "/dashboard/show/books" },
-      { key: "2", label: "Add/Edit Books", path: "/dashboard/Add/books" },
+      { key: "2", label: "Add Books", path: "/dashboard/add/books" },
       { key: "3", label: "Borrow a Book", path: "/dashboard/borrow" },
       { key: "4", label: "Return a Book", path: "/dashboard/return" },
+      { key: "5", label: "View Records", path: "/dashboard/view/records" },
     ],
   },
   {
@@ -28,7 +29,7 @@ const items = [
     children: [
       {
         key: "5",
-        label: "Borrower Information",
+        label: "Borrower List",
         path: "/dashboard/show/borrowers",
       },
       { key: "6", label: "My Profile", path: "/dashboard/profile" },
@@ -38,49 +39,34 @@ const items = [
 
 const SideBar = () => {
   const navigate = useNavigate();
-  const location = useLocation();
-
-  const getKeyByPath = (pathname) =>
-    items
-      .flatMap((menu) => menu.children || [])
-      .find((child) => child.path === pathname)?.key || "1";
-
-  const [current, setCurrent] = useState(getKeyByPath(location.pathname));
-  const [page, setPage] = useState(
-    items
-      .flatMap((menu) => menu.children || [])
-      .find((child) => child.key === current)?.label || "Show Books"
-  );
-
-  useEffect(() => {
-    const newKey = getKeyByPath(location.pathname);
-    setCurrent(newKey);
-    setPage(
-      items
-        .flatMap((menu) => menu.children || [])
-        .find((child) => child.key === newKey)?.label || "Show Books"
-    );
-  }, [location.pathname]);
+  const [current, setCurrent] = useState("1"); // default active menu
+  const [page, setPage] = useState("Show Books");
 
   const onClick = (e) => {
-    if (e.key === "logout") {
+    setCurrent(e.key);
+
+    if (e.key === "1") {
+      setPage("Show Books");
+      navigate("/dashboard/show/books");
+    } else if (e.key === "2") {
+      setPage("Add/Edit Books");
+      navigate("/dashboard/Add/books");
+    } else if (e.key === "3") {
+      setPage("Borrow a Book");
+      navigate("/dashboard/borrow");
+    } else if (e.key === "4") {
+      setPage("Return a Book");
+      navigate("/dashboard/return");
+    } else if (e.key === "5") {
+      setPage("Borrower Information");
+      navigate("/dashboard/show/borrowers");
+    } else if (e.key === "6") {
+      setPage("My Profile");
+      navigate("/dashboard/profile");
+    } else if (e.key === "logout") {
       navigate("/");
-      return;
-    }
-
-    const selectedItem = items
-      .flatMap((menu) => menu.children || [])
-      .find((child) => child.key === e.key);
-
-    if (selectedItem) {
-      setCurrent(e.key);
-      setPage(selectedItem.label);
-      if (selectedItem.path) {
-        navigate(selectedItem.path);
-      }
     }
   };
-
   return (
     <div className="dashboard-layout">
       <div className="topNav">{page}</div>
