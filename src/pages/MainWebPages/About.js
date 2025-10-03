@@ -1,20 +1,26 @@
 import React from "react";
 import bookshelf from "../../assets/bookshelf-black.png";
-import "../../App.css";
+// import "../../App.css";
 import { Divider, Col, Row } from "antd";
 export const About = () => {
   return (
     <>
       <Row justify="center" align="middle">
         <Col span={18}>
+          <img
+            src={bookshelf}
+            alt="bookshelf black"
+            width="100%"
+            height="500px"
+            style={{ marginTop: "50px", objectFit: "Cover" }}
+          />
+        </Col>
+      </Row>
+      <Row justify="center" align="middle" style={{ marginBottom: "50px" }}>
+        <Col span={18}>
           <Divider>
             <h2>ABOUT US</h2>
           </Divider>
-          <img src={bookshelf} alt="bookshelf black" width="100%" />
-        </Col>
-      </Row>
-      <Row justify="center" align="middle" style={{ marginBottom: "100px" }}>
-        <Col span={18}>
           <p>
             Welcome to <strong>Liboria</strong>, your digital library designed
             for readers of all ages and interests. From the hottest trending

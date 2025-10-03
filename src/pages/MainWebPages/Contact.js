@@ -1,20 +1,25 @@
 import React from "react";
 import { Divider, Col, Row } from "antd";
 import numoabuilding from "../../assets/NU MOA building.png";
-import "../../App.css";
 export const Contact = () => {
   return (
     <>
       <Row justify="center" align="middle">
         <Col span={18}>
-          <Divider>
-            <h2>CONTACT</h2>
-          </Divider>
-          <img src={numoabuilding} alt="NU MOA Building" width="100%" />
+          <img
+            src={numoabuilding}
+            alt="NU MOA Building"
+            width="100%"
+            height="500px"
+            style={{ marginTop: "50px", objectFit: "Cover" }}
+          />
         </Col>
       </Row>
       <Row justify="center" align="middle" style={{ marginBottom: "100px" }}>
         <Col span={18}>
+          <Divider>
+            <h2>CONTACT</h2>
+          </Divider>
           <p>
             At Liboria, we believe every reader is part of our story. Whether
             you’re looking for your next great read, need help borrowing a book,

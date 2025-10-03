@@ -39,11 +39,8 @@ export const Home = () => {
           <h1 style={{ color: "white", fontSize }}>
             FIND BOOKS THAT MATCH YOUR INTERESTS{" "}
           </h1>
-          <p>
+          <p style={{ marginBottom: "50px" }}>
             Liboria makes it easy to discover books that match your interests.
-            From academic resources to novels and beyond, Liboria connects you
-            with titles tailored to your preferences-helping you find your next
-            great read quickly and effortlessly.
           </p>
 
           <Button
