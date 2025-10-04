@@ -22,20 +22,22 @@ body {
   flex-direction: column;
   min-height: 100vh;
   gap: 20px;
-  padding-top: 64px;
+  align-items: center;
+  justify-content: center;
 }
 .dashboard-layout {
   display: flex;
-  flex-direction: row; /* sidebar left, content right */
-  min-height: 100vh;
+  flex-direction: row;
+  height: 100vh;
 }
 
 .dashboard-content {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 64px 20px 0 20px;
   margin-left: 256px;
+  padding: 64px 24px 24px;
+  transition: all 0.3s ease;
 }
 .contact-content,
 .about-content {
@@ -108,4 +110,21 @@ a.active {
   flex: 100%;
   font-size: 18px;
   line-height: 1.6;
+}
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .dashboard-content {
+    margin-left: 0; /* remove sidebar offset */
+    padding: 64px 12px 24px;
+  }
+
+  .menu-toggle-btn {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    z-index: 1000;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
 }
