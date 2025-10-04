@@ -31,35 +31,13 @@ const AddBookModal = ({ modal2Open, setModal2Open }) => {
     }
   };
 
-  const handleCancel = () => {
-    // This shows the confirmation dialog when "Discard" is clicked
-    console.log("Discard button clicked - showing confirmation");
-    confirm({
-      title: "Discard book?",
-      icon: <ExclamationCircleOutlined />,
-      content: "Are you sure you want to discard this book?",
-      okText: "Yes",
-      cancelText: "No",
-      onOk() {
-        // Only closes the modal and resets the form if "Yes" is confirmed
-        console.log("Confirmed discard - resetting form and closing modal");
-        form.resetFields();
-        setModal2Open(false);
-      },
-      onCancel() {
-        // If "No" is clicked, do nothing - modal stays open with form intact
-        console.log("Discard cancelled - keeping modal open");
-      },
-    });
-  };
-
   return (
     <Modal
       title="ADD BOOK DETAILS"
       centered
       open={modal2Open}
       onOk={handleOk}
-      onCancel={handleCancel}
+      onCancel={() => setModal2Open(false)}
       okText="Add Book"
       cancelText="Discard"
       width={800}
