@@ -13,7 +13,7 @@ const DisplayBook = () => {
       <Row justify={"space-between"}>
         <Col>
           <Search
-            placeholder="input search text"
+            placeholder="Search Book"
             onSearch={onSearch}
             style={{ width: 400 }}
             enterButton={
@@ -21,7 +21,7 @@ const DisplayBook = () => {
                 icon={
                   <SearchOutlined style={{ fontSize: 16, color: "#fff" }} />
                 }
-                style={{ width: 100, backgroundColor: "#04011cff" }} // 🔹 small button size
+                style={{ width: 100, backgroundColor: "#04011cff" }} //
               />
             }
           />
