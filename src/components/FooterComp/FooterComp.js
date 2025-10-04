@@ -5,15 +5,7 @@ import { Col, Row } from "antd";
 
 const FooterComp = () => {
   return (
-    <footer
-      className="footer"
-      style={{
-        backgroundColor: "black",
-        color: "white",
-        padding: "50px 10%",
-        width: "100%",
-      }}
-    >
+    <footer className="footer">
       <Row>
         <img src={logo_light} alt="Liboria Logo" className="footer-logo" />
       </Row>

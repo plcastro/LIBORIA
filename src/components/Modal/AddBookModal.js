@@ -9,10 +9,9 @@ import {
   Col,
   Row,
 } from "antd";
-import { PlusOutlined, ExclamationCircleOutlined } from "@ant-design/icons";
+import { PlusOutlined } from "@ant-design/icons";
 
 const { TextArea } = Input;
-const { confirm } = Modal;
 
 const normFile = (e) => (Array.isArray(e) ? e : e?.fileList);
 

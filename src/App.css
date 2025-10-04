@@ -12,19 +12,7 @@ body {
   width: 100%;
   background-color: #f2f2f2;
 }
-.layout {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-}
-.content {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  gap: 20px;
-  align-items: center;
-  justify-content: center;
-}
+
 .dashboard-layout {
   display: flex;
   flex-direction: row;
@@ -42,18 +30,16 @@ body {
   margin: 48px 0 0 256px;
   padding: 24px 5%;
 }
-.contact-content,
-.about-content {
+.contact-content {
   width: 80%;
   margin: 40px auto;
 }
-.about-desc,
+
 .contact-desc {
   margin: 20px auto 100px auto;
 }
 h2 {
   font-size: 36px;
-  margin-bottom: 20px;
   font-weight: 700;
 }
 h1 {

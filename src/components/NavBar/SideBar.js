@@ -1,4 +1,3 @@
-import "./SideBar.css";
 import logo_dark from "../../assets/liboria white.png";
 import React, { useState } from "react";
 import {
@@ -60,10 +59,31 @@ const SideBar = ({ setPage }) => {
   };
 
   return (
-    <div className="sidebar">
+    <div
+      className="sidebar"
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
+        height: "100vh",
+        backgroundColor: "#001529",
+      }}
+    >
       <div className="sidebar-top">
-        <div className="profile-section">
-          <img src={logo_dark} alt="Logo" className="sidebar-logo" />
+        <div
+          className="profile-section"
+          style={{
+            margin: "20px 10px",
+          }}
+        >
+          <img
+            src={logo_dark}
+            alt="Logo"
+            className="sidebar-logo"
+            style={{
+              margin: "20px 0",
+            }}
+          />
           <h3 className="profile-name">John Doe</h3>
           <p className="profile-role">Librarian</p>
         </div>
@@ -74,12 +94,18 @@ const SideBar = ({ setPage }) => {
           defaultOpenKeys={["sub1"]}
           selectedKeys={[current]}
           mode="inline"
-          style={{ flex: "auto", width: 256 }}
+          style={{ flex: "auto" }}
           items={items}
         />
       </div>
 
-      <div className="sidebar-bottom">
+      <div
+        className="sidebar-bottom"
+        style={{
+          margin: "10px 0 20px",
+          display: "block",
+        }}
+      >
         <Menu theme="dark" mode="inline" onClick={onClick}>
           <Menu.Item key="logout" icon={<ArrowLeftOutlined />}>
             Log out

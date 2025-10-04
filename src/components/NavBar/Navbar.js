@@ -21,9 +21,6 @@ const Navbar = () => {
       <NavLink to="/books">
         <li>Books</li>
       </NavLink>
-      <NavLink to="/about">
-        <li>About</li>
-      </NavLink>
       <NavLink to="/contact">
         <li>Contact</li>
       </NavLink>
@@ -34,7 +31,6 @@ const Navbar = () => {
     <nav className="navbar">
       <img src={logo_dark} alt="Logo" className="logo" />
 
-      {/* Desktop Menu */}
       {screens.md ? (
         menuItems
       ) : (
@@ -62,10 +58,8 @@ const Navbar = () => {
               <Menu.Item key="3">
                 <NavLink to="/books">Books</NavLink>
               </Menu.Item>
+
               <Menu.Item key="4">
-                <NavLink to="/about">About</NavLink>
-              </Menu.Item>
-              <Menu.Item key="5">
                 <NavLink to="/contact">Contact</NavLink>
               </Menu.Item>
             </Menu>

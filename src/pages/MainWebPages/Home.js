@@ -1,8 +1,8 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Button, Row, Col } from "antd";
+import { Button, Row, Col, Grid, Divider } from "antd";
 import BookBackground from "../../assets/book-background.png";
-import { Grid } from "antd";
+import bookshelf from "../../assets/bookshelf-black.png";
 
 const Home = () => {
   const { useBreakpoint } = Grid;
@@ -31,8 +31,7 @@ const Home = () => {
           xs={{ span: 22, offset: 1 }}
           sm={{ span: 20, offset: 2 }}
           md={{ span: 14, offset: 2 }}
-          lg={{ span: 12, offset: 2 }}
-          xl={{ span: 10, offset: 2 }}
+          lg={{ span: 10, offset: 2 }}
           style={{ color: "white", alignContent: "center" }}
         >
           <h1 style={{ color: "white", fontSize }}>
@@ -52,13 +51,61 @@ const Home = () => {
           </Button>
         </Col>
       </Row>
-      <Row
-        justify="center"
-        align="middle"
-        style={{ margin: "50px 0", minHeight: "100vh" }}
-      >
-        <h1>Available Books:</h1>
-        {/* Dito ilalagay yung available books component */}
+      <Row justify="center" align="middle">
+        <Divider>
+          <h2>ABOUT US</h2>
+        </Divider>
+        <Col
+          lg={{ span: 8 }}
+          md={{ span: 10 }}
+          sm={{ span: 18 }}
+          xs={{ span: 22 }}
+        >
+          <img
+            src={bookshelf}
+            alt="bookshelf black"
+            width="100%"
+            height="350px"
+            alignContent="center"
+            style={{ objectFit: "Cover" }}
+          />
+        </Col>
+        <Col
+          lg={{ span: 9, offset: 1 }}
+          md={{ span: 12, offset: 1 }}
+          sm={{ span: 18 }}
+          xs={{ span: 22 }}
+        >
+          <p style={{ textAlign: "justify" }}>
+            Welcome to <strong>Liboria</strong>, your digital library designed
+            for readers of all ages and interests. From the hottest trending
+            titles and heart-fluttering romance novels, to magical kids’
+            stories, edge-of-your-seat thrillers, and essential textbooks,
+            Liboria brings the joy of reading into one easy-to-use platform.{" "}
+            <br /> <br />
+            We believe books are for sharing, not just storing. That’s why
+            Liboria works as a borrowing-based eLibrary, giving you the freedom
+            to explore more books without limits—anytime, anywhere.
+          </p>
+        </Col>
+      </Row>
+      <Row justify="center" align="middle">
+        <Col span={18}>
+          <Divider>
+            <h2>MISSION AND VISION</h2>
+          </Divider>
+          <p>
+            At Liboria, our mission is simple: to make reading more accessible,
+            enjoyable, and affordable for everyone. We combine the spirit of a
+            traditional library with the convenience of the digital world, so
+            that every reader can find stories that inspire, knowledge that
+            empowers, and adventures that spark the imagination.
+            <br /> <br />
+            Our vision is to build a connected community of readers who believe
+            in the power of sharing stories—because every book borrowed is a new
+            world discovered.
+          </p>
+        </Col>
       </Row>
     </>
   );

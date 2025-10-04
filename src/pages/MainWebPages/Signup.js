@@ -21,7 +21,7 @@ export const Signup = () => {
 
           <div className="form-group">
             <label htmlFor="username">Username</label>
-            <input type="text" id="username" placeholder="Choose a username" />
+            <input type="text" id="username" placeholder="Enter username" />
           </div>
 
           <div className="form-group">
@@ -30,6 +30,7 @@ export const Signup = () => {
               type="password"
               id="password"
               placeholder="Create a password"
+              minLength={8}
             />
           </div>
 
@@ -39,6 +40,7 @@ export const Signup = () => {
               type="password"
               id="confirm"
               placeholder="Confirm password"
+              minLength={8}
             />
           </div>
 
@@ -46,7 +48,7 @@ export const Signup = () => {
             SIGN UP
           </Link>
           <div className="signup-link">
-            Already have an account? <a href="login">Log in here</a>
+            Already have an account? <Link to="/login">Log in</Link>
           </div>
         </form>
       </div>

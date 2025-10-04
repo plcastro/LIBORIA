@@ -13,7 +13,6 @@ import { Forgot } from "./pages/MainWebPages/Forgot";
 import { RootLayout } from "./layout/RootLayout";
 import { DashboardLayout } from "./layout/DashboardLayout";
 import { Books } from "./pages/MainWebPages/Books";
-import { About } from "./pages/MainWebPages/About";
 import { Contact } from "./pages/MainWebPages/Contact";
 import ProfilePage from "./pages/DashboardPages/ProfilePage";
 import NotFound from "./pages/MainWebPages/NotFound";
@@ -32,7 +31,6 @@ function App() {
           <Route path="reset" element={<Reset />} />
           <Route path="forgot" element={<Forgot />} />
           <Route path="books" element={<Books />} />
-          <Route path="about" element={<About />} />
           <Route path="contact" element={<Contact />} />
           <Route path="*" element={<NotFound />} />
         </Route>
