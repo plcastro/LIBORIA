@@ -4,14 +4,12 @@ import { Button, Row, Col } from "antd";
 import BookBackground from "../../assets/book-background.png";
 import { Grid } from "antd";
 
-export const Home = () => {
+const Home = () => {
   const { useBreakpoint } = Grid;
   const screens = useBreakpoint();
 
-  let fontSize = "90px"; // default
-  if (screens.xl) fontSize = "90px";
-  else if (screens.lg) fontSize = "70px";
-  else if (screens.md) fontSize = "60px";
+  let fontSize = "70px"; // default
+  if (screens.md) fontSize = "60px";
   else if (screens.sm) fontSize = "45px";
   else fontSize = "42px"; //
 
@@ -24,6 +22,7 @@ export const Home = () => {
           backgroundRepeat: "no-repeat",
           backgroundPosition: "center center",
           backgroundSize: "cover",
+          width: "100%",
           height: "100vh",
           minHeight: "300px",
         }}
@@ -64,3 +63,4 @@ export const Home = () => {
     </>
   );
 };
+export default Home;

@@ -5,7 +5,7 @@ import {
   RouterProvider,
   Route,
 } from "react-router-dom";
-import { Home } from "./pages/MainWebPages/Home";
+import Home from "./pages/MainWebPages/Home";
 import { Login } from "./pages/MainWebPages/Login";
 import { Signup } from "./pages/MainWebPages/Signup";
 import { Reset } from "./pages/MainWebPages/Reset";
@@ -17,8 +17,8 @@ import { About } from "./pages/MainWebPages/About";
 import { Contact } from "./pages/MainWebPages/Contact";
 import ProfilePage from "./pages/DashboardPages/ProfilePage";
 import NotFound from "./pages/MainWebPages/NotFound";
-import DashboardBooks from "./pages/DashboardPages/DashboardBooks";
-import BorrowBooks from "./pages/DashboardPages/BorrowBooks";
+import ViewRecords from "./pages/DashboardPages/ViewRecords";
+import DisplayBook from "./pages/DashboardPages/DisplayBook";
 import ReturnBooks from "./pages/DashboardPages/ReturnBooks";
 
 function App() {
@@ -38,10 +38,9 @@ function App() {
         </Route>
 
         <Route path="/dashboard" element={<DashboardLayout />}>
-          <Route index element={<DashboardBooks />} />
-          <Route path="show/books" element={<DashboardBooks />} />
-          <Route path="borrow" element={<BorrowBooks />} />
+          <Route path="show/books" element={<DisplayBook />} />
           <Route path="return" element={<ReturnBooks />} />
+          <Route path="show/records" element={<ViewRecords />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="*" element={<NotFound />} />
         </Route>

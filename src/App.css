@@ -30,14 +30,17 @@ body {
   flex-direction: row;
   height: 100vh;
 }
-
+.main-content {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
 .dashboard-content {
   flex: 1;
   display: flex;
   flex-direction: column;
-  margin-left: 256px;
-  padding: 64px 24px 24px;
-  transition: all 0.3s ease;
+  margin: 48px 0 0 256px;
+  padding: 24px 5%;
 }
 .contact-content,
 .about-content {
@@ -110,6 +113,9 @@ a.active {
   flex: 100%;
   font-size: 18px;
   line-height: 1.6;
+}
+input {
+  height: 30px;
 }
 /* Mobile adjustments */
 @media (max-width: 768px) {

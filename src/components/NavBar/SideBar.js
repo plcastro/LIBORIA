@@ -1,6 +1,6 @@
 import "./SideBar.css";
 import logo_dark from "../../assets/liboria white.png";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   UserOutlined,
   BookOutlined,
@@ -15,11 +15,10 @@ const items = [
     label: "Book Management",
     icon: <BookOutlined />,
     children: [
-      { key: "1", label: "Show Books", path: "/dashboard/show/books" },
-      { key: "2", label: "Add Books", path: "/dashboard/add/books" },
-      { key: "3", label: "Borrow a Book", path: "/dashboard/borrow" },
-      { key: "4", label: "Return a Book", path: "/dashboard/return" },
-      { key: "5", label: "View Records", path: "/dashboard/view/records" },
+      { key: "1", label: "Books", path: "/dashboard/show/books" },
+
+      { key: "2", label: "Return Book", path: "/dashboard/return" },
+      { key: "3", label: "View Records", path: "/dashboard/view/records" },
     ],
   },
   {
@@ -27,8 +26,8 @@ const items = [
     label: "User Management",
     icon: <UserOutlined />,
     children: [
-      { key: "6", label: "Borrower List", path: "/dashboard/show/borrowers" },
-      { key: "7", label: "My Profile", path: "/dashboard/profile" },
+      { key: "4", label: "Borrower List", path: "/dashboard/show/borrowers" },
+      { key: "5", label: "My Profile", path: "/dashboard/profile" },
     ],
   },
 ];
@@ -44,21 +43,15 @@ const SideBar = ({ setPage }) => {
       setPage("Show Books");
       navigate("/dashboard/show/books");
     } else if (e.key === "2") {
-      setPage("Add/Edit Books");
-      navigate("/dashboard/add/books");
-    } else if (e.key === "3") {
-      setPage("Borrow a Book");
-      navigate("/dashboard/borrow");
-    } else if (e.key === "4") {
-      setPage("Return a Book");
+      setPage("Return Book");
       navigate("/dashboard/return");
-    } else if (e.key === "5") {
+    } else if (e.key === "3") {
       setPage("View Records");
       navigate("/dashboard/view/records");
-    } else if (e.key === "6") {
+    } else if (e.key === "4") {
       setPage("Borrower Information");
       navigate("/dashboard/show/borrowers");
-    } else if (e.key === "7") {
+    } else if (e.key === "5") {
       setPage("My Profile");
       navigate("/dashboard/profile");
     } else if (e.key === "logout") {

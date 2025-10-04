@@ -2,6 +2,7 @@ import React from "react";
 import { useNavigate, Link } from "react-router-dom";
 import "./login.css";
 export const Login = () => {
+  const navigate = useNavigate();
   return (
     <div className="login-container">
       <div className="login-content">
@@ -37,7 +38,11 @@ export const Login = () => {
             </a>
           </div>
 
-          <button type="submit" className="login-btn">
+          <button
+            type="submit"
+            className="login-btn"
+            onClick={() => navigate("/dashboard/show/books")}
+          >
             LOGIN
           </button>
 
