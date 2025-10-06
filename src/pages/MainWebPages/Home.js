@@ -75,6 +75,7 @@ const Home = () => {
           md={{ span: 12, offset: 1 }}
           sm={{ span: 18 }}
           xs={{ span: 22 }}
+          style={{ display: "flex", alignContent: "flex-start" }}
         >
           <p style={{ textAlign: "justify" }}>
             Welcome to <strong>Liboria</strong>, your digital library designed
@@ -90,11 +91,11 @@ const Home = () => {
         </Col>
       </Row>
       <Row justify="center" align="middle">
-        <Col span={18}>
+        <Col sm={{ span: 18 }} xs={{ span: 22 }}>
           <Divider>
             <h2>MISSION AND VISION</h2>
           </Divider>
-          <p>
+          <p style={{ textAlign: "justify" }}>
             At Liboria, our mission is simple: to make reading more accessible,
             enjoyable, and affordable for everyone. We combine the spirit of a
             traditional library with the convenience of the digital world, so

@@ -4,6 +4,7 @@ import {
   UserOutlined,
   BookOutlined,
   ArrowLeftOutlined,
+  ContactsOutlined,
 } from "@ant-design/icons";
 import { Menu } from "antd";
 import { useNavigate } from "react-router-dom";
@@ -25,7 +26,12 @@ const items = [
     label: "User Management",
     icon: <UserOutlined />,
     children: [
-      { key: "4", label: "Borrower List", path: "/dashboard/show/borrowers" },
+      {
+        key: "4",
+        label: "Borrower List",
+        path: "/dashboard/show/borrowers",
+        icon: <ContactsOutlined />,
+      },
       { key: "5", label: "My Profile", path: "/dashboard/profile" },
     ],
   },
@@ -85,7 +91,9 @@ const SideBar = ({ setPage }) => {
             }}
           />
           <h3 className="profile-name">John Doe</h3>
-          <p className="profile-role">Librarian</p>
+          <p className="profile-role" color="#585757ff">
+            Librarian
+          </p>
         </div>
         <hr />
         <Menu

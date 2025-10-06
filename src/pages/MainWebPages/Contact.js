@@ -1,7 +1,7 @@
 import React from "react";
 import { Divider, Col, Row } from "antd";
 import numoabuilding from "../../assets/NU MOA building.png";
-export const Contact = () => {
+const Contact = () => {
   return (
     <>
       <Row justify="center" align="middle">
@@ -17,10 +17,7 @@ export const Contact = () => {
       </Row>
       <Row justify="center" align="middle" style={{ marginBottom: "100px" }}>
         <Col span={18}>
-          <Divider>
-            <h2>CONTACT</h2>
-          </Divider>
-          <p>
+          <p style={{ textAlign: "justify" }}>
             At Liboria, we believe every reader is part of our story. Whether
             you’re looking for your next great read, need help borrowing a book,
             or simply want to share your thoughts, we’re here to listen. Our
@@ -47,3 +44,4 @@ export const Contact = () => {
     </>
   );
 };
+export default Contact;

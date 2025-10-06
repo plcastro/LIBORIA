@@ -38,7 +38,7 @@ const siderStyle = {
   justifyContent: "space-between",
 };
 
-export const DashboardLayout = () => {
+const DashboardLayout = () => {
   const [page, setPage] = useState("Show Books");
 
   return (
@@ -59,3 +59,4 @@ export const DashboardLayout = () => {
     </Flex>
   );
 };
+export default DashboardLayout;

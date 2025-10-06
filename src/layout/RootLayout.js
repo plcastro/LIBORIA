@@ -32,7 +32,7 @@ const contentStyle = {
   justifyContent: "center",
 };
 
-export const RootLayout = () => {
+const RootLayout = () => {
   return (
     <Flex gap="middle" wrap>
       <Layout style={layoutStyle}>
@@ -49,3 +49,4 @@ export const RootLayout = () => {
     </Flex>
   );
 };
+export default RootLayout;

@@ -1,7 +1,7 @@
 import React from "react";
 import "./login.css";
 import { Link } from "react-router-dom";
-export const Reset = () => {
+const Reset = () => {
   return (
     <div className="reset-password-container">
       <div className="reset-password-content">
@@ -35,3 +35,4 @@ export const Reset = () => {
     </div>
   );
 };
+export default Reset;

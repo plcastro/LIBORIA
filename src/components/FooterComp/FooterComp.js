@@ -10,14 +10,20 @@ const FooterComp = () => {
         <img src={logo_light} alt="Liboria Logo" className="footer-logo" />
       </Row>
       <Row align="middle" justify="space-between">
-        <Col xs={22} sm={22} md={12} lg={12}>
+        <Col xs={22} sm={22} md={12} lg={12} style={{ margin: "20px 0" }}>
           <p>
             Discover, read, and enjoy books <br />
             anywhere life takes you.
           </p>
         </Col>
 
-        <Col xs={22} sm={22} md={12} lg={{ span: 6, offset: 2 }}>
+        <Col
+          xs={22}
+          sm={22}
+          md={12}
+          lg={{ span: 6, offset: 2 }}
+          style={{ margin: "20px 0" }}
+        >
           <p>
             <strong>PHONE:</strong> +63 09564569912
           </p>

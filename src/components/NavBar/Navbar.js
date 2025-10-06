@@ -18,9 +18,6 @@ const Navbar = () => {
       <NavLink to="/login">
         <li>Login</li>
       </NavLink>
-      <NavLink to="/books">
-        <li>Books</li>
-      </NavLink>
       <NavLink to="/contact">
         <li>Contact</li>
       </NavLink>
@@ -56,10 +53,6 @@ const Navbar = () => {
                 <NavLink to="/login">Login</NavLink>
               </Menu.Item>
               <Menu.Item key="3">
-                <NavLink to="/books">Books</NavLink>
-              </Menu.Item>
-
-              <Menu.Item key="4">
                 <NavLink to="/contact">Contact</NavLink>
               </Menu.Item>
             </Menu>
