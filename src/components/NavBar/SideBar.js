@@ -6,7 +6,7 @@ import {
   ArrowLeftOutlined,
   ContactsOutlined,
 } from "@ant-design/icons";
-import { Menu } from "antd";
+import { Menu, Grid } from "antd";
 import { useNavigate } from "react-router-dom";
 
 const items = [
@@ -40,6 +40,9 @@ const items = [
 const SideBar = ({ setPage }) => {
   const navigate = useNavigate();
   const [current, setCurrent] = useState("1");
+  const [open, setOpen] = useState(false);
+  const { useBreakpoint } = Grid;
+  const screens = useBreakpoint();
 
   const onClick = (e) => {
     setCurrent(e.key);
@@ -88,6 +91,7 @@ const SideBar = ({ setPage }) => {
             className="sidebar-logo"
             style={{
               margin: "20px 0",
+              width: "80%",
             }}
           />
           <h3 className="profile-name">John Doe</h3>
