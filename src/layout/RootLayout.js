@@ -8,13 +8,13 @@ const { Header, Footer, Content } = Layout;
 const headerStyle = {
   color: "#fff",
   height: 64,
-  paddingInline: 48,
   lineHeight: "64px",
 };
 const layoutStyle = {
   display: "flex",
   flexDirection: "column",
-  minHeight: "100vh",
+  width: "100%",
+  overflowX: "hidden",
 };
 const footerStyle = {
   backgroundColor: "black",
@@ -27,7 +27,6 @@ const contentStyle = {
   display: "flex",
   flexDirection: "column",
   minHeight: "100vh",
-  gap: "10px",
   alignItems: "center",
   justifyContent: "center",
 };

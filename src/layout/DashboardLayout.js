@@ -49,7 +49,7 @@ const DashboardLayout = () => {
             onClick={() => setOpen(true)}
             style={{
               position: "fixed",
-              top: "10px",
+              top: "-10px",
               left: "10px",
               zIndex: 1000,
               background: "white",
@@ -57,12 +57,11 @@ const DashboardLayout = () => {
             }}
           />
           <Drawer
-            title="Menu"
             placement="left"
             onClose={() => setOpen(false)}
             open={open}
             width="80%"
-            bodyStyle={{
+            style={{
               padding: 0,
               backgroundColor: "#001529",
               color: "white",

@@ -3,28 +3,28 @@ import { useNavigate } from "react-router-dom";
 import { Button, Row, Col, Grid, Divider } from "antd";
 import BookBackground from "../../assets/book-background.png";
 import bookshelf from "../../assets/bookshelf-black.png";
-
+import "../../App.css";
 const Home = () => {
   const { useBreakpoint } = Grid;
   const screens = useBreakpoint();
 
-  let fontSize = "70px"; // default
+  let fontSize = "70px";
   if (screens.md) fontSize = "60px";
   else if (screens.sm) fontSize = "45px";
-  else fontSize = "42px"; //
+  else fontSize = "42px";
 
   const navigate = useNavigate();
   return (
     <>
       <Row
         style={{
-          backgroundImage: `url(${BookBackground})`,
+          backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2)), url(${BookBackground})`,
           backgroundRepeat: "no-repeat",
           backgroundPosition: "center center",
           backgroundSize: "cover",
           width: "100%",
           height: "100vh",
-          minHeight: "300px",
+          overflowX: "hidden",
         }}
       >
         <Col
@@ -32,7 +32,11 @@ const Home = () => {
           sm={{ span: 20, offset: 2 }}
           md={{ span: 14, offset: 2 }}
           lg={{ span: 10, offset: 2 }}
-          style={{ color: "white", alignContent: "center" }}
+          style={{
+            color: "white",
+            alignContent: "center",
+            margin: "0 10%",
+          }}
         >
           <h1 style={{ color: "white", fontSize }}>
             FIND BOOKS THAT MATCH YOUR INTERESTS{" "}
@@ -51,7 +55,7 @@ const Home = () => {
           </Button>
         </Col>
       </Row>
-      <Row justify="center" align="middle">
+      <Row justify="center" align="middle" style={{ margin: "50px 0" }}>
         <Divider>
           <h2>ABOUT US</h2>
         </Divider>
@@ -90,7 +94,7 @@ const Home = () => {
           </p>
         </Col>
       </Row>
-      <Row justify="center" align="middle">
+      <Row justify="center" align="middle" style={{ margin: "100px 0" }}>
         <Col sm={{ span: 18 }} xs={{ span: 22 }}>
           <Divider>
             <h2>MISSION AND VISION</h2>

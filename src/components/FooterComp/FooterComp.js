@@ -7,7 +7,7 @@ const FooterComp = () => {
   return (
     <footer className="footer">
       <Row>
-        <img src={logo_light} alt="Liboria Logo" className="footer-logo" />
+        <img src={logo_light} alt="Liboria Logo" style={{ width: "200px" }} />
       </Row>
       <Row align="middle" justify="space-between">
         <Col xs={22} sm={22} md={12} lg={12} style={{ margin: "20px 0" }}>

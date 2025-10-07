@@ -1,0 +1,27 @@
+.search-wrapper {
+  display: flex;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: none;
+}
+
+.search-input .ant-input {
+  height: 44px;
+  border-radius: 0;
+  border-right: none;
+}
+
+.search-btn {
+  background-color: #04011cff;
+  border: none;
+  height: 44px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0 8px 8px 0;
+}
+
+.search-btn:hover {
+  background-color: #1209c7;
+}

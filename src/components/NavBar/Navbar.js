@@ -39,7 +39,7 @@ const Navbar = () => {
           />
           <Drawer
             title={
-              <img src={logo_dark} alt="Logo" style={{ height: "30px" }} />
+              <img src={logo_dark} alt="Logo" style={{ width: "200px" }} />
             }
             placement="right"
             onClose={() => setOpen(false)}

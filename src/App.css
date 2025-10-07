@@ -13,38 +13,14 @@ body {
   background-color: #f2f2f2;
 }
 
-.dashboard-layout {
-  display: flex;
-  flex-direction: row;
-  height: 100vh;
-}
-.main-content {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-}
-.dashboard-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  margin: 48px 0 0 256px;
-  padding: 24px 5%;
-}
-.contact-content {
-  width: 80%;
-  margin: 40px auto;
-}
-
 .contact-desc {
   margin: 20px auto 100px auto;
 }
 h2 {
-  font-size: 36px;
+  font-size: 42px;
   font-weight: 700;
 }
-h1 {
-  font-size: 70px;
-}
+
 p {
   font-size: 18px;
   line-height: 1.6;
@@ -103,10 +79,10 @@ a.active {
 input {
   height: 30px;
 }
-/* Mobile adjustments */
+
 @media (max-width: 768px) {
   .dashboard-content {
-    margin-left: 0; /* remove sidebar offset */
+    margin-left: 0;
     padding: 64px 12px 24px;
   }
 
