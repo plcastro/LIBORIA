@@ -7,12 +7,6 @@ import "../../App.css";
 const Home = () => {
   const { useBreakpoint } = Grid;
   const screens = useBreakpoint();
-
-  let fontSize = "70px";
-  if (screens.md) fontSize = "60px";
-  else if (screens.sm) fontSize = "45px";
-  else fontSize = "42px";
-
   const navigate = useNavigate();
   return (
     <>
@@ -38,7 +32,7 @@ const Home = () => {
             margin: "0 10%",
           }}
         >
-          <h1 style={{ color: "white", fontSize }}>
+          <h1 style={{ color: "white", fontSize: "clamp(32px, 70px, 90px)" }}>
             FIND BOOKS THAT MATCH YOUR INTERESTS{" "}
           </h1>
           <p style={{ marginBottom: "50px" }}>
@@ -55,31 +49,42 @@ const Home = () => {
           </Button>
         </Col>
       </Row>
-      <Row justify="center" align="middle" style={{ margin: "50px 0" }}>
+      <Row
+        justify="center"
+        align="middle"
+        style={{ margin: "50px 0", padding: " 0 10%" }}
+      >
         <Divider>
-          <h2>ABOUT US</h2>
+          <h2 style={{ fontSize: "clamp (32px, 42px, 50px)" }}>ABOUT US</h2>
         </Divider>
         <Col
-          lg={{ span: 8 }}
-          md={{ span: 10 }}
-          sm={{ span: 18 }}
-          xs={{ span: 22 }}
+          lg={{ span: 12 }}
+          md={{ span: 20 }}
+          sm={{ span: 24 }}
+          xs={{ span: 24 }}
+          style={{ padding: "0 20px" }}
         >
           <img
             src={bookshelf}
             alt="bookshelf black"
-            width="100%"
-            height="350px"
-            alignContent="center"
-            style={{ objectFit: "Cover" }}
+            style={{
+              width: "100%",
+              height: "auto",
+              maxHeight: "400px",
+              minHeight: "250px",
+              objectFit: "cover",
+            }}
           />
         </Col>
         <Col
-          lg={{ span: 9, offset: 1 }}
-          md={{ span: 12, offset: 1 }}
-          sm={{ span: 18 }}
-          xs={{ span: 22 }}
-          style={{ display: "flex", alignContent: "flex-start" }}
+          lg={{ span: 12 }}
+          md={{ span: 20 }}
+          sm={{ span: 24 }}
+          xs={{ span: 24 }}
+          style={{
+            display: "flex",
+            alignContent: "flex-start",
+          }}
         >
           <p style={{ textAlign: "justify" }}>
             Welcome to <strong>Liboria</strong>, your digital library designed
@@ -94,10 +99,16 @@ const Home = () => {
           </p>
         </Col>
       </Row>
-      <Row justify="center" align="middle" style={{ margin: "100px 0" }}>
-        <Col sm={{ span: 18 }} xs={{ span: 22 }}>
+      <Row
+        justify="center"
+        align="middle"
+        style={{ margin: "100px 0", padding: " 0 10%" }}
+      >
+        <Col lg={{ span: 24 }} sm={{ span: 20 }} xs={{ span: 20 }}>
           <Divider>
-            <h2>MISSION AND VISION</h2>
+            <h2 style={{ fontSize: "clamp (32px, 42px, 50px)" }}>
+              MISSION AND VISION
+            </h2>
           </Divider>
           <p style={{ textAlign: "justify" }}>
             At Liboria, our mission is simple: to make reading more accessible,

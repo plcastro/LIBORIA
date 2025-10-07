@@ -11,7 +11,7 @@ const FooterComp = () => {
       </Row>
       <Row align="middle" justify="space-between">
         <Col xs={22} sm={22} md={12} lg={12} style={{ margin: "20px 0" }}>
-          <p>
+          <p style={{ fontSize: "14px" }}>
             Discover, read, and enjoy books <br />
             anywhere life takes you.
           </p>
@@ -24,16 +24,16 @@ const FooterComp = () => {
           lg={{ span: 6, offset: 2 }}
           style={{ margin: "20px 0" }}
         >
-          <p>
+          <p style={{ fontSize: "14px" }}>
             <strong>PHONE:</strong> +63 09564569912
           </p>
-          <p>
+          <p style={{ fontSize: "14px" }}>
             <strong>EMAIL:</strong>{" "}
             <a href="mailto:liboria@gmail.com" style={{ color: "white" }}>
               liboria@gmail.com
             </a>
           </p>
-          <p>
+          <p style={{ fontSize: "14px" }}>
             <strong>ADDRESS:</strong> Coral Way, Pasay City
           </p>
         </Col>

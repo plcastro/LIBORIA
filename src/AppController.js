@@ -29,10 +29,10 @@ export default function AppController() {
         </Route>
 
         <Route path="/dashboard" element={<DashboardLayout />}>
-          <Route path="show/books" element={<DisplayBook />} />
-          <Route path="return" element={<ReturnBooks />} />
-          <Route path="show/records" element={<ViewRecords />} />
-          <Route path="profile" element={<ProfilePage />} />
+          <Route path="view/books" element={<DisplayBook />} />
+          <Route path="view/return" element={<ReturnBooks />} />
+          <Route path="view/records" element={<ViewRecords />} />
+          <Route path="view/profile" element={<ProfilePage />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>

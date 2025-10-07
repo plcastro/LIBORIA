@@ -46,19 +46,19 @@ const SideBar = ({ setPage }) => {
 
     if (e.key === "1") {
       setPage("Show Books");
-      navigate("/dashboard/show/books");
+      navigate("/dashboard/view/books");
     } else if (e.key === "2") {
       setPage("Return Book");
-      navigate("/dashboard/return");
+      navigate("/dashboard/view/return");
     } else if (e.key === "3") {
       setPage("View Records");
       navigate("/dashboard/view/records");
     } else if (e.key === "4") {
       setPage("Borrower Information");
-      navigate("/dashboard/show/borrowers");
+      navigate("/dashboard/view/borrowers");
     } else if (e.key === "5") {
       setPage("My Profile");
-      navigate("/dashboard/profile");
+      navigate("/dashboard/view/profile");
     } else if (e.key === "logout") {
       navigate("/");
     }
