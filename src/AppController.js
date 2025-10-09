@@ -7,7 +7,6 @@ import Signup from "./pages/MainWebPages/Signup";
 import Reset from "./pages/MainWebPages/Reset";
 import Forgot from "./pages/MainWebPages/Forgot";
 
-import Contact from "./pages/MainWebPages/Contact";
 import NotFound from "./pages/MainWebPages/NotFound";
 import DisplayBook from "./pages/DashboardPages/DisplayBook";
 import ReturnBooks from "./pages/DashboardPages/ReturnBooks";
@@ -25,7 +24,6 @@ export default function AppController() {
           <Route path="signup" element={<Signup />} />
           <Route path="reset" element={<Reset />} />
           <Route path="forgot" element={<Forgot />} />
-          <Route path="contact" element={<Contact />} />
           <Route path="*" element={<NotFound />} />
         </Route>
 

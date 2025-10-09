@@ -18,9 +18,6 @@ const Navbar = () => {
       <NavLink to="/auth/login">
         <li>Login</li>
       </NavLink>
-      <NavLink to="/contact">
-        <li>Contact</li>
-      </NavLink>
     </ul>
   );
 
@@ -51,9 +48,6 @@ const Navbar = () => {
               </Menu.Item>
               <Menu.Item key="2">
                 <NavLink to="/auth/login">Login</NavLink>
-              </Menu.Item>
-              <Menu.Item key="3">
-                <NavLink to="/contact">Contact</NavLink>
               </Menu.Item>
             </Menu>
           </Drawer>

@@ -121,6 +121,28 @@ const Home = () => {
           </p>
         </Col>
       </Row>
+      <Row
+        justify="center"
+        align="middle"
+        style={{ margin: "100px 0", padding: " 0 10%" }}
+      >
+        <Col lg={{ span: 24 }} sm={{ span: 20 }} xs={{ span: 20 }}>
+          <Divider>
+            <h2 style={{ fontSize: "clamp (32px, 42px, 50px)" }}>
+              Let's Talk Books
+            </h2>
+          </Divider>
+          <p style={{ textAlign: "justify" }}>
+            At Liboria, we believe every reader is part of our story. Whether
+            you’re looking for your next great read, need help borrowing a book,
+            or simply want to share your thoughts, we’re here to listen. Our
+            team loves hearing from fellow book lovers—because your ideas,
+            questions, and feedback help us grow and make Liboria even better.
+            Don’t be shy—drop us a message and let’s keep the love for reading
+            alive together!
+          </p>
+        </Col>
+      </Row>
     </>
   );
 };
