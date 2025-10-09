@@ -2,53 +2,53 @@ import React from "react";
 import { Card, Divider, Button, Row, Col, Avatar } from "antd";
 import { EditOutlined, UserOutlined } from "@ant-design/icons";
 const ProfilePage = () => {
+  const rowStyle = {
+    width: "100%",
+    margin: "auto",
+  };
   return (
-    <div>
+    <div style={{ margin: "5% auto" }}>
       <Card
         style={{
+          maxWidth: "450px",
           width: "90%",
           height: "100%",
           margin: "auto",
-          padding: "20px",
+          boxShadow: "0 5px 15px rgba(0, 0, 0, 0.34)",
         }}
       >
         <Row>
-          <Col
-            lg={{ span: 10 }}
-            md={{ span: 24 }}
-            sm={{ span: 24 }}
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-              alignItems: "center",
-              margin: "auto",
-              gap: "20px",
-            }}
-          >
-            <Avatar size={128} icon={<UserOutlined />} />
-            <p>Lololololol</p>
-            <Button color="default" variant="solid" icon={<EditOutlined />}>
-              Edit Profile
-            </Button>
-          </Col>
-          <Col
-            lg={{ span: 12 }}
-            md={{ span: 24 }}
-            sm={{ span: 24 }}
-            style={{
-              display: "flex",
-              flexDirection: "column", // stack vertically
-              gap: "10px",
-            }}
-          >
+          <Row style={{ margin: "auto", textAlign: "center" }}>
+            <Col span={24}>
+              <Avatar size={128} icon={<UserOutlined />} />
+              <p>John Doe</p>
+            </Col>
+          </Row>
+          <Row style={{ rowStyle, textAlign: "left" }}>
             <Divider>Personal Information</Divider>
-            <p>Name: John Doe</p>
-            <p>Contact #: 09123456789</p>
-            <p>Email: john.doe@gmail.com</p>
-            <p>Date Joined: October 3, 2025</p>
-            <p>Role: Librarian</p>
-          </Col>
+            <Col>
+              {" "}
+              <p>Name: John Doe</p>
+              <br />
+              <p>Email: john.doe@gmail.com</p>
+              <br />
+              <p>Role: Librarian</p>
+            </Col>
+          </Row>
+          <Row justify="center" style={rowStyle}>
+            <Col lg={24} style={{ textAlign: "center" }}>
+              <Button
+                icon={<EditOutlined />}
+                style={{
+                  width: "100%",
+                  backgroundColor: "#000",
+                  color: "#fff",
+                }}
+              >
+                Edit Profile
+              </Button>
+            </Col>
+          </Row>
         </Row>
       </Card>
     </div>
