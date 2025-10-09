@@ -41,7 +41,7 @@ const Home = () => {
             color="default"
             variant="outlined"
             size="large"
-            onClick={() => navigate("/login")}
+            onClick={() => navigate("/auth/login")}
           >
             Get Started
           </Button>

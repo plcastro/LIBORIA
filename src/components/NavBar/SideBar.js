@@ -59,7 +59,7 @@ const SideBar = ({ setPage }) => {
       setPage("My Profile");
       navigate("/dashboard/view/profile");
     } else if (e.key === "logout") {
-      navigate("/");
+      navigate("/home");
     }
   };
 

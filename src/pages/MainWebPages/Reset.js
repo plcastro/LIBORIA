@@ -27,7 +27,7 @@ const Reset = () => {
             />
           </div>
 
-          <Link to="/login" className="recovery-btn">
+          <Link to="/auth/login" className="recovery-btn">
             RESET PASSWORD
           </Link>
         </form>

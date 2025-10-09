@@ -1,67 +1,54 @@
 import React, { useState } from "react";
-import { SearchOutlined, PlusOutlined } from "@ant-design/icons";
-import { Input, Row, Col, Button } from "antd";
+import { PlusOutlined, SearchOutlined } from "@ant-design/icons";
+import { Row, Col, Button } from "antd";
 import AddBookModal from "../../components/Modal/AddBookModal";
 
 const DisplayBook = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
 
-  const onSearch = () => {
-    console.log("Searching:", searchValue);
+  const onSearch = (value) => {
+    console.log("Searching:", value);
   };
 
   return (
     <>
-      <Row justify="space-between" align="middle" gutter={[16, 16]}>
-        <Col>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              width: 290,
-              height: 40,
-              borderRadius: 8,
-              overflow: "hidden",
-              border: "1px solid #d9d9d9",
-            }}
-          >
-            <Input
-              placeholder="Search Book"
+      <Row
+        gutter={[16, 16]}
+        justify="space-between"
+        align="middle"
+        style={{ width: "100%", marginBottom: "24px" }}
+      >
+        <Col flex="auto" className="max-w-xl">
+          <div style={{ maxWidth: "300px" }}>
+            <input
+              type="text"
+              placeholder="Search Book, Author..."
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
-              style={{
-                flex: 1,
-                height: "100%",
-                fontSize: 14,
-                borderRadius: 0,
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  onSearch();
+                }
               }}
-              onPressEnter={onSearch}
+              style={{ minHeight: "40px" }}
             />
-            <Button
-              type="primary"
-              icon={<SearchOutlined />}
+
+            <button
               onClick={onSearch}
-              style={{
-                height: "100%",
-                border: "none",
-                borderRadius: 0,
-                backgroundColor: "#04011cff",
-                width: 60,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: 0,
-                lineHeight: "normal",
-              }}
-            />
+              style={{ width: "40px", height: "40px" }}
+              aria-label="Maghanap"
+            >
+              <SearchOutlined style={{ fontSize: "16px", color: "#fff" }} />
+            </button>
           </div>
         </Col>
 
         <Col>
           <Button
+            type="primary"
             style={{
-              background: "#2808f9ff",
+              backgroundColor: "#2808f9ff",
               color: "#fff",
               width: 200,
               height: 40,

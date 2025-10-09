@@ -7,17 +7,15 @@ import "./NotFound.css";
 const NotFound = () => {
   const navigate = useNavigate();
   const pathname = window.location.pathname;
-
-  // Determine button text
   const backPageText = pathname.startsWith("/dashboard")
     ? "Go Back"
     : "Go Back to Home";
 
   const goBackToPrevPage = () => {
     if (pathname.startsWith("/dashboard")) {
-      navigate("/dashboard/show/books");
+      navigate("/dashboard/view/books");
     } else {
-      navigate("/");
+      navigate("/home");
     }
   };
 

@@ -40,7 +40,6 @@ const DashboardLayout = () => {
 
   return (
     <Layout style={{ minHeight: "100vh", overflow: "hidden" }}>
-      {/* SIDEBAR SECTION */}
       {isMobile ? (
         <>
           <Button
@@ -76,12 +75,10 @@ const DashboardLayout = () => {
         </Sider>
       )}
 
-      {/* MAIN CONTENT */}
       <Layout
         style={{
           marginLeft: isMobile ? 0 : "20%",
           width: isMobile ? "100%" : "80%",
-          transition: "all 0.3s ease",
           overflowX: "hidden",
         }}
       >

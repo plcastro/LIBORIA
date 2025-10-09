@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import RootLayout from "./layout/RootLayout";
 import DashboardLayout from "./layout/DashboardLayout";
 import Home from "./pages/MainWebPages/Home";
@@ -20,17 +20,16 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<RootLayout />}>
-          <Route index element={<Navigate to="/home" replace />} />
-          <Route path="home" element={<Home />} />
+          <Route index path="home" element={<Home />} />
           <Route path="auth/login" element={<Login />} />
           <Route path="signup" element={<Signup />} />
           <Route path="reset" element={<Reset />} />
-          <Route path="forgot" element={<Forgot />} />
+          <Route path="auth/forgot" element={<Forgot />} />
           <Route path="*" element={<NotFound />} />
         </Route>
 
         <Route path="/dashboard" element={<DashboardLayout />}>
-          <Route index element={<Navigate to="view/books" replace />} />
+          <Route index path="view/books" element={<DisplayBook />} />
           <Route path="view/return" element={<ReturnBooks />} />
           <Route path="view/records" element={<ViewRecords />} />
           <Route path="view/staff" element={<StaffList />} />
