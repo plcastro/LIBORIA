@@ -41,7 +41,7 @@ const Login = () => {
           <button
             type="submit"
             className="login-btn"
-            onClick={() => navigate("/dashboard/show/books")}
+            onClick={() => navigate("/dashboard/view/books")}
           >
             LOGIN
           </button>
