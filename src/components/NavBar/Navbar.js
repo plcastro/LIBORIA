@@ -12,10 +12,10 @@ const Navbar = () => {
 
   const menuItems = (
     <ul className="nav-links">
-      <NavLink to="/">
+      <NavLink to="/home">
         <li>Home</li>
       </NavLink>
-      <NavLink to="/login">
+      <NavLink to="/auth/login">
         <li>Login</li>
       </NavLink>
       <NavLink to="/contact">
@@ -47,10 +47,10 @@ const Navbar = () => {
           >
             <Menu mode="vertical" onClick={() => setOpen(false)}>
               <Menu.Item key="1">
-                <NavLink to="/">Home</NavLink>
+                <NavLink to="/home">Home</NavLink>
               </Menu.Item>
               <Menu.Item key="2">
-                <NavLink to="/login">Login</NavLink>
+                <NavLink to="/auth/login">Login</NavLink>
               </Menu.Item>
               <Menu.Item key="3">
                 <NavLink to="/contact">Contact</NavLink>

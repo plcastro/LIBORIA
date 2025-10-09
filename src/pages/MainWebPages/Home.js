@@ -1,12 +1,10 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Button, Row, Col, Grid, Divider } from "antd";
+import { Button, Row, Col, Divider } from "antd";
 import BookBackground from "../../assets/book-background.png";
 import bookshelf from "../../assets/bookshelf-black.png";
 import "../../App.css";
 const Home = () => {
-  const { useBreakpoint } = Grid;
-  const screens = useBreakpoint();
   const navigate = useNavigate();
   return (
     <>
@@ -25,7 +23,7 @@ const Home = () => {
           xs={{ span: 22, offset: 1 }}
           sm={{ span: 20, offset: 2 }}
           md={{ span: 14, offset: 2 }}
-          lg={{ span: 10, offset: 2 }}
+          lg={{ span: 12, offset: 2 }}
           style={{
             color: "white",
             alignContent: "center",
