@@ -13,6 +13,7 @@ import ReturnBooks from "./pages/DashboardPages/ReturnBooks";
 import ViewRecords from "./pages/DashboardPages/ViewRecords";
 import StaffList from "./pages/DashboardPages/StaffList";
 import ProfilePage from "./pages/DashboardPages/ProfilePage";
+import EditProfile from "./pages/DashboardPages/EditProfile";
 
 export default function App() {
   return (
@@ -29,11 +30,12 @@ export default function App() {
         </Route>
 
         <Route path="/dashboard" element={<DashboardLayout />}>
-          <Route path="view/books" element={<DisplayBook />} />
+          <Route index element={<Navigate to="view/books" replace />} />
           <Route path="view/return" element={<ReturnBooks />} />
           <Route path="view/records" element={<ViewRecords />} />
           <Route path="view/staff" element={<StaffList />} />
           <Route path="view/profile" element={<ProfilePage />} />
+          <Route path="edit/profile" element={<EditProfile />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>

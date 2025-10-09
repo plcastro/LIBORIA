@@ -16,7 +16,7 @@ const items = [
     icon: <BookOutlined />,
     children: [
       { key: "1", label: "Books", path: "/dashboard/view/books" },
-      { key: "2", label: "Return Book", path: "/dashboard/return" },
+      { key: "2", label: "Return Book", path: "/dashboard/view/return" },
       { key: "3", label: "View Records", path: "/dashboard/view/records" },
     ],
   },
