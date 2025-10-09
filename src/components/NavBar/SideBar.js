@@ -15,8 +15,7 @@ const items = [
     label: "Book Management",
     icon: <BookOutlined />,
     children: [
-      { key: "1", label: "Books", path: "/dashboard/show/books" },
-
+      { key: "1", label: "Books", path: "/dashboard/view/books" },
       { key: "2", label: "Return Book", path: "/dashboard/return" },
       { key: "3", label: "View Records", path: "/dashboard/view/records" },
     ],
@@ -28,11 +27,11 @@ const items = [
     children: [
       {
         key: "4",
-        label: "Borrower List",
-        path: "/dashboard/show/borrowers",
+        label: "View Staff",
+        path: "/dashboard/view/staff",
         icon: <ContactsOutlined />,
       },
-      { key: "5", label: "My Profile", path: "/dashboard/profile" },
+      { key: "5", label: "My Profile", path: "/dashboard/view/profile" },
     ],
   },
 ];
@@ -54,8 +53,8 @@ const SideBar = ({ setPage }) => {
       setPage("View Records");
       navigate("/dashboard/view/records");
     } else if (e.key === "4") {
-      setPage("Borrower Information");
-      navigate("/dashboard/view/borrowers");
+      setPage("View Staff");
+      navigate("/dashboard/view/staff");
     } else if (e.key === "5") {
       setPage("My Profile");
       navigate("/dashboard/view/profile");

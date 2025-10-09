@@ -11,9 +11,10 @@ import NotFound from "./pages/MainWebPages/NotFound";
 import DisplayBook from "./pages/DashboardPages/DisplayBook";
 import ReturnBooks from "./pages/DashboardPages/ReturnBooks";
 import ViewRecords from "./pages/DashboardPages/ViewRecords";
+import StaffList from "./pages/DashboardPages/StaffList";
 import ProfilePage from "./pages/DashboardPages/ProfilePage";
 
-export default function AppController() {
+export default function App() {
   return (
     <BrowserRouter>
       <Routes>
@@ -31,6 +32,7 @@ export default function AppController() {
           <Route path="view/books" element={<DisplayBook />} />
           <Route path="view/return" element={<ReturnBooks />} />
           <Route path="view/records" element={<ViewRecords />} />
+          <Route path="view/staff" element={<StaffList />} />
           <Route path="view/profile" element={<ProfilePage />} />
           <Route path="*" element={<NotFound />} />
         </Route>
