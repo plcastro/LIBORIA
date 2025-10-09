@@ -13,7 +13,12 @@ const SubmitButton = ({ form, children }) => {
   }, [form, values]);
 
   return (
-    <Button type="primary" htmlType="submit" disabled={!submittable}>
+    <Button
+      type="primary"
+      htmlType="submit"
+      disabled={!submittable}
+      style={{ backgroundColor: "#000", color: "#fff", width: "200px" }}
+    >
       {children}
     </Button>
   );
@@ -115,9 +120,13 @@ const EditProfile = ({ initialData, isVisible, onClose, onSave }) => {
         </Form.Item>
 
         <Form.Item>
-          <Space>
+          <Space align="baseline">
             <SubmitButton form={form}>Save Changes</SubmitButton>
-            <Button onClick={onClose} htmlType="button">
+            <Button
+              onClick={onClose}
+              htmlType="button"
+              style={{ width: "200px" }}
+            >
               Cancel
             </Button>
           </Space>

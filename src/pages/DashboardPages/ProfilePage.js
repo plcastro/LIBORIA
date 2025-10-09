@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
 import { Card, Divider, Button, Row, Col, Avatar } from "antd";
 import { EditOutlined, UserOutlined } from "@ant-design/icons";
 import EditProfile from "./EditProfile";
