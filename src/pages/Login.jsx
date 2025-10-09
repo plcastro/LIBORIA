@@ -1,7 +1,66 @@
 import React from "react";
+<<<<<<< Updated upstream:src/pages/Login.jsx
 import { useNavigate } from "react-router-dom";
 import "./accounts.css";
 export const Login = () => {
+=======
+import { useNavigate, Link } from "react-router-dom";
+import {useState} from "react";
+import "./login.css";
+export const Login = () => {
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    username: "",
+    password: ""
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleInputChange = (e) => {
+    const { id, value } = e.target;
+    setFormData(prevState => ({
+      ...prevState,
+      [id]: value
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+
+    try {
+      const response = await fetch('http://localhost:8000/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: formData.username,
+          password: formData.password
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Store token and user data in localStorage
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        
+        // Navigate to dashboard on successful login
+        navigate("/dashboard/show/books");
+      } else {
+        setError(data.error || "Login failed");
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      setError("Network error. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+>>>>>>> Stashed changes:src/pages/MainWebPages/Login.js
   return (
      <div className="login-container">
       <div className="login-content">
