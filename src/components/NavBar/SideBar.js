@@ -12,62 +12,66 @@ import { useNavigate, useLocation } from "react-router-dom";
 import BookIcon from "../../assets/books.png";
 import ReturnIcon from "../../assets/return.png";
 
-const user = JSON.parse(localStorage.getItem("currentUser")) || {};
-const items = [
-  {
-    key: "sub1",
-    label: "Book Management",
-    icon: <BookOutlined />,
-    children: [
-      {
-        key: "1",
-        label: "Books",
-        path: "/dashboard/view/books",
-        icon: (
-          <img src={BookIcon} alt="Books" style={{ width: 18, height: 18 }} />
-        ),
-      },
-      {
-        key: "2",
-        label: "Return Book",
-        path: "/dashboard/view/return",
-        icon: (
-          <img src={ReturnIcon} alt="Books" style={{ width: 18, height: 18 }} />
-        ),
-      },
-      {
-        key: "3",
-        label: "View Records",
-        path: "/dashboard/view/records",
-        icon: <UnorderedListOutlined />,
-      },
-    ],
-  },
-  {
-    key: "sub2",
-    label: "User Management",
-    icon: <UserOutlined />,
-    children: [
-      {
-        key: "4",
-        label: "View Staff",
-        path: "/dashboard/view/staff",
-        icon: <UnorderedListOutlined />,
-      },
-      {
-        key: "5",
-        label: "My Profile",
-        path: "/dashboard/view/profile",
-        icon: <ContactsOutlined />,
-      },
-    ],
-  },
-];
-
 const SideBar = ({ setPage }) => {
   const navigate = useNavigate();
-  const location = useLocation();
   const [current, setCurrent] = useState("");
+  const location = useLocation();
+
+  const user = JSON.parse(localStorage.getItem("currentUser")) || {};
+  const items = [
+    {
+      key: "sub1",
+      label: "Book Management",
+      icon: <BookOutlined />,
+      children: [
+        {
+          key: "1",
+          label: "Books",
+          path: "/dashboard/view/books",
+          icon: (
+            <img src={BookIcon} alt="Books" style={{ width: 18, height: 18 }} />
+          ),
+        },
+        {
+          key: "2",
+          label: "Return Book",
+          path: "/dashboard/view/return",
+          icon: (
+            <img
+              src={ReturnIcon}
+              alt="Books"
+              style={{ width: 18, height: 18 }}
+            />
+          ),
+        },
+        {
+          key: "3",
+          label: "View Records",
+          path: "/dashboard/view/records",
+          icon: <UnorderedListOutlined />,
+        },
+      ],
+    },
+    {
+      key: "sub2",
+      label: "User Management",
+      icon: <UserOutlined />,
+      children: [
+        {
+          key: "4",
+          label: "View Staff",
+          path: "/dashboard/view/staff",
+          icon: <UnorderedListOutlined />,
+        },
+        {
+          key: "5",
+          label: "My Profile",
+          path: "/dashboard/view/profile",
+          icon: <ContactsOutlined />,
+        },
+      ],
+    },
+  ];
 
   useEffect(() => {
     if (location.pathname.includes("/dashboard/view/books")) setCurrent("1");

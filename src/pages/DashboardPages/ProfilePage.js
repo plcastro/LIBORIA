@@ -21,7 +21,7 @@ const ProfilePage = () => {
     width: "100%",
     margin: "auto",
   };
-
+  const user = JSON.parse(localStorage.getItem("currentUser")) || {};
   return (
     <>
       <div style={{ margin: "5% auto" }}>
@@ -38,20 +38,17 @@ const ProfilePage = () => {
             <Row style={{ margin: "auto", textAlign: "center" }}>
               <Col span={24}>
                 <Avatar size={128} icon={<UserOutlined />} />
-                <p style={{ marginTop: "20px" }}>{profile.username}</p>
+                <p style={{ marginTop: "20px" }}>{user.name || "John Doe"}</p>
               </Col>
             </Row>
             <Row style={{ rowStyle, textAlign: "left" }}>
               <Divider>Personal Information</Divider>
               <Col>
-                {" "}
-                <p>Name: {profile.fullname}</p>
+                <p>Name: {user.name || "John Doe"}</p>
                 <br />
-                <p>Email: {profile.email}</p>
+                <p>Email: {user.email || "john.doe@gmail.com"}</p>
                 <br />
-                <p>Role: {profile.role}</p>
-                <br />
-                <p>Password: *********</p>
+                <p>Role: {user.role || "Librarian"}</p>
               </Col>
             </Row>
             <Row justify="center" style={rowStyle}>
