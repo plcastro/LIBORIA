@@ -30,21 +30,24 @@ const siderStyle = {
   left: 0,
   top: 0,
   bottom: 0,
+  zIndex: 5,
 };
 
 const DashboardLayout = () => {
   const [page, setPage] = useState("Show Books");
   const [open, setOpen] = useState(false);
   const screens = useBreakpoint();
-  const isMobile = !screens.sm;
+  const isTablet = !screens.lg;
 
   return (
     <Layout style={{ minHeight: "100vh", overflow: "hidden" }}>
-      {isMobile ? (
+      {isTablet ? (
         <>
           <Button
             type="text"
-            icon={<MenuOutlined style={{ fontSize: "24px" }} />}
+            icon={
+              <MenuOutlined style={{ fontSize: "clamp(12px, 1.8vw, 16px)" }} />
+            }
             onClick={() => setOpen(true)}
             style={{
               position: "fixed",
@@ -77,8 +80,8 @@ const DashboardLayout = () => {
 
       <Layout
         style={{
-          marginLeft: isMobile ? 0 : "15%",
-          width: isMobile ? "100%" : "85%",
+          marginLeft: isTablet ? 0 : "15%",
+          width: isTablet ? "100%" : "85%",
           overflowX: "hidden",
         }}
       >

@@ -297,7 +297,10 @@ const ReturnBooks = ({ REASONS }) => {
         dataSource={sampleData}
         rowKey="id"
         pagination={false}
-        scroll={{ y: sampleData.length > 10 ? 650 : undefined }}
+        scroll={{
+          y: sampleData.length > 10 ? 650 : undefined,
+          x: "max-content",
+        }}
       />
 
       <ReturnBookModal

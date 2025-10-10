@@ -88,7 +88,14 @@ const SideBar = ({ setPage }) => {
         flexDirection: "column",
       }}
     >
-      <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+      <div
+        style={{
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          fontSize: "clamp(12px, 1.8vw, 16px)",
+        }}
+      >
         <div
           style={{
             textAlign: "left",
@@ -99,8 +106,8 @@ const SideBar = ({ setPage }) => {
             src={logo_dark}
             alt="Logo"
             style={{
-              width: "90%",
-              margin: "30px 0",
+              width: "200px",
+              margin: " 0",
               padding: 0,
             }}
           />
@@ -130,6 +137,7 @@ const SideBar = ({ setPage }) => {
         style={{
           borderInline: "none",
           backgroundColor: "#001529",
+          fontSize: "clamp(12px, 1.8vw, 16px)",
         }}
       >
         <Menu.Item key="logout" icon={<ArrowLeftOutlined />}>
