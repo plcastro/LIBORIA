@@ -1,20 +1,20 @@
-const mysql = require('mysql2');
+const mysql = require("mysql2");
 
 // Create database connection
 const db = mysql.createConnection({
-  host: 'localhost',
-  user: 'root',
-  password: '123456',
-  database: 'Liboria'
+  host: "localhost",
+  user: "root",
+  password: "123456",
+  database: "liboria",
 });
 
 // Connect to database
-db.connect(err => {
+db.connect((err) => {
   if (err) {
-    console.error('Database connection failed: ' + err.stack);
+    console.error("Database connection failed: " + err.stack);
     process.exit(1); // Exit the process if connection fails
   }
-  console.log('Connected to MySQL database');
+  console.log("Connected to MySQL database");
 });
 
 // Export the connection

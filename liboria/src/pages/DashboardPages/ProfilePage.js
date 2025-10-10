@@ -3,25 +3,28 @@ import { Card, Divider, Button, Row, Col, Avatar } from "antd";
 import { EditOutlined, UserOutlined } from "@ant-design/icons";
 import EditProfile from "./EditProfile";
 
-const sampleData = {
-  username: "johndoe",
-  fullname: "John Doe",
-  email: "johndoe@gmail.com",
-  role: "Librarian",
-};
 const ProfilePage = () => {
-  const [profile, setProfile] = useState(sampleData);
+  const user = JSON.parse(localStorage.getItem("currentUser")) || {
+    username: "John Doe",
+    name: "John Doe",
+    email: "john.doe@gmail.com",
+    role: "Librarian",
+  };
+
+  const [profile, setProfile] = useState(user);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleProfileUpdate = (updatedData) => {
     setProfile(updatedData);
+    localStorage.setItem("currentUser", JSON.stringify(updatedData));
     setIsModalOpen(false);
   };
+
   const rowStyle = {
     width: "100%",
     margin: "auto",
   };
-  const user = JSON.parse(localStorage.getItem("currentUser")) || {};
+
   return (
     <>
       <div style={{ margin: "5% auto" }}>
@@ -38,7 +41,9 @@ const ProfilePage = () => {
             <Row style={{ margin: "auto", textAlign: "center" }}>
               <Col span={24}>
                 <Avatar size={128} icon={<UserOutlined />} />
-                <p style={{ marginTop: "20px" }}>{user.name || "John Doe"}</p>
+                <p style={{ marginTop: "20px" }}>
+                  {user.username || "John Doe"}
+                </p>
               </Col>
             </Row>
             <Row style={{ rowStyle, textAlign: "left" }}>
