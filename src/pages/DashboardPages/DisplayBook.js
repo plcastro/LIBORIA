@@ -13,29 +13,34 @@ const DisplayBook = () => {
   return (
     <>
       <div style={{ marginBottom: 16 }}>
-        <Row gutter={[16, 16]} align="middle" justify="space-between">
+        <Row
+          gutter={[16, 16]}
+          style={{
+            display: "flex",
+            alignContent: "baseline",
+            justifyContent: "space-between",
+          }}
+        >
           {/* Search Input */}
-          <Col xs={24} sm={24} md={12} lg={6}>
+          <Col xs={24} sm={24} md={6} lg={6}>
             <Input
               type="search"
               placeholder="Search book"
               // onChange={handleSearch}
-              style={{ width: "100%", height: "40px" }}
+              style={{ maxWidth: "300px", width: "100%", height: "40px" }}
             />
           </Col>
-
-          {/* Add Book Button */}
           <Col
             xs={24}
             sm={24}
-            md="auto"
-            lg="auto"
+            md={6}
+            lg={6}
             style={{ display: "flex", justifyContent: "flex-end" }}
           >
             <Button
               type="primary"
               style={{
-                backgroundColor: "#2808f9ff",
+                backgroundColor: "#1600a3ff",
                 color: "#fff",
                 width: 200,
                 height: 40,
