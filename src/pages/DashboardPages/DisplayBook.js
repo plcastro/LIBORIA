@@ -7,34 +7,23 @@ const { Search } = Input;
 const onSearch = (value, _e, info) => console.log(info?.source, value);
 const DisplayBook = () => {
   const [modalOpen, setModalOpen] = useState(false);
-  // useEffect(() => {
-  //   axios;
-  // });
   return (
     <>
-      <div style={{ marginBottom: 16 }}>
-        <Row
-          gutter={[16, 16]}
-          style={{
-            display: "flex",
-            alignContent: "baseline",
-            justifyContent: "space-between",
-          }}
-        >
+      <div>
+        <Row align="middle" justify="space-between" style={{ display: "flex" }}>
           {/* Search Input */}
-          <Col xs={24} sm={24} md={6} lg={6}>
+          <Col xs={24} md={8} lg={8}>
             <Input
               type="search"
               placeholder="Search book"
               // onChange={handleSearch}
-              style={{ maxWidth: "300px", width: "100%", height: "40px" }}
+              style={{ maxWidth: "425px", width: "100%", height: "40px" }}
             />
           </Col>
           <Col
             xs={24}
-            sm={24}
-            md={6}
-            lg={6}
+            md={8}
+            lg={8}
             style={{ display: "flex", justifyContent: "flex-end" }}
           >
             <Button
@@ -56,7 +45,9 @@ const DisplayBook = () => {
       </div>
 
       <Row>
-        <h2 style={{ marginTop: 20 }}>Trending Books</h2>
+        <h2 style={{ marginTop: 20, fontSize: "clamp(24px, 4vw, 40px)" }}>
+          Books
+        </h2>
       </Row>
       <Row>{/* Mapping ng books */}</Row>
 
