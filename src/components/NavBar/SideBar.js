@@ -11,6 +11,8 @@ import { Menu } from "antd";
 import { useNavigate, useLocation } from "react-router-dom";
 import BookIcon from "../../assets/books.png";
 import ReturnIcon from "../../assets/return.png";
+
+const user = JSON.parse(localStorage.getItem("currentUser")) || {};
 const items = [
   {
     key: "sub1",
