@@ -57,12 +57,16 @@ const SideBar = ({ setPage }) => {
       label: "User Management",
       icon: <UserOutlined />,
       children: [
-        {
-          key: "4",
-          label: "View Staff",
-          path: "/dashboard/view/staff",
-          icon: <UnorderedListOutlined />,
-        },
+        ...(user.account_type !== "librarian"
+          ? [
+              {
+                key: "4",
+                label: "View Staff",
+                path: "/dashboard/view/staff",
+                icon: <UnorderedListOutlined />,
+              },
+            ]
+          : []),
         {
           key: "5",
           label: "My Profile",
@@ -105,6 +109,7 @@ const SideBar = ({ setPage }) => {
       setPage("My Profile");
       navigate("/dashboard/view/profile");
     } else if (e.key === "logout") {
+      localStorage.removeItem("currentUser");
       navigate("/home");
     }
   };

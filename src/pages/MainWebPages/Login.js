@@ -2,7 +2,6 @@ import React from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useState } from "react";
 import "./login.css";
-import { Color } from "antd/es/color-picker";
 
 export const Login = () => {
   const navigate = useNavigate();
