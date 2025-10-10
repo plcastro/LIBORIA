@@ -38,11 +38,10 @@ const items = [
 
 const SideBar = ({ setPage }) => {
   const navigate = useNavigate();
-  const location = useLocation(); // pang detect ng path
+  const location = useLocation();
   const [current, setCurrent] = useState("");
 
   useEffect(() => {
-    //kapag nirefresh di siya babalik sa first page ng dashboard kung hindi iyon ang current page
     if (location.pathname.includes("/dashboard/view/books")) setCurrent("1");
     else if (location.pathname.includes("/dashboard/view/return"))
       setCurrent("2");
@@ -80,61 +79,63 @@ const SideBar = ({ setPage }) => {
 
   return (
     <div
-      className="sidebar"
       style={{
+        height: "100%",
+        width: "100%",
+        backgroundColor: "#001529",
+        color: "white",
         display: "flex",
         flexDirection: "column",
-        justifyContent: "space-between",
-        height: "100vh",
-        backgroundColor: "#001529",
       }}
     >
-      <div className="sidebar-top">
+      <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
         <div
-          className="profile-section"
           style={{
-            margin: "20px 10px",
+            textAlign: "left",
+            padding: "10px",
           }}
         >
           <img
             src={logo_dark}
             alt="Logo"
-            className="sidebar-logo"
             style={{
-              margin: "20px 0",
-              width: "80%",
+              width: "90%",
+              margin: "30px 0",
+              padding: 0,
             }}
           />
-          <h3 className="profile-name">John Doe</h3>
-          <p className="profile-role" color="#585757ff">
-            Librarian
-          </p>
+          <h3 style={{ color: "white", margin: "5px 0 0" }}>John Doe</h3>
+          <p style={{ color: "#ccc", margin: 0 }}>Librarian</p>
         </div>
-        <hr />
+
         <Menu
           theme="dark"
+          mode="inline"
           onClick={onClick}
           defaultOpenKeys={["sub1"]}
           selectedKeys={[current]}
-          mode="inline"
-          style={{ flex: "auto" }}
           items={items}
+          style={{
+            flex: 1,
+            borderInline: "none",
+            backgroundColor: "#001529",
+          }}
         />
       </div>
 
-      <div
-        className="sidebar-bottom"
+      <Menu
+        theme="dark"
+        mode="inline"
+        onClick={onClick}
         style={{
-          margin: "10px 0 20px",
-          display: "block",
+          borderInline: "none",
+          backgroundColor: "#001529",
         }}
       >
-        <Menu theme="dark" mode="inline" onClick={onClick}>
-          <Menu.Item key="logout" icon={<ArrowLeftOutlined />}>
-            Log out
-          </Menu.Item>
-        </Menu>
-      </div>
+        <Menu.Item key="logout" icon={<ArrowLeftOutlined />}>
+          Log out
+        </Menu.Item>
+      </Menu>
     </div>
   );
 };

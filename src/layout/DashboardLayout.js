@@ -36,7 +36,7 @@ const DashboardLayout = () => {
   const [page, setPage] = useState("Show Books");
   const [open, setOpen] = useState(false);
   const screens = useBreakpoint();
-  const isMobile = !screens.md;
+  const isMobile = !screens.sm;
 
   return (
     <Layout style={{ minHeight: "100vh", overflow: "hidden" }}>
@@ -59,9 +59,9 @@ const DashboardLayout = () => {
             placement="left"
             onClose={() => setOpen(false)}
             open={open}
-            width="85%"
+            width="80%"
+            bodyStyle={{ padding: 0 }}
             style={{
-              padding: 0,
               backgroundColor: "#001529",
               color: "white",
             }}
