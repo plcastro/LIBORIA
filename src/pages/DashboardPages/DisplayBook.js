@@ -12,12 +12,19 @@ const DisplayBook = () => {
   // });
   return (
     <>
-      <div style={{ height: "50px" }}>
+      <div
+        style={{
+          height: "50px",
+          display: "flex",
+          alignItems: "baseline",
+          justifyContent: "space-between",
+        }}
+      >
         <Input
           type="search"
           placeholder="Search book"
           // onChange={handleSearch}
-          style={{ width: "200px", height: "40px" }}
+          style={{ width: "300px", height: "40px" }}
         />
 
         <Button
@@ -35,7 +42,7 @@ const DisplayBook = () => {
           Add Book
         </Button>
       </div>
-      <Space direction="horizontal"> </Space>
+
       <Row>
         <h2 style={{ marginTop: 20 }}>Trending Books</h2>
       </Row>
