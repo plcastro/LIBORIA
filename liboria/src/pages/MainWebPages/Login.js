@@ -3,7 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { useState } from "react";
 import "./login.css";
 
-export const Login = () => {
+const Login = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     username: "",
@@ -22,8 +22,15 @@ export const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setError("");
+
+    // Prevent empty fields
+    if (!formData.username.trim() || !formData.password.trim()) {
+      setError("Username and password are required");
+      return;
+    }
+
+    setLoading(true);
 
     try {
       const response = await fetch("http://localhost:8000/api/users/login", {
@@ -32,33 +39,28 @@ export const Login = () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          username: formData.username,
-          password: formData.password,
+          username: formData.username.trim(),
+          password: formData.password.trim(),
         }),
       });
 
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json(); // parse JSON safely
+      } catch {
+        setError("Invalid response from server");
+        return;
+      }
 
       if (response.ok) {
-        // Store user data in localStorage including account_type
+        // Store user data
         localStorage.setItem("currentUser", JSON.stringify(data.user));
-
-        // Check user role and navigate accordingly
-        if (data.user.account_type === "admin") {
-          // Admin goes to admin dashboard
-          navigate("/admin/dashboard");
-        } else if (data.user.account_type === "librarian") {
-          // Librarian goes to librarian dashboard
-          navigate("/librarian/dashboard");
-        } else {
-          // Default fallback
-          navigate("/dashboard");
-        }
+        navigate("/dashboard");
       } else {
         setError(data.error || "Login failed");
       }
-    } catch (error) {
-      console.error("Login error:", error);
+    } catch (err) {
+      console.error("Login error:", err);
       setError("Network error. Please try again.");
     } finally {
       setLoading(false);

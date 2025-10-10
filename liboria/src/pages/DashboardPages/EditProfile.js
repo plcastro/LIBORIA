@@ -4,6 +4,7 @@ import { Button, Form, Input, Select, Space, Modal, message } from "antd";
 const SubmitButton = ({ form, children }) => {
   const [submittable, setSubmittable] = React.useState(false);
   const values = Form.useWatch([], form);
+  const user = JSON.parse(localStorage.getItem("currentUser")) || {};
 
   React.useEffect(() => {
     form

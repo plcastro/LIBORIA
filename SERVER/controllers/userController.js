@@ -1,4 +1,5 @@
 const db = require("../config/database");
+const crypto = require("crypto");
 
 // GET all users
 const getUsers = (req, res) => {
@@ -358,6 +359,168 @@ const login = (req, res) => {
   });
 };
 
+// FORGOT PASSWORD - Generate reset token (Development version with test link)
+const forgotPassword = (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ error: "Email is required" });
+  }
+
+  // Check if user exists with this email
+  const findUserQuery =
+    "SELECT userid, username, email FROM users WHERE email = ?";
+
+  db.query(findUserQuery, [email], (err, results) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: "Internal Server Error" });
+    }
+
+    // Always return the same generic message for security
+    const genericMessage =
+      "If an account with that email exists, a reset link has been sent.";
+
+    if (results.length === 0) {
+      return res.json({
+        message: genericMessage,
+      });
+    }
+
+    const user = results[0];
+
+    // Generate reset token
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hour from now
+
+    // Store reset token in database
+    const updateTokenQuery =
+      "UPDATE users SET reset_token = ?, reset_token_expiry = ? WHERE userid = ?";
+
+    db.query(
+      updateTokenQuery,
+      [resetToken, resetTokenExpiry, user.userid],
+      (err, updateResults) => {
+        if (err) {
+          console.error(err);
+          return res.status(500).json({ error: "Internal Server Error" });
+        }
+
+        // For development only - include test link
+        // Check if we're in development mode
+        const isDevelopment = process.env.NODE_ENV !== "production";
+
+        if (isDevelopment) {
+          // In development, return the test link
+          res.json({
+            message: genericMessage,
+            resetLink: `http://localhost:3000/reset-password/${resetToken}`, // Development only
+          });
+        } else {
+          // In production, return only the generic message
+          res.json({
+            message: genericMessage,
+          });
+
+          // TODO: In production, implement actual email sending here
+          // sendPasswordResetEmail(email, resetToken);
+        }
+
+        // Always log to console for development/debugging
+        console.log(`Password reset requested for: ${email}`);
+        console.log(`Reset token: ${resetToken}`);
+        if (isDevelopment) {
+          console.log(
+            `Development reset link: http://localhost:3000/reset-password/${resetToken}`
+          );
+        }
+      }
+    );
+  });
+};
+
+// VERIFY RESET TOKEN - Check if token is valid
+const verifyResetToken = (req, res) => {
+  const { token } = req.body;
+
+  if (!token) {
+    return res.status(400).json({ error: "Reset token is required" });
+  }
+
+  const query =
+    "SELECT userid, username, reset_token_expiry FROM users WHERE reset_token = ? AND reset_token_expiry > NOW()";
+
+  db.query(query, [token], (err, results) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: "Internal Server Error" });
+    }
+
+    if (results.length === 0) {
+      return res.status(400).json({ error: "Invalid or expired reset token" });
+    }
+
+    res.json({
+      message: "Token is valid",
+      user: {
+        userid: results[0].userid,
+        username: results[0].username,
+      },
+    });
+  });
+};
+
+// RESET PASSWORD - Update password using reset token
+const resetPassword = (req, res) => {
+  const { token, newPassword } = req.body;
+
+  if (!token || !newPassword) {
+    return res
+      .status(400)
+      .json({ error: "Token and new password are required" });
+  }
+
+  if (newPassword.length < 8) {
+    return res
+      .status(400)
+      .json({ error: "Password must be at least 8 characters" });
+  }
+
+  // First verify the token is valid
+  const verifyQuery =
+    "SELECT userid FROM users WHERE reset_token = ? AND reset_token_expiry > NOW()";
+
+  db.query(verifyQuery, [token], (err, results) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: "Internal Server Error" });
+    }
+
+    if (results.length === 0) {
+      return res.status(400).json({ error: "Invalid or expired reset token" });
+    }
+
+    const user = results[0];
+
+    // Update password and clear reset token
+    const updatePasswordQuery =
+      "UPDATE users SET password = ?, reset_token = NULL, reset_token_expiry = NULL WHERE userid = ?";
+
+    db.query(
+      updatePasswordQuery,
+      [newPassword, user.userid],
+      (err, updateResults) => {
+        if (err) {
+          console.error(err);
+          return res.status(500).json({ error: "Internal Server Error" });
+        }
+
+        res.json({ message: "Password reset successfully" });
+      }
+    );
+  });
+};
+
 module.exports = {
   getUsers,
   getUserById,
@@ -366,4 +529,7 @@ module.exports = {
   updateUser,
   deleteUser,
   login,
+  forgotPassword,
+  verifyResetToken,
+  resetPassword,
 };

@@ -15,9 +15,15 @@ import ReturnIcon from "../../assets/return.png";
 const SideBar = ({ setPage }) => {
   const navigate = useNavigate();
   const [current, setCurrent] = useState("");
+  const [loggedOut, setLoggedOut] = useState(false);
   const location = useLocation();
 
   const user = JSON.parse(localStorage.getItem("currentUser")) || {};
+  useEffect(() => {
+    if (loggedOut) {
+      navigate("/home");
+    }
+  }, [loggedOut, navigate]);
   const items = [
     {
       key: "sub1",
@@ -110,7 +116,7 @@ const SideBar = ({ setPage }) => {
       navigate("/dashboard/view/profile");
     } else if (e.key === "logout") {
       localStorage.removeItem("currentUser");
-      navigate("/home");
+      setLoggedOut(true);
     }
   };
 
@@ -149,8 +155,10 @@ const SideBar = ({ setPage }) => {
               padding: 0,
             }}
           />
-          <h3 style={{ color: "white", margin: "5px 0 0" }}>John Doe</h3>
-          <p style={{ color: "#ccc", margin: 0 }}>Librarian</p>
+          <h3 className="profile-name">{user.name}</h3>
+          <p className="profile-role" color="#585757ff">
+            {user.account_type}
+          </p>
         </div>
 
         <Menu

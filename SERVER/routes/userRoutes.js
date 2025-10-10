@@ -1,13 +1,35 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const userController = require('../controllers/userController');
+const userController = require("../controllers/userController");
 
-router.get('/', userController.getUsers);
-router.get('/:id', userController.getUserById);
-router.post('/', userController.createUser);  // For admin
-router.post('/register', userController.register);  // For public signup
-router.put('/:id', userController.updateUser);
-router.delete('/:id', userController.deleteUser);
-router.post('/login', userController.login);
+// GET all users
+router.get("/", userController.getUsers);
+
+// GET user by ID
+router.get("/:id", userController.getUserById);
+
+// CREATE user (admin only)
+router.post("/", userController.createUser);
+
+// REGISTER user (public signup)
+router.post("/register", userController.register);
+
+// UPDATE user
+router.put("/:id", userController.updateUser);
+
+// DELETE user
+router.delete("/:id", userController.deleteUser);
+
+// LOGIN user
+router.post("/login", userController.login);
+
+// FORGOT PASSWORD - Request password reset
+router.post("/forgot-password", userController.forgotPassword);
+
+// VERIFY RESET TOKEN - Check if reset token is valid
+router.post("/verify-reset-token", userController.verifyResetToken);
+
+// RESET PASSWORD - Set new password using reset token
+router.post("/reset-password", userController.resetPassword);
 
 module.exports = router;

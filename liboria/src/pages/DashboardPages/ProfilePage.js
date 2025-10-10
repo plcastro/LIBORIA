@@ -53,7 +53,7 @@ const ProfilePage = () => {
                 <br />
                 <p>Email: {user.email || "john.doe@gmail.com"}</p>
                 <br />
-                <p>Role: {user.role || "Librarian"}</p>
+                <p>Role: {user.account_type || "Librarian"}</p>
               </Col>
             </Row>
             <Row justify="center" style={rowStyle}>

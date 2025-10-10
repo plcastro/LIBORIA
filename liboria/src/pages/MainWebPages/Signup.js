@@ -74,7 +74,7 @@ export const Signup = () => {
           email: formData.email,
           username: formData.username,
           password: formData.password,
-          account_type: formData.account_type,
+          account_type: "librarian",
         }),
       });
 
@@ -158,18 +158,6 @@ export const Signup = () => {
               onChange={handleInputChange}
               minLength={8}
             />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="account_type">Account Type</label>
-            <select
-              id="account_type"
-              value={formData.account_type}
-              onChange={handleInputChange}
-            >
-              <option value="librarian">Librarian</option>
-              <option value="admin">Admin</option>
-            </select>
           </div>
 
           <button type="submit" className="recovery-btn" disabled={loading}>
