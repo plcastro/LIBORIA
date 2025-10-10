@@ -1,7 +1,11 @@
 import React, { useState } from "react";
 import { Table, Tag, Input } from "antd";
 import ReturnBookModal from "../../components/Modal/ReturnBookModal";
-
+const REASONS = [
+  { label: "Late Return", value: "Late Return" },
+  { label: "Damaged", value: "Damaged" },
+  { label: "Lost", value: "Lost" },
+];
 const ReturnBooks = ({ REASONS }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);

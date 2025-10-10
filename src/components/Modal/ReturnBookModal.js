@@ -8,7 +8,6 @@ import {
   Select,
   Row,
   Col,
-  Space,
   Button,
 } from "antd";
 import dayjs from "dayjs";
@@ -25,18 +24,37 @@ const ReturnBookModal = ({
 
   useEffect(() => {
     if (initialValues) {
+      const today = dayjs();
+      const dueDate = dayjs(initialValues.due_date);
+      const daysLate = today.isAfter(dueDate) ? today.diff(dueDate, "day") : 0;
+
+      const latePenalty = daysLate * 10;
+      const violations = daysLate > 0 ? ["Late Return"] : [];
+
       form.setFieldsValue({
         name: initialValues.name,
-        penalty: 0,
+        penalty: latePenalty,
         bookTitle: initialValues.book_title,
         inCash: 0,
-        returnedDate: dayjs(),
-        violation: [],
+        returnedDate: today,
+        violation: violations,
       });
     } else {
       form.resetFields();
     }
   }, [initialValues, form, open]);
+
+  const handleViolationChange = (selectedViolations) => {
+    const today = dayjs();
+    const dueDate = dayjs(initialValues?.due_date);
+    const daysLate = today.isAfter(dueDate) ? today.diff(dueDate, "day") : 0;
+    let penalty = daysLate * 10;
+
+    if (selectedViolations.includes("Damaged")) penalty += 50;
+    if (selectedViolations.includes("Lost")) penalty += 200;
+
+    form.setFieldsValue({ penalty, violation: selectedViolations });
+  };
 
   const handleFinish = (values) => {
     onSubmit(values);
@@ -50,16 +68,22 @@ const ReturnBookModal = ({
       open={open}
       onCancel={onClose}
       footer={
-        <div style={{ textAlign: "center" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            gap: "10px",
+          }}
+        >
+          <Button onClick={onClose}>Cancel</Button>
           <Button
             type="primary"
             htmlType="submit"
             form={form}
-            style={{ backgroundColor: "#000" }}
+            style={{ backgroundColor: "#000", color: "white" }}
           >
             Return
           </Button>
-          <Button onClick={onClose}>Cancel</Button>
         </div>
       }
     >
@@ -75,6 +99,7 @@ const ReturnBookModal = ({
               <Input disabled />
             </Form.Item>
           </Col>
+
           <Col {...colProps}>
             <Form.Item name="penalty" label="Penalty (PHP)">
               <InputNumber
@@ -87,11 +112,13 @@ const ReturnBookModal = ({
               />
             </Form.Item>
           </Col>
+
           <Col {...colProps}>
             <Form.Item name="bookTitle" label="Book Title">
               <Input disabled />
             </Form.Item>
           </Col>
+
           <Col {...colProps}>
             <Form.Item name="inCash" label="Amount Paid">
               <InputNumber
@@ -104,38 +131,24 @@ const ReturnBookModal = ({
               />
             </Form.Item>
           </Col>
+
           <Col {...colProps}>
             <Form.Item name="returnedDate" label="Returned Date">
               <DatePicker style={{ width: "100%" }} disabled />
             </Form.Item>
           </Col>
+
           <Col {...colProps}>
             <Form.Item name="violation" label="Violation">
               <Select
                 mode="tags"
                 placeholder="Select Reason"
                 options={REASONS}
+                onChange={handleViolationChange}
               />
             </Form.Item>
           </Col>
         </Row>
-
-        {/* <Row justify="center" style={{ marginTop: 24 }}>
-          <Col xs={24} sm={12} md={8}>
-            <Space style={{ width: "100%" }}>
-              <Button
-                type="primary"
-                htmlType="submit"
-                style={{ flex: 1, backgroundColor: "#000", color: "white" }}
-              >
-                Return
-              </Button>
-              <Button onClick={onClose} style={{ flex: 1 }}>
-                Cancel
-              </Button>
-            </Space>
-          </Col>
-        </Row> */}
       </Form>
     </Modal>
   );
