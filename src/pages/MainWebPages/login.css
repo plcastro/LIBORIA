@@ -248,6 +248,60 @@ input[type="password"]:focus {
   color: black;
 }
 
+.token-input-group {
+  display: flex;
+  align-items: center;
+  margin-top: 20px;
+  gap: 10px;
+  width: 100%;
+}
+
+.token-input {
+  flex: 1;
+  min-width: 0; /* Important for flex shrinking */
+  height: 40px;
+  padding: 8px 12px;
+  margin-top: 10px;
+  margin-right: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 16px;
+  transition: border-color 0.3s;
+}
+
+.token-input:focus {
+  border-color: #000;
+  outline: none;
+}
+
+.token-confirm-btn {
+  width: 100px;
+  height: 40px;
+  padding: 0 16px;
+  white-space: nowrap;
+  background-color: #000;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  text-transform: none;
+  letter-spacing: normal;
+  flex-shrink: 0;
+}
+
+.token-confirm-btn:hover:not(:disabled) {
+  background-color: #ddd;
+  color: black;
+}
+
+.token-confirm-btn:disabled {
+  background-color: #666;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
 /* Responsive Design */
 @media (max-width: 768px) {
   .login-container,
@@ -306,6 +360,23 @@ input[type="password"]:focus {
 
   .back-button {
     font-size: 15px;
+  }
+    .token-input-group {
+    gap: 8px;
+  }
+  
+  .token-input {
+    height: 38px;
+    font-size: 15px;
+    padding: 7px 11px;
+    margin-right: 8px;
+  }
+  
+  .token-confirm-btn {
+    width: 110px;
+    height: 38px;
+    font-size: 13px;
+    padding: 0 14px;
   }
 }
 
@@ -379,6 +450,23 @@ input[type="password"]:focus {
   .back-button {
     font-size: 14px;
   }
+    .token-input-group {
+    gap: 6px;
+  }
+  
+  .token-input {
+    height: 36px;
+    font-size: 14px;
+    padding: 6px 10px;
+    margin-right: 6px;
+  }
+  
+  .token-confirm-btn {
+    width: 100px;
+    height: 36px;
+    font-size: 12px;
+    padding: 0 12px;
+  }
 }
 
 @media (max-width: 320px) {
@@ -418,6 +506,23 @@ input[type="password"]:focus {
 
   .back-button {
     font-size: 13px;
+  }
+    .token-input-group {
+    gap: 5px;
+  }
+  
+  .token-input {
+    height: 34px;
+    font-size: 13px;
+    padding: 5px 8px;
+    margin-right: 5px;
+  }
+  
+  .token-confirm-btn {
+    width: 90px;
+    height: 34px;
+    font-size: 11px;
+    padding: 0 8px;
   }
 }
 

@@ -9,7 +9,7 @@ const { useBreakpoint } = Grid;
 
 const headerStyle = {
   height: "48px",
-  fontSize: "34px",
+  fontSize: "clamp(27px, 4vw, 32px)",
   backgroundColor: "white",
   boxShadow: "0 2px 8px #0000007c",
   fontWeight: "500",
@@ -30,22 +30,24 @@ const siderStyle = {
   left: 0,
   top: 0,
   bottom: 0,
+  zIndex: 5,
 };
 
 const DashboardLayout = () => {
   const [page, setPage] = useState("Show Books");
   const [open, setOpen] = useState(false);
   const screens = useBreakpoint();
-  const isMobile = !screens.md;
+  const isTablet = !screens.lg;
 
   return (
     <Layout style={{ minHeight: "100vh", overflow: "hidden" }}>
-      {/* SIDEBAR SECTION */}
-      {isMobile ? (
+      {isTablet ? (
         <>
           <Button
             type="text"
-            icon={<MenuOutlined style={{ fontSize: "24px" }} />}
+            icon={
+              <MenuOutlined style={{ fontSize: "clamp(12px, 1.8vw, 16px)" }} />
+            }
             onClick={() => setOpen(true)}
             style={{
               position: "fixed",
@@ -60,9 +62,9 @@ const DashboardLayout = () => {
             placement="left"
             onClose={() => setOpen(false)}
             open={open}
-            width="80%"
+            width="300px"
+            bodyStyle={{ padding: 0 }}
             style={{
-              padding: 0,
               backgroundColor: "#001529",
               color: "white",
             }}
@@ -71,17 +73,15 @@ const DashboardLayout = () => {
           </Drawer>
         </>
       ) : (
-        <Sider width="20%" style={siderStyle}>
+        <Sider width="15%" style={siderStyle}>
           <Sidebar setPage={setPage} />
         </Sider>
       )}
 
-      {/* MAIN CONTENT */}
       <Layout
         style={{
-          marginLeft: isMobile ? 0 : "20%",
-          width: isMobile ? "100%" : "80%",
-          transition: "all 0.3s ease",
+          marginLeft: isTablet ? 0 : "15%",
+          width: isTablet ? "100%" : "85%",
           overflowX: "hidden",
         }}
       >

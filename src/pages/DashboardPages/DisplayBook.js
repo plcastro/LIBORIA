@@ -1,83 +1,139 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { SearchOutlined, PlusOutlined } from "@ant-design/icons";
-import { Input, Row, Col, Button } from "antd";
+import { Input, Row, Col, Button, Card, message, Spin } from "antd";
 import AddBookModal from "../../components/Modal/AddBookModal";
+
+const { Meta } = Card;
 
 const DisplayBook = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
+  const [books, setBooks] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
 
-  const onSearch = () => {
-    console.log("Searching:", searchValue);
+  // Fetch all books on component mount
+  const fetchBooks = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch("http://localhost:8000/api/books");
+      if (!response.ok) {
+        throw new Error("Failed to fetch books");
+      }
+      const data = await response.json();
+      setBooks(data);
+    } catch (error) {
+      console.error("Error fetching books:", error);
+      message.error("Failed to load books");
+    } finally {
+      setLoading(false);
+    }
   };
 
+  // Search books
+  const onSearch = async () => {
+    if (!searchValue.trim()) {
+      fetchBooks(); // If search is empty, fetch all books
+      return;
+    }
+
+    setSearchLoading(true);
+    try {
+      const response = await fetch(
+        `http://localhost:8000/api/books/search?q=${encodeURIComponent(
+          searchValue
+        )}`
+      );
+      if (!response.ok) {
+        throw new Error("Search failed");
+      }
+      const data = await response.json();
+      setBooks(data);
+      message.success(`Found ${data.length} books matching "${searchValue}"`);
+    } catch (error) {
+      console.error("Error searching books:", error);
+      message.error("Search failed");
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+
+  // Delete a book
+  const deleteBook = async (bookId) => {
+    try {
+      const response = await fetch(
+        `http://localhost:8000/api/books/${bookId}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (response.ok) {
+        message.success("Book deleted successfully");
+        fetchBooks(); // Refresh the list
+      } else {
+        const data = await response.json();
+        message.error(data.error || "Failed to delete book");
+      }
+    } catch (error) {
+      console.error("Error deleting book:", error);
+      message.error("Failed to delete book");
+    }
+  };
+
+  // Handle book creation from modal
+  const handleBookCreated = () => {
+    fetchBooks(); // Refresh the list after adding a new book
+    setModalOpen(false);
+  };
+
+  useEffect(() => {
+    fetchBooks();
+  }, []);
   return (
     <>
-      <Row justify="space-between" align="middle" gutter={[16, 16]}>
-        <Col>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              width: 290,
-              height: 40,
-              borderRadius: 8,
-              overflow: "hidden",
-              border: "1px solid #d9d9d9",
-            }}
-          >
+      <div>
+        <Row align="middle" justify="space-between" style={{ display: "flex" }}>
+          {/* Search Input */}
+          <Col xs={24} md={8} lg={8}>
             <Input
-              placeholder="Search Book"
+              type="search"
+              placeholder="Search book"
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
-              style={{
-                flex: 1,
-                height: "100%",
-                fontSize: 14,
-                borderRadius: 0,
-              }}
-              onPressEnter={onSearch}
+              style={{ maxWidth: "425px", width: "100%", height: "40px" }}
             />
+          </Col>
+          <Col
+            xs={24}
+            md={8}
+            lg={8}
+            style={{ display: "flex", justifyContent: "flex-end" }}
+          >
             <Button
               type="primary"
-              icon={<SearchOutlined />}
-              onClick={onSearch}
               style={{
-                height: "100%",
-                border: "none",
-                borderRadius: 0,
-                backgroundColor: "#04011cff",
-                width: 60,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: 0,
-                lineHeight: "normal",
+                backgroundColor: "#1600a3ff",
+                color: "#fff",
+                width: 200,
+                height: 40,
+                fontWeight: 500,
               }}
-            />
-          </div>
-        </Col>
-
-        <Col>
-          <Button
-            style={{
-              background: "#2808f9ff",
-              color: "#fff",
-              width: 200,
-              height: 40,
-              fontWeight: 500,
-            }}
-            icon={<PlusOutlined style={{ fontSize: 16, color: "#fff" }} />}
-            onClick={() => setModalOpen(true)}
-          >
-            Add Book
-          </Button>
-        </Col>
-      </Row>
+              icon={<PlusOutlined style={{ fontSize: 16, color: "#fff" }} />}
+              onClick={() => setModalOpen(true)}
+            >
+              Add Book
+            </Button>
+          </Col>
+        </Row>
+      </div>
 
       <Row>
-        <h2 style={{ marginTop: 20 }}>Trending Books</h2>
+        <h2 style={{ marginTop: 20, fontSize: "clamp(24px, 4vw, 40px)" }}>
+          Books
+        </h2>
       </Row>
+      <Row>{/* Mapping ng books */}</Row>
 
       <AddBookModal modal2Open={modalOpen} setModal2Open={setModalOpen} />
     </>

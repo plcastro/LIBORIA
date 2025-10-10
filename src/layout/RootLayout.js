@@ -21,7 +21,6 @@ const footerStyle = {
   color: "white",
   padding: "50px 10%",
   width: "100%",
-  marginTop: "50px",
 };
 const contentStyle = {
   display: "flex",

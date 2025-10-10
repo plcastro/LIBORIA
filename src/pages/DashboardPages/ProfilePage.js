@@ -1,11 +1,15 @@
 import React from "react";
 import { Card, Divider, Button, Row, Col, Avatar } from "antd";
 import { EditOutlined, UserOutlined } from "@ant-design/icons";
+
 const ProfilePage = () => {
   const rowStyle = {
     width: "100%",
     margin: "auto",
   };
+
+  const user = JSON.parse(localStorage.getItem("currentUser")) || {};
+
   return (
     <div style={{ margin: "5% auto" }}>
       <Card
@@ -21,18 +25,17 @@ const ProfilePage = () => {
           <Row style={{ margin: "auto", textAlign: "center" }}>
             <Col span={24}>
               <Avatar size={128} icon={<UserOutlined />} />
-              <p>John Doe</p>
+              <p>{user.name || "John Doe"}</p>
             </Col>
           </Row>
           <Row style={{ rowStyle, textAlign: "left" }}>
             <Divider>Personal Information</Divider>
             <Col>
-              {" "}
-              <p>Name: John Doe</p>
+              <p>Name: {user.name || "John Doe"}</p>
               <br />
-              <p>Email: john.doe@gmail.com</p>
+              <p>Email: {user.email || "john.doe@gmail.com"}</p>
               <br />
-              <p>Role: Librarian</p>
+              <p>Role: {user.account_type || "Librarian"}</p>
             </Col>
           </Row>
           <Row justify="center" style={rowStyle}>

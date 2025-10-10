@@ -1,111 +1,136 @@
 import React, { useState } from "react";
-import {
-  Button,
-  Row,
-  Col,
-  DatePicker,
-  Form,
-  Input,
-  InputNumber,
-  Select,
-} from "antd";
-
-const reasonOptions = [
-  { value: "Late Return", label: "Late Return" },
-  { value: "Damaged", label: "Damaged" },
-  { value: "Lost Book", label: "Lost Book" },
+import { Table, Tag, Input } from "antd";
+import ReturnBookModal from "../../components/Modal/ReturnBookModal";
+const REASONS = [
+  { label: "Late Return", value: "Late Return" },
+  { label: "Damaged", value: "Damaged" },
+  { label: "Lost", value: "Lost" },
 ];
-const handleChange = (value) => {
-  console.log(`selected ${value}`);
-};
-const ReturnBooks = () => {
-  const [componentSize, setComponentSize] = useState("default");
-  const onFormLayoutChange = ({ size }) => {
-    setComponentSize(size);
-  };
-  return (
-    <Form
-      labelCol={{ span: 9 }}
-      wrapperCol={{ span: 15 }}
-      layout="horizontal"
-      initialValues={{ size: componentSize }}
-      onValuesChange={onFormLayoutChange}
-      size={componentSize}
-      style={{
-        maxWidth: 800,
-        width: "100%",
-        backgroundColor: "white",
-        boxShadow: " 0 5px 15px rgba(0, 0, 0, 0.1)",
-        borderRadius: 20,
-        padding: "20px",
-        textAlign: "left",
-      }}
-    >
-      <Row className="return-book-form">
-        <Col>
-          <Form.Item label="Name">
-            <Input />
-          </Form.Item>
-          <Form.Item label="Book Title">
-            <Input />
-          </Form.Item>
-          <Form.Item label="Returned Date">
-            <DatePicker />
-          </Form.Item>
-        </Col>
-        <Col>
-          <Form.Item label="Penalty (PHP)" name="penalty">
-            <InputNumber
-              style={{ width: "100%" }}
-              formatter={(value) =>
-                `₱ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-              }
-              parser={(value) => value.replace(/₱\s?|(,*)/g, "")}
-              min={0}
-            />
-          </Form.Item>
-          <Form.Item label="Amount Paid" name="inCash">
-            <InputNumber
-              style={{ width: "100%" }}
-              formatter={(value) =>
-                `₱ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-              }
-              parser={(value) => value.replace(/₱\s?|(,*)/g, "")}
-              min={0}
-            />
-          </Form.Item>
-          <Form.Item label="Violation">
-            <Select
-              mode="tags"
-              style={{ width: "100%" }}
-              placeholder="Select Reason"
-              onChange={handleChange}
-              options={reasonOptions}
-            />
-          </Form.Item>
-        </Col>
-      </Row>
+const ReturnBooks = ({ REASONS }) => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedRecord, setSelectedRecord] = useState(null);
 
-      <Row justify={"space-evenly"}>
-        <Button
-          style={{
-            backgroundColor: "#000",
-            color: "white",
-            gap: "8px",
-            height: 50,
-          }}
-        >
+  const sampleData = [ // sample data
+    {
+      key: "1",
+      id: "1",
+      name: "John Brown",
+      yrlvl: "2nd Year",
+      course: ["BSIT-MWA"],
+      book_title: "Minecraft for Dummies",
+      date_borrowed: "Oct 2, 2025",
+      due_date: "Oct 7, 2025",
+    },
+    {
+      key: "2",
+      id: "2",
+      name: "Jane Smith",
+      yrlvl: "1st Year",
+      course: ["BSIT-MAA"],
+      book_title: "Learn Python the Hard Way",
+      date_borrowed: "Oct 3, 2025",
+      due_date: "Oct 8, 2025",
+    },
+  ];
+
+  const handleReturn = (record) => {
+    setSelectedRecord(record);
+    setIsModalOpen(true);
+  };
+
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+    setSelectedRecord(null);
+  };
+
+  const handleSubmit = (values) => {
+    console.log("Return submitted:", values);
+  };
+
+  const columns = [
+    {
+      title: "ID",
+      dataIndex: "id",
+      key: "id",
+    },
+    {
+      title: "Name",
+      dataIndex: "name",
+      key: "name",
+    },
+    {
+      title: "Year Level",
+      dataIndex: "yrlvl",
+      key: "yrlvl",
+    },
+    {
+      title: "Course",
+      dataIndex: "course",
+      key: "course",
+      render: (course) =>
+        course.map((tag) => {
+          let color = tag.length > 5 ? "geekblue" : "green";
+          if (tag === "BSIT-MWA") color = "volcano";
+          return (
+            <Tag color={color} key={tag}>
+              {tag.toUpperCase()}
+            </Tag>
+          );
+        }),
+    },
+    {
+      title: "Book Title",
+      dataIndex: "book_title",
+      key: "book_title",
+    },
+    {
+      title: "Date Borrowed",
+      dataIndex: "date_borrowed",
+      key: "date_borrowed",
+    },
+    {
+      title: "Due Date",
+      dataIndex: "due_date",
+      key: "due_date",
+    },
+    {
+      title: "Action",
+      key: "action",
+      render: (_, record) => (
+        <a onClick={() => handleReturn(record)} style={{ color: "red" }}>
           Return
-        </Button>
-        <Button
-          style={{
-            height: 50,
-          }}
-        >
-          Cancel
-        </Button>
-      </Row>
-    </Form>
+        </a>
+      ),
+    },
+  ];
+
+  return (
+    <>
+      <Input
+        type="search"
+        placeholder="Search data"
+        // onChange={handleSearch}
+        style={{ width: "200px", height: "40px", marginBottom: "20px" }}
+      />
+      <Table
+        columns={columns}
+        dataSource={sampleData}
+        rowKey="id"
+        pagination={false}
+        scroll={{
+          y: sampleData.length > 10 ? 650 : undefined,
+          x: "max-content",
+        }}
+      />
+
+      <ReturnBookModal
+        open={isModalOpen}
+        onClose={handleModalClose}
+        onSubmit={handleSubmit}
+        initialValues={selectedRecord}
+        REASONS={REASONS}
+      />
+    </>
   );
 };
 
