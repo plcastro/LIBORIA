@@ -62,7 +62,7 @@ const DashboardLayout = () => {
             placement="left"
             onClose={() => setOpen(false)}
             open={open}
-            width="80%"
+            width="300px"
             bodyStyle={{ padding: 0 }}
             style={{
               backgroundColor: "#001529",

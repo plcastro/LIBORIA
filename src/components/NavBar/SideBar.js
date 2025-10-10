@@ -106,8 +106,9 @@ const SideBar = ({ setPage }) => {
             src={logo_dark}
             alt="Logo"
             style={{
-              width: "200px",
-              margin: " 0",
+              maxWidth: "200px",
+              width: "100%",
+              margin: "0",
               padding: 0,
             }}
           />
