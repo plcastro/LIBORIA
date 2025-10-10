@@ -5,19 +5,40 @@ import {
   BookOutlined,
   ArrowLeftOutlined,
   ContactsOutlined,
+  UnorderedListOutlined,
 } from "@ant-design/icons";
 import { Menu } from "antd";
 import { useNavigate, useLocation } from "react-router-dom";
-
+import BookIcon from "../../assets/books.png";
+import ReturnIcon from "../../assets/return.png";
 const items = [
   {
     key: "sub1",
     label: "Book Management",
     icon: <BookOutlined />,
     children: [
-      { key: "1", label: "Books", path: "/dashboard/view/books" },
-      { key: "2", label: "Return Book", path: "/dashboard/view/return" },
-      { key: "3", label: "View Records", path: "/dashboard/view/records" },
+      {
+        key: "1",
+        label: "Books",
+        path: "/dashboard/view/books",
+        icon: (
+          <img src={BookIcon} alt="Books" style={{ width: 18, height: 18 }} />
+        ),
+      },
+      {
+        key: "2",
+        label: "Return Book",
+        path: "/dashboard/view/return",
+        icon: (
+          <img src={ReturnIcon} alt="Books" style={{ width: 18, height: 18 }} />
+        ),
+      },
+      {
+        key: "3",
+        label: "View Records",
+        path: "/dashboard/view/records",
+        icon: <UnorderedListOutlined />,
+      },
     ],
   },
   {
@@ -29,9 +50,14 @@ const items = [
         key: "4",
         label: "View Staff",
         path: "/dashboard/view/staff",
+        icon: <UnorderedListOutlined />,
+      },
+      {
+        key: "5",
+        label: "My Profile",
+        path: "/dashboard/view/profile",
         icon: <ContactsOutlined />,
       },
-      { key: "5", label: "My Profile", path: "/dashboard/view/profile" },
     ],
   },
 ];
