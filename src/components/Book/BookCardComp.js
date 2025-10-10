@@ -2,7 +2,7 @@ import React from "react";
 import { Card } from "antd";
 const { Meta } = Card;
 
-export const BookCardComp = () => {
+const BookCardComp = () => {
   return (
     <div>
       <Card
@@ -21,3 +21,4 @@ export const BookCardComp = () => {
     </div>
   );
 };
+export default BookCardComp;

@@ -9,7 +9,7 @@ const { useBreakpoint } = Grid;
 
 const headerStyle = {
   height: "48px",
-  fontSize: "34px",
+  fontSize: "clamp(27px, 4vw, 32px)",
   backgroundColor: "white",
   boxShadow: "0 2px 8px #0000007c",
   fontWeight: "500",
@@ -59,7 +59,7 @@ const DashboardLayout = () => {
             placement="left"
             onClose={() => setOpen(false)}
             open={open}
-            width="80%"
+            width="85%"
             style={{
               padding: 0,
               backgroundColor: "#001529",
@@ -70,15 +70,15 @@ const DashboardLayout = () => {
           </Drawer>
         </>
       ) : (
-        <Sider width="20%" style={siderStyle}>
+        <Sider width="15%" style={siderStyle}>
           <Sidebar setPage={setPage} />
         </Sider>
       )}
 
       <Layout
         style={{
-          marginLeft: isMobile ? 0 : "20%",
-          width: isMobile ? "100%" : "80%",
+          marginLeft: isMobile ? 0 : "15%",
+          width: isMobile ? "100%" : "85%",
           overflowX: "hidden",
         }}
       >

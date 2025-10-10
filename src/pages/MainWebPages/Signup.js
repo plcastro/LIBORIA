@@ -44,7 +44,7 @@ const Signup = () => {
             />
           </div>
 
-          <Link to="/login" className="recovery-btn">
+          <Link to="/auth/login" className="recovery-btn">
             SIGN UP
           </Link>
           <div className="signup-link">

@@ -1,5 +1,5 @@
 import logo_dark from "../../assets/liboria white.png";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   UserOutlined,
   BookOutlined,
@@ -7,7 +7,7 @@ import {
   ContactsOutlined,
 } from "@ant-design/icons";
 import { Menu } from "antd";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const items = [
   {
@@ -38,7 +38,22 @@ const items = [
 
 const SideBar = ({ setPage }) => {
   const navigate = useNavigate();
-  const [current, setCurrent] = useState("1");
+  const location = useLocation(); // pang detect ng path
+  const [current, setCurrent] = useState("");
+
+  useEffect(() => {
+    //kapag nirefresh di siya babalik sa first page ng dashboard kung hindi iyon ang current page
+    if (location.pathname.includes("/dashboard/view/books")) setCurrent("1");
+    else if (location.pathname.includes("/dashboard/view/return"))
+      setCurrent("2");
+    else if (location.pathname.includes("/dashboard/view/records"))
+      setCurrent("3");
+    else if (location.pathname.includes("/dashboard/view/staff"))
+      setCurrent("4");
+    else if (location.pathname.includes("/dashboard/view/profile"))
+      setCurrent("5");
+    else setCurrent("");
+  }, [location.pathname]);
 
   const onClick = (e) => {
     setCurrent(e.key);
