@@ -10,6 +10,7 @@ import Forgot from "./pages/MainWebPages/Forgot";
 import NotFound from "./pages/MainWebPages/NotFound";
 import DisplayBook from "./pages/DashboardPages/DisplayBook";
 import ReturnBooks from "./pages/DashboardPages/ReturnBooks";
+import BorrowBooks from "./pages/DashboardPages/BorrowBooks";
 import ViewRecords from "./pages/DashboardPages/ViewRecords";
 import StaffList from "./pages/DashboardPages/StaffList";
 import ProfilePage from "./pages/DashboardPages/ProfilePage";
@@ -35,8 +36,9 @@ export default function App() {
         <Route path="*" element={<NotFound />} />
 
         <Route path="/dashboard" element={<DashboardLayout />}>
-          <Route index path="view/books" element={<DisplayBook />} />
+          <Route path="view/books" element={<DisplayBook />} />
           <Route path="view/return" element={<ReturnBooks />} />
+          <Route path="view/borrow" element={<BorrowBooks />} />
           <Route path="view/records" element={<ViewRecords />} />
           <Route path="view/staff" element={<StaffList />} />
           <Route path="view/profile" element={<ProfilePage />} />

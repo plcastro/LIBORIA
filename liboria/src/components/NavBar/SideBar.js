@@ -1,123 +1,67 @@
-import logo_dark from "../../assets/liboria white.png";
-import React, { useState, useEffect } from "react";
-import {
-  UserOutlined,
-  BookOutlined,
-  ArrowLeftOutlined,
-  ContactsOutlined,
-  UnorderedListOutlined,
-} from "@ant-design/icons";
-import { Menu } from "antd";
+import React, { useEffect, useState } from "react";
+import { Menu, Button } from "antd";
 import { useNavigate, useLocation } from "react-router-dom";
+import {
+  BookOutlined,
+  UserOutlined,
+  ArrowLeftOutlined,
+  UnorderedListOutlined,
+  ContactsOutlined,
+} from "@ant-design/icons";
+import logo_dark from "../../assets/liboria white.png";
 import BookIcon from "../../assets/books.png";
 import ReturnIcon from "../../assets/return.png";
 
-const SideBar = ({ setPage }) => {
+const Sidebar = () => {
   const navigate = useNavigate();
-  const [current, setCurrent] = useState("");
-  const [loggedOut, setLoggedOut] = useState(false);
   const location = useLocation();
-
+  const [current, setCurrent] = useState("");
   const user = JSON.parse(localStorage.getItem("currentUser")) || {};
-  useEffect(() => {
-    if (loggedOut) {
-      navigate("/home");
-    }
-  }, [loggedOut, navigate]);
-  const items = [
-    {
-      key: "sub1",
-      label: "Book Management",
-      icon: <BookOutlined />,
-      children: [
-        {
-          key: "1",
-          label: "Books",
-          path: "/dashboard/view/books",
-          icon: (
-            <img src={BookIcon} alt="Books" style={{ width: 18, height: 18 }} />
-          ),
-        },
-        {
-          key: "2",
-          label: "Return Book",
-          path: "/dashboard/view/return",
-          icon: (
-            <img
-              src={ReturnIcon}
-              alt="Books"
-              style={{ width: 18, height: 18 }}
-            />
-          ),
-        },
-        {
-          key: "3",
-          label: "View Records",
-          path: "/dashboard/view/records",
-          icon: <UnorderedListOutlined />,
-        },
-      ],
-    },
-    {
-      key: "sub2",
-      label: "User Management",
-      icon: <UserOutlined />,
-      children: [
-        ...(user.account_type !== "librarian"
-          ? [
-              {
-                key: "4",
-                label: "View Staff",
-                path: "/dashboard/view/staff",
-                icon: <UnorderedListOutlined />,
-              },
-            ]
-          : []),
-        {
-          key: "5",
-          label: "My Profile",
-          path: "/dashboard/view/profile",
-          icon: <ContactsOutlined />,
-        },
-      ],
-    },
-  ];
 
   useEffect(() => {
     if (location.pathname.includes("/dashboard/view/books")) setCurrent("1");
-    else if (location.pathname.includes("/dashboard/view/return"))
+    else if (location.pathname.includes("/dashboard/view/borrow"))
       setCurrent("2");
-    else if (location.pathname.includes("/dashboard/view/records"))
+    else if (location.pathname.includes("/dashboard/view/return"))
       setCurrent("3");
-    else if (location.pathname.includes("/dashboard/view/staff"))
+    else if (location.pathname.includes("/dashboard/view/records"))
       setCurrent("4");
-    else if (location.pathname.includes("/dashboard/view/profile"))
+    else if (location.pathname.includes("/dashboard/view/staff"))
       setCurrent("5");
+    else if (location.pathname.includes("/dashboard/view/profile"))
+      setCurrent("6");
     else setCurrent("");
   }, [location.pathname]);
 
-  const onClick = (e) => {
+  const onClickMenu = (e) => {
     setCurrent(e.key);
-
-    if (e.key === "1") {
-      setPage("Show Books");
-      navigate("/dashboard/view/books");
-    } else if (e.key === "2") {
-      setPage("Return Book");
-      navigate("/dashboard/view/return");
-    } else if (e.key === "3") {
-      setPage("View Records");
-      navigate("/dashboard/view/records");
-    } else if (e.key === "4") {
-      setPage("View Staff");
-      navigate("/dashboard/view/staff");
-    } else if (e.key === "5") {
-      setPage("My Profile");
-      navigate("/dashboard/view/profile");
-    } else if (e.key === "logout") {
-      localStorage.removeItem("currentUser");
-      setLoggedOut(true);
+    switch (e.key) {
+      case "1":
+        navigate("/dashboard/view/books");
+        break;
+      case "2":
+        navigate("/dashboard/view/borrow");
+        break;
+      case "3":
+        navigate("/dashboard/view/return");
+        break;
+      case "4":
+        navigate("/dashboard/view/records");
+        break;
+      case "5":
+        navigate("/dashboard/view/staff");
+        break;
+      case "6":
+        navigate("/dashboard/view/profile");
+        break;
+      default:
+        break;
     }
+  };
+
+  const onLogout = () => {
+    localStorage.removeItem("currentUser");
+    navigate("/home");
   };
 
   return (
@@ -125,73 +69,104 @@ const SideBar = ({ setPage }) => {
       style={{
         height: "100%",
         width: "100%",
-        backgroundColor: "#001529",
-        color: "white",
         display: "flex",
         flexDirection: "column",
+        backgroundColor: "#001529",
+        color: "white",
       }}
     >
-      <div
-        style={{
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-          fontSize: "clamp(12px, 1.8vw, 16px)",
-        }}
-      >
-        <div
-          style={{
-            textAlign: "left",
-            padding: "10px",
-          }}
-        >
+      <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+        <div style={{ padding: "10px", textAlign: "left" }}>
           <img
             src={logo_dark}
             alt="Logo"
-            style={{
-              maxWidth: "200px",
-              width: "100%",
-              margin: "0",
-              padding: 0,
-            }}
+            style={{ maxWidth: "200px", width: "100%" }}
           />
-          <h3 className="profile-name">{user.name}</h3>
-          <p className="profile-role" color="#585757ff">
-            {user.account_type}
-          </p>
+          <h3>{user.name}</h3>
+          <p style={{ color: "#ccc" }}>{user.account_type}</p>
         </div>
 
         <Menu
           theme="dark"
           mode="inline"
-          onClick={onClick}
-          defaultOpenKeys={["sub1"]}
           selectedKeys={[current]}
-          items={items}
-          style={{
-            flex: 1,
-            borderInline: "none",
-            backgroundColor: "#001529",
-          }}
+          defaultOpenKeys={["sub1"]}
+          onClick={onClickMenu}
+          style={{ flex: 1, borderInline: "none", backgroundColor: "#001529" }}
+          items={[
+            {
+              key: "sub1",
+              label: "Book Management",
+              icon: <BookOutlined />,
+              children: [
+                {
+                  key: "1",
+                  label: "Books",
+                  icon: (
+                    <img
+                      src={BookIcon}
+                      alt="Books"
+                      style={{ width: 18, height: 18 }}
+                    />
+                  ),
+                },
+                {
+                  key: "2",
+                  label: "Borrow Book",
+                  icon: (
+                    <img
+                      src={ReturnIcon}
+                      alt="Borrow"
+                      style={{ width: 18, height: 18 }}
+                    />
+                  ),
+                },
+                {
+                  key: "3",
+                  label: "Return Book",
+                  icon: (
+                    <img
+                      src={ReturnIcon}
+                      alt="Return"
+                      style={{ width: 18, height: 18 }}
+                    />
+                  ),
+                },
+                {
+                  key: "4",
+                  label: "View Records",
+                  icon: <UnorderedListOutlined />,
+                },
+              ],
+            },
+            {
+              key: "sub2",
+              label: "User Management",
+              icon: <UserOutlined />,
+              children: [
+                {
+                  key: "5",
+                  label: "View Staff",
+                  icon: <UnorderedListOutlined />,
+                },
+                { key: "6", label: "My Profile", icon: <ContactsOutlined /> },
+              ],
+            },
+          ]}
         />
       </div>
-
-      <Menu
-        theme="dark"
-        mode="inline"
-        onClick={onClick}
-        style={{
-          borderInline: "none",
-          backgroundColor: "#001529",
-          fontSize: "clamp(12px, 1.8vw, 16px)",
-        }}
-      >
-        <Menu.Item key="logout" icon={<ArrowLeftOutlined />}>
-          Log out
-        </Menu.Item>
-      </Menu>
+      <div style={{ padding: "10px" }}>
+        <Button
+          type="primary"
+          style={{ backgroundColor: "#06233dff" }}
+          icon={<ArrowLeftOutlined />}
+          onClick={onLogout}
+        >
+          Log Out
+        </Button>
+      </div>
     </div>
   );
 };
 
-export default SideBar;
+export default Sidebar;

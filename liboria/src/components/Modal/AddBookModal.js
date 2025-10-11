@@ -5,14 +5,12 @@ import {
   Form,
   DatePicker,
   InputNumber,
-  Upload,
   Col,
   Row,
   message,
   Button,
   Space,
 } from "antd";
-import { PlusOutlined } from "@ant-design/icons";
 
 const { TextArea } = Input;
 
@@ -55,6 +53,8 @@ const AddBookModal = ({ modal2Open, setModal2Open }) => {
         title="ADD BOOK DETAILS"
         centered
         open={modal2Open}
+        maskClosable={false} // disable click outside
+        keyboard={false}
         footer={[
           <Button
             key="Discard"
@@ -88,24 +88,16 @@ const AddBookModal = ({ modal2Open, setModal2Open }) => {
           initialValues={{ totalCopies: 1 }}
         >
           <Row gutter={24}>
-            <Col span={8}>
+            <Col span={16}>
               <Form.Item
                 label="Image"
                 name="image"
-                valuePropName="fileList"
-                getValueFromEvent={(e) => (Array.isArray(e) ? e : e?.fileList)}
-                rules={[{ required: true, message: "Please upload an image" }]}
+                rules={[
+                  { required: true, message: "Please enter the image url" },
+                ]}
               >
-                <Upload listType="picture-card" maxCount={1}>
-                  <div>
-                    <PlusOutlined />
-                    <div style={{ marginTop: 8 }}>Upload</div>
-                  </div>
-                </Upload>
+                <Input placeholder="Enter Image URL" />
               </Form.Item>
-            </Col>
-
-            <Col span={16}>
               <Form.Item
                 label="Title"
                 name="title"
@@ -171,7 +163,6 @@ const AddBookModal = ({ modal2Open, setModal2Open }) => {
               >
                 Back
               </Button>
-
               <Button
                 type="primary"
                 onClick={handleConfirm}
@@ -185,12 +176,24 @@ const AddBookModal = ({ modal2Open, setModal2Open }) => {
                 Confirm
               </Button>
             </Space>
-            ,
           </div>,
         ]}
       >
         {bookData ? (
           <div>
+            {bookData.image && (
+              <div style={{ textAlign: "center", marginBottom: 10 }}>
+                <img
+                  src={bookData.image}
+                  alt={bookData.title || "Book Image"}
+                  style={{
+                    maxWidth: "100%",
+                    maxHeight: 200,
+                    objectFit: "contain",
+                  }}
+                />
+              </div>
+            )}
             <p>
               <strong>Title:</strong> {bookData.title}
             </p>
@@ -215,6 +218,7 @@ const AddBookModal = ({ modal2Open, setModal2Open }) => {
           <p>No book data to confirm.</p>
         )}
       </Modal>
+
       <Modal
         title="Discard Book Entry"
         open={isDiscardOpen}

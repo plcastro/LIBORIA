@@ -58,7 +58,7 @@ const Home = () => {
           <Button
             type="default"
             size="large"
-            onClick={() => navigate("/auth/login")}
+            onClick={() => navigate("/login")}
             style={{
               backgroundColor: "white",
               color: "black",

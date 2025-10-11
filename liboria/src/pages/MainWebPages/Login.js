@@ -55,7 +55,7 @@ const Login = () => {
       if (response.ok) {
         // Store user data
         localStorage.setItem("currentUser", JSON.stringify(data.user));
-        navigate("/dashboard");
+        navigate("/dashboard/view/books");
       } else {
         setError(data.error || "Login failed");
       }

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import Sidebar from "../components/NavBar/SideBar";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import { Layout, Button, Drawer, Grid } from "antd";
 import { MenuOutlined } from "@ant-design/icons";
 
@@ -34,10 +34,22 @@ const siderStyle = {
 };
 
 const DashboardLayout = () => {
-  const [page, setPage] = useState("Show Books");
   const [open, setOpen] = useState(false);
+  const location = useLocation();
   const screens = useBreakpoint();
   const isTablet = !screens.lg;
+
+  // Map URL paths to page titles
+  const pageMap = {
+    "/dashboard/view/books": "Show Books",
+    "/dashboard/view/borrow": "Borrow Books",
+    "/dashboard/view/return": "Return Books",
+    "/dashboard/view/records": "View Records",
+    "/dashboard/view/staff": "Staff List",
+    "/dashboard/view/profile": "Profile",
+    "/dashboard/edit/profile": "Edit Profile",
+  };
+  const page = pageMap[location.pathname] || "Dashboard";
 
   return (
     <Layout style={{ minHeight: "100vh", overflow: "hidden" }}>
@@ -69,12 +81,12 @@ const DashboardLayout = () => {
               color: "white",
             }}
           >
-            <Sidebar setPage={setPage} />
+            <Sidebar />
           </Drawer>
         </>
       ) : (
         <Sider width="15%" style={siderStyle}>
-          <Sidebar setPage={setPage} />
+          <Sidebar />
         </Sider>
       )}
 
