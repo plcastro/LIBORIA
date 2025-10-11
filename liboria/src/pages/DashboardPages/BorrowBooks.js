@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Table, Tag, Input } from "antd";
+import { Table, Input } from "antd";
 import BorrowBookModal from "../../components/Modal/BorrowBookModal";
 import dayjs from "dayjs";
 const BorrowBooks = () => {
@@ -64,20 +64,25 @@ const BorrowBooks = () => {
   );
 
   const columns = [
-    { title: "Book ID", dataIndex: "book_id", key: "book_id" },
+    {
+      title: "Book ID",
+      dataIndex: "book_id",
+      key: "book_id",
+      render: (text) => <span style={{ whiteSpace: "nowrap" }}>{text}</span>,
+      onHeaderCell: () => ({
+        style: { width: "100px", whiteSpace: "nowrap" },
+      }),
+    },
     { title: "Author Name", dataIndex: "author_name", key: "author_name" },
     { title: "Book Title", dataIndex: "title", key: "title" },
     { title: "Category", dataIndex: "category", key: "category" },
     { title: "Total Copies", dataIndex: "total_copies", key: "total_copies" },
     {
-      title: "Availability",
-      key: "availability",
+      title: "Available Copies",
+      key: "available_copies",
       render: (_, record) => (
         <div>
-          <span>{record.available_copies} copies </span>
-          <Tag color={record.available_copies > 0 ? "green" : "red"}>
-            {record.available_copies > 0 ? "Available" : "Not Available"}
-          </Tag>
+          <span>{record.available_copies} copies</span>
         </div>
       ),
     },
@@ -98,7 +103,7 @@ const BorrowBooks = () => {
         type="search"
         placeholder="Search data"
         onChange={(e) => setSearchText(e.target.value)}
-        style={{ width: 200, height: 40, marginBottom: 20 }}
+        style={{ maxWidth: 300, width: "100%", height: 40, marginBottom: 20 }}
       />
       <Table
         columns={columns.map((col) => ({ ...col, width: col.width || 150 }))}
@@ -110,7 +115,7 @@ const BorrowBooks = () => {
           x: "max-content",
         }}
         loading={loading}
-        style={{ tableLayout: "fixed" }}
+        style={{ tableLayout: "auto" }}
       />
       <BorrowBookModal
         open={isModalOpen}

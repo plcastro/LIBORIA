@@ -115,7 +115,12 @@ const ReturnBooks = () => {
         type="search"
         placeholder="Search data"
         onChange={(e) => setSearchText(e.target.value)}
-        style={{ width: "200px", height: "40px", marginBottom: "20px" }}
+        style={{
+          maxWidth: 300,
+          width: "100%",
+          height: "40px",
+          marginBottom: "20px",
+        }}
       />
       <Table
         columns={columns.map((col) => ({ ...col, width: col.width || 150 }))}

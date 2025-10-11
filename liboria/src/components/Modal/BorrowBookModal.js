@@ -25,7 +25,41 @@ const BorrowBookModal = ({ open, onClose, onSubmit, initialValues }) => {
       form.resetFields();
     }
   }, [open, initialValues, form]);
+  const handleBorrow = async () => {
+    try {
+      const values = await form.validateFields(); // ensure all required fields are filled
 
+      const payload = {
+        name: values.name.trim(),
+        year_level: values.year_level,
+        course: values.course,
+        book_title: values.book_title,
+        created_at: dayjs(values.created_at).format("YYYY-MM-DD"),
+        due_date: dayjs(values.due_date).format("YYYY-MM-DD"),
+      };
+
+      const response = await fetch("http://localhost:8000/api/borrowers", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        console.log("Borrow successful:", data);
+        onSubmit(data);
+        onClose();
+        form.resetFields();
+      } else {
+        console.error("Borrow failed:", data.error);
+      }
+    } catch (err) {
+      console.error("Error while borrowing:", err);
+    }
+  };
   const handleFinish = (values) => {
     onSubmit(values);
     onClose();
@@ -50,7 +84,12 @@ const BorrowBookModal = ({ open, onClose, onSubmit, initialValues }) => {
       footer={
         <div style={{ display: "flex", justifyContent: "center", gap: 10 }}>
           <Button onClick={onClose}>Cancel</Button>
-          <Button type="primary" htmlType="submit" form={form}>
+          <Button
+            type="primary"
+            htmlType="submit"
+            form={form}
+            onClick={handleBorrow}
+          >
             Borrow
           </Button>
         </div>

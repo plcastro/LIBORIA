@@ -92,46 +92,66 @@ const DisplayBook = () => {
   }, []);
   return (
     <>
-      <div>
-        <Row align="middle" justify="space-between" style={{ display: "flex" }}>
-          {/* Search Input */}
-          <Col xs={24} md={8} lg={8}>
-            <Input
-              type="search"
-              placeholder="Search book"
-              value={searchValue}
-              onChange={(e) => setSearchValue(e.target.value)}
-              style={{ maxWidth: "425px", width: "100%", height: "40px" }}
-            />
-          </Col>
-          <Col
-            xs={24}
-            md={8}
-            lg={8}
-            style={{ display: "flex", justifyContent: "flex-end" }}
+      <Row
+        align="top"
+        justify="space-between"
+        style={{
+          display: "flex",
+          margin: 0,
+          padding: 0,
+          height: "fit-content",
+          maxHeight: 40,
+        }}
+      >
+        {/* Search Input */}
+        <Col xs={24} sm={8} md={8} lg={8} align="top">
+          <Input
+            type="search"
+            placeholder="Search book"
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.target.value)}
+            style={{
+              maxWidth: "425px",
+              width: "100%",
+              height: "40px",
+              marginBottom: "10px",
+            }}
+          />
+        </Col>
+        <Col
+          xs={24}
+          sm={6}
+          md={8}
+          lg={8}
+          style={{
+            maxWidth: "425px",
+            width: "100%",
+            height: "40px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "flex-end",
+          }}
+        >
+          <Button
+            type="primary"
+            style={{
+              backgroundColor: "#1600a3ff",
+              color: "#fff",
+              margin: 0,
+              padding: 0,
+              height: "40px",
+              fontWeight: 500,
+            }}
+            icon={<PlusOutlined style={{ fontSize: 16, color: "#fff" }} />}
+            onClick={() => setModalOpen(true)}
           >
-            <Button
-              type="primary"
-              style={{
-                backgroundColor: "#1600a3ff",
-                color: "#fff",
-                width: 200,
-                height: 40,
-                fontWeight: 500,
-              }}
-              icon={<PlusOutlined style={{ fontSize: 16, color: "#fff" }} />}
-              onClick={() => setModalOpen(true)}
-            >
-              Add Book
-            </Button>
-          </Col>
-        </Row>
-      </div>
+            Add Book
+          </Button>
+        </Col>
+      </Row>
 
       <Row>
-        <h2 style={{ marginTop: 20, fontSize: "clamp(24px, 4vw, 40px)" }}>
-          Books
-        </h2>
+        <h2 style={{ fontSize: "clamp(24px, 4vw, 40px)" }}>Books</h2>
       </Row>
       <Row>{/* Mapping ng books */}</Row>
 

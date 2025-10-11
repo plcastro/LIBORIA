@@ -82,8 +82,16 @@ const Sidebar = () => {
             alt="Logo"
             style={{ maxWidth: "200px", width: "100%" }}
           />
-          <h3>{user.name}</h3>
-          <p style={{ color: "#ccc" }}>{user.account_type}</p>
+          <h3 style={{ margin: "20px 0 10px" }}>{user.name}</h3>
+          <p
+            style={{
+              color: "#ccc",
+              margin: "10px 0",
+              fontSize: "14px",
+            }}
+          >
+            {user.account_type}
+          </p>
         </div>
 
         <Menu
@@ -158,7 +166,7 @@ const Sidebar = () => {
       <div style={{ padding: "10px" }}>
         <Button
           type="primary"
-          style={{ backgroundColor: "#06233dff" }}
+          style={{ backgroundColor: "#06233dff", maxWidth: 300, width: "100%" }}
           icon={<ArrowLeftOutlined />}
           onClick={onLogout}
         >
