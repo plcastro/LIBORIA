@@ -8,8 +8,8 @@ const StaffList = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const storedUser = JSON.parse(localStorage.getItem("currentUser"));
-  const currentUserName = storedUser?.name;
-  const currentUser = localStorage.getItem("name");
+  const currentUserId = storedUser?.userid;
+
   const loadAllStaff = async () => {
     setLoading(true);
     setError("");
@@ -32,6 +32,7 @@ const StaffList = () => {
   useEffect(() => {
     loadAllStaff();
   }, []);
+
   const [modalVisible, setModalVisible] = useState(false);
   const [modalMode, setModalMode] = useState("add");
   const [selectedStaff, setSelectedStaff] = useState(null);
@@ -109,6 +110,7 @@ const StaffList = () => {
     { title: "Name", dataIndex: "name", key: "name" },
     { title: "Email", dataIndex: "email", key: "email" },
     { title: "Role", dataIndex: "account_type", key: "account_type" },
+    { title: "Username", dataIndex: "username", key: "username" },
     {
       title: "Action",
       key: "action",
@@ -134,17 +136,17 @@ const StaffList = () => {
             danger
             size="small"
             icon={<DeleteOutlined />}
-            disabled={record.name === currentUserName}
+            disabled={record.userid === currentUserId}
             onClick={() => handleDelete(record)}
             style={{
               backgroundColor:
-                record.name === currentUserName ? "#ccc" : "#ff4d4f",
+                record.userid === currentUserId ? "#ccc" : "#ff4d4f",
               height: "30px",
               color: "white",
               border: "none",
               maxWidth: "100px",
               cursor:
-                record.name === currentUserName ? "not-allowed" : "pointer",
+                record.userid === currentUserId ? "not-allowed" : "pointer",
             }}
           >
             Delete
@@ -155,7 +157,8 @@ const StaffList = () => {
   ];
 
   return (
-    <div style={{ position: "relative", paddingBottom: "80px" }}>
+    <div>
+      {/* style={{ position: "relative", paddingBottom: "80px" }} */}
       <Button
         type="primary"
         icon={<PlusOutlined />}
@@ -183,7 +186,6 @@ const StaffList = () => {
           x: "max-content", // horizontal scroll
         }}
       />
-
       <StaffModal
         isVisible={modalVisible}
         mode={modalMode}

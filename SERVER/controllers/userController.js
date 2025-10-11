@@ -44,39 +44,79 @@ const createUser = (req, res) => {
       .json({ error: "Username and password are required" });
   }
 
-  const query =
-    "INSERT INTO users (username, password, name, email, account_type) VALUES (?, ?, ?, ?, ?)";
+  // First check if username already exists
+  const checkUsernameQuery = "SELECT userid FROM users WHERE username = ?";
 
-  db.query(
-    query,
-    [
-      username,
-      password,
-      name || null,
-      email || null,
-      account_type || "librarian",
-    ],
-    (err, results) => {
-      if (err) {
-        console.error(err);
-        if (err.code === "ER_DUP_ENTRY") {
-          return res.status(400).json({ error: "Username already exists" });
-        }
-        return res.status(500).json({ error: "Internal Server Error" });
-      }
+  db.query(checkUsernameQuery, [username], (err, usernameResults) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: "Internal Server Error" });
+    }
 
-      // Return user without password
-      const getQuery =
-        "SELECT userid, username, name, email, account_type FROM users WHERE userid = ?";
-      db.query(getQuery, [results.insertId], (err, userResults) => {
+    if (usernameResults.length > 0) {
+      return res.status(400).json({ error: "Username already exists" });
+    }
+
+    // If email is provided, check if email already exists
+    if (email) {
+      const checkEmailQuery = "SELECT userid FROM users WHERE email = ?";
+
+      db.query(checkEmailQuery, [email], (err, emailResults) => {
         if (err) {
           console.error(err);
           return res.status(500).json({ error: "Internal Server Error" });
         }
-        res.status(201).json(userResults[0]);
+
+        if (emailResults.length > 0) {
+          return res.status(400).json({ error: "Email already exists" });
+        }
+
+        proceedWithCreation();
       });
+    } else {
+      // If no email provided, proceed with creation
+      proceedWithCreation();
     }
-  );
+  });
+
+  function proceedWithCreation() {
+    const query =
+      "INSERT INTO users (username, password, name, email, account_type) VALUES (?, ?, ?, ?, ?)";
+
+    db.query(
+      query,
+      [
+        username,
+        password,
+        name || null,
+        email || null,
+        account_type || "librarian",
+      ],
+      (err, results) => {
+        if (err) {
+          console.error(err);
+          // Additional safety check in case of race conditions
+          if (err.code === "ER_DUP_ENTRY") {
+            return res
+              .status(400)
+              .json({ error: "Username or email already exists" });
+          }
+          return res.status(500).json({ error: "Internal Server Error" });
+        }
+
+        // Return user without password
+        const getQuery =
+          "SELECT userid, username, name, email, account_type FROM users WHERE userid = ?";
+        db.query(getQuery, [results.insertId], (err, userResults) => {
+          if (err) {
+            console.error(err);
+            return res.status(500).json({ error: "Internal Server Error" });
+          }
+          res.status(201).json(userResults[0]);
+        });
+      }
+    );
+  }
 };
 
 // REGISTER user (for public signup)
@@ -367,6 +407,19 @@ const forgotPassword = (req, res) => {
     return res.status(400).json({ error: "Email is required" });
   }
 
+  // Generate exactly 4-character hex token (guaranteed)
+  function generate4CharToken() {
+    let token = crypto.randomBytes(2).toString("hex");
+    // Ensure it's exactly 4 characters (should always be, but just in case)
+    if (token.length > 4) {
+      token = token.slice(0, 4);
+    } else if (token.length < 4) {
+      // Pad with zeros if somehow shorter (shouldn't happen)
+      token = token.padEnd(4, "0");
+    }
+    return token;
+  }
+
   // Check if user exists with this email
   const findUserQuery =
     "SELECT userid, username, email FROM users WHERE email = ?";
@@ -389,8 +442,11 @@ const forgotPassword = (req, res) => {
 
     const user = results[0];
 
-    // Generate reset token
-    const resetToken = crypto.randomBytes(32).toString("hex");
+    const resetToken = generate4CharToken();
+    console.log(
+      `Generated token: "${resetToken}", Length: ${resetToken.length}`
+    ); // Should be exactly 4
+
     const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hour from now
 
     // Store reset token in database
@@ -521,6 +577,37 @@ const resetPassword = (req, res) => {
   });
 };
 
+// GET all borrowing records with related data
+const getBorrowingRecords = (req, res) => {
+  const query = `
+    SELECT 
+      bb.borrow_id,
+      br.name AS borrower_name,
+      br.year_level,
+      br.course,
+      b.title AS book_title,
+      bb.date_borrowed,
+      bb.due_date,
+      rb.returned_date,
+      COALESCE(rb.violation, 'None') AS violation,
+      COALESCE(rb.penalty, 0.00) AS penalty,
+      bb.status
+    FROM borrowed_books bb
+    LEFT JOIN borrowers br ON bb.borrower_id = br.borrower_id
+    LEFT JOIN books b ON bb.book_id = b.book_id
+    LEFT JOIN returned_books rb ON bb.borrow_id = rb.borrow_id
+    ORDER BY bb.date_borrowed DESC
+  `;
+
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: "Internal Server Error" });
+    }
+    res.json(results);
+  });
+};
+
 module.exports = {
   getUsers,
   getUserById,
@@ -532,4 +619,5 @@ module.exports = {
   forgotPassword,
   verifyResetToken,
   resetPassword,
+  getBorrowingRecords,
 };

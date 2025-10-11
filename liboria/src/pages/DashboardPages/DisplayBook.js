@@ -1,10 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { SearchOutlined, PlusOutlined } from "@ant-design/icons";
-import { Input, Row, Col, Button, Table, message } from "antd";
+import { Input, Row, Col, Button, Table, message, Card } from "antd";
 import AddBookModal from "../../components/Modal/AddBookModal";
+import EditBookModal from "../../components/Modal/EditBookModal";
+import DeleteBookModal from "../../components/Modal/DeleteBookModal";
+import BorrowBookModal from "../../components/Modal/BorrowBookModal";
 
 const DisplayBook = () => {
-  const [modalOpen, setModalOpen] = useState(false);
+  const [addModalOpen, setAddModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [borrowModalOpen, setBorrowModalOpen] = useState(false);
+  const [selectedBook, setSelectedBook] = useState(null);
   const [searchValue, setSearchValue] = useState("");
   const [books, setBooks] = useState([]);
   const [filteredBooks, setFilteredBooks] = useState([]);
@@ -39,46 +46,38 @@ const DisplayBook = () => {
   }, [searchValue, books]);
 
   // Delete a book
-  const deleteBook = async (bookId) => {
-    try {
-      const response = await fetch(
-        `http://localhost:8000/api/books/${bookId}`,
-        {
-          method: "DELETE",
-        }
-      );
-      if (response.ok) {
-        message.success("Book deleted successfully");
-        fetchBooks();
-      } else {
-        const data = await response.json();
-        message.error(data.error || "Failed to delete book");
-      }
-    } catch (error) {
-      console.error(error);
-      message.error("Failed to delete book");
-    }
+  const handleDeleteBook = (book) => {
+    setSelectedBook(book);
+    setDeleteModalOpen(true);
+  };
+  // Update book
+
+  const handleUpdateBook = (book) => {
+    setSelectedBook(book);
+    setEditModalOpen(true);
   };
 
   // After adding a book
   const handleBookCreated = () => {
     fetchBooks();
-    setModalOpen(false);
+    setAddModalOpen(false);
   };
 
   useEffect(() => {
     fetchBooks();
   }, []);
 
-  const handleBorrow = (record) => {
-    message.info(`Borrow clicked for: ${record.title}`);
+  const handleBorrow = (book) => {
+    setSelectedBook(book);
+    setBorrowModalOpen(true);
   };
 
   const columns = [
     {
-      title: "Image",
+      title: "_",
       dataIndex: "image",
       key: "image",
+      width: 70,
       render: (text, record) => (
         <img
           src={record.image ? record.image : "https://via.placeholder.com/60"}
@@ -109,18 +108,18 @@ const DisplayBook = () => {
           <div>
             <a
               onClick={() => handleBorrow(record)}
-              style={{ color: "#3a5eff" }}
+              style={{ color: "#3a5eff", marginRight: 16 }} // add margin to the right
             >
               Borrow
             </a>
             <a
-              onClick={() => deleteBook(record)}
-              style={{ color: "#00910cff" }}
+              onClick={() => handleUpdateBook(record)}
+              style={{ color: "#000000ff", marginRight: 16 }}
             >
               Edit
             </a>
             <a
-              onClick={() => deleteBook(record)}
+              onClick={() => handleDeleteBook(record)}
               style={{ color: "#ff3a3aff" }}
             >
               Delete
@@ -133,57 +132,94 @@ const DisplayBook = () => {
 
   return (
     <>
-      <Row
-        align="middle"
-        justify="space-between"
-        style={{
-          marginBottom: "15px",
-        }}
-      >
-        <Col xs={24} sm={12} md={10}>
-          <Input
-            prefix={<SearchOutlined />}
-            placeholder="Search book"
-            value={searchValue}
-            onChange={(e) => setSearchValue(e.target.value)}
-            style={{ height: "40px" }}
+      <Card>
+        <Row align="middle" justify="space-between">
+          <Col xs={24} sm={12} md={10} lg={5}>
+            <Input
+              prefix={<SearchOutlined />}
+              placeholder="Search book"
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
+              style={{ height: 40 }}
+            />
+          </Col>
+
+          <Col>
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              style={{
+                backgroundColor: "#1600a3",
+                border: "none",
+                height: 40,
+                fontWeight: 500,
+              }}
+              onClick={() => setAddModalOpen(true)}
+            >
+              Add Book
+            </Button>
+          </Col>
+        </Row>
+
+        <Table
+          columns={columns}
+          dataSource={filteredBooks}
+          rowKey="id"
+          loading={loading}
+          pagination={false}
+          scroll={{
+            y: books.length > 10 ? 600 : undefined,
+            x: "max-content",
+          }}
+        />
+
+        <AddBookModal
+          modal2Open={addModalOpen}
+          setModal2Open={setAddModalOpen}
+          onBookCreated={handleBookCreated}
+        />
+
+        {/* Edit Book */}
+        {selectedBook && (
+          <EditBookModal
+            modalOpen={editModalOpen}
+            setModalOpen={setEditModalOpen}
+            book={selectedBook}
+            onBookUpdated={handleUpdateBook}
           />
-        </Col>
-
-        <Col>
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            style={{
-              backgroundColor: "#1600a3",
-              border: "none",
-              height: "40px",
-              fontWeight: 500,
+        )}
+        {selectedBook && (
+          <BorrowBookModal
+            open={borrowModalOpen}
+            onClose={() => setBorrowModalOpen(false)}
+            initialValues={{ ...selectedBook, book_title: selectedBook.title }}
+            onSubmit={(data) => {
+              message.success(`Borrowed: ${data.book_title}`);
+              setBorrowModalOpen(false);
             }}
-            onClick={() => setModalOpen(true)}
-          >
-            Add Book
-          </Button>
-        </Col>
-      </Row>
-
-      <Table
-        columns={columns}
-        dataSource={filteredBooks}
-        rowKey="id"
-        loading={loading}
-        pagination={false}
-        scroll={{
-          y: books.length > 10 ? 600 : undefined,
-          x: "max-content",
-        }}
-      />
-
-      <AddBookModal
-        modal2Open={modalOpen}
-        setModal2Open={setModalOpen}
-        onBookCreated={handleBookCreated}
-      />
+          />
+        )}
+        {selectedBook && (
+          <DeleteBookModal
+            open={deleteModalOpen}
+            setOpen={setDeleteModalOpen}
+            book={selectedBook}
+            onDelete={async (bookId) => {
+              const response = await fetch(
+                `http://localhost:8000/api/books/${bookId}`,
+                {
+                  method: "DELETE",
+                }
+              );
+              if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || "Failed to delete book");
+              }
+              fetchBooks();
+            }}
+          />
+        )}
+      </Card>
     </>
   );
 };

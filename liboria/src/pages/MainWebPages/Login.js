@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "./login.css";
 
 const Login = () => {
@@ -9,8 +9,24 @@ const Login = () => {
     username: "",
     password: "",
   });
+  const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Load saved credentials on component mount
+  useEffect(() => {
+    const savedUsername = localStorage.getItem("rememberedUsername");
+    const savedPassword = localStorage.getItem("rememberedPassword");
+    const savedRememberMe = localStorage.getItem("rememberMe") === "true";
+
+    if (savedRememberMe && savedUsername) {
+      setFormData({
+        username: savedUsername,
+        password: savedPassword || "",
+      });
+      setRememberMe(true);
+    }
+  }, []);
 
   const handleInputChange = (e) => {
     const { id, value } = e.target;
@@ -18,6 +34,18 @@ const Login = () => {
       ...prevState,
       [id]: value,
     }));
+  };
+
+  const handleRememberMeChange = (e) => {
+    const isChecked = e.target.checked;
+    setRememberMe(isChecked);
+
+    // If unchecking, remove saved credentials
+    if (!isChecked) {
+      localStorage.removeItem("rememberedUsername");
+      localStorage.removeItem("rememberedPassword");
+      localStorage.removeItem("rememberMe");
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -55,6 +83,19 @@ const Login = () => {
       if (response.ok) {
         // Store user data
         localStorage.setItem("currentUser", JSON.stringify(data.user));
+
+        // Handle Remember Me functionality
+        if (rememberMe) {
+          localStorage.setItem("rememberedUsername", formData.username.trim());
+          localStorage.setItem("rememberedPassword", formData.password.trim());
+          localStorage.setItem("rememberMe", "true");
+        } else {
+          // Clear saved credentials if Remember Me is not checked
+          localStorage.removeItem("rememberedUsername");
+          localStorage.removeItem("rememberedPassword");
+          localStorage.removeItem("rememberMe");
+        }
+
         navigate("/dashboard/view/borrow");
       } else {
         setError(data.error || "Login failed");
@@ -100,7 +141,12 @@ const Login = () => {
 
           <div className="remember-forgot">
             <div className="remember-me">
-              <input type="checkbox" id="remember" />
+              <input
+                type="checkbox"
+                id="remember"
+                checked={rememberMe}
+                onChange={handleRememberMeChange}
+              />
               <label htmlFor="remember">Remember me</label>
             </div>
             <Link to="/forgot" className="forgot-password">

@@ -10,11 +10,12 @@ import {
   message,
   Button,
   Space,
+  Select,
 } from "antd";
 
 const { TextArea } = Input;
-
-const AddBookModal = ({ modal2Open, setModal2Open }) => {
+const { Option } = Select;
+const AddBookModal = ({ modal2Open, setModal2Open, onBookCreated }) => {
   const [form] = Form.useForm();
   const [bookData, setBookData] = useState(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
@@ -25,21 +26,53 @@ const AddBookModal = ({ modal2Open, setModal2Open }) => {
       const values = await form.validateFields();
       console.log("Validated form values:", values);
 
-      setBookData(values);
+      const normalizedData = {
+        title: values.title,
+        author_name: values.author,
+        category: values.category,
+        published_date: values.published_date
+          ? values.published_date.format("YYYY-MM-DD")
+          : null,
+        total_copies: values.total_copies,
+        available_copies: values.total_copies,
+        description: values.description,
+        image: values.image,
+      };
 
+      setBookData(normalizedData);
       setIsConfirmOpen(true);
     } catch (err) {
-      message.warning("Please fill out all required fields before proceeding.");
+      console.error(err);
+      message.error(err.message || "Failed to add book");
     }
   };
 
-  const handleConfirm = () => {
-    console.log("Book added:", bookData);
-    message.success("Book added successfully!");
-    form.resetFields();
-    setIsConfirmOpen(false);
-    setModal2Open(false);
+  const handleConfirm = async () => {
+    try {
+      if (!bookData) return;
+
+      const response = await fetch("http://localhost:8000/api/books", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(bookData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) throw new Error(data.error || "Failed to add book");
+
+      message.success("Book added successfully!");
+      form.resetFields();
+      setIsConfirmOpen(false);
+      setModal2Open(false);
+
+      if (onBookCreated) onBookCreated();
+    } catch (err) {
+      console.error(err);
+      message.error(err.message || "Failed to add book");
+    }
   };
+
   const handleDiscard = () => {
     form.resetFields();
     setModal2Open(false);
@@ -85,7 +118,7 @@ const AddBookModal = ({ modal2Open, setModal2Open }) => {
           wrapperCol={{ span: 15 }}
           layout="horizontal"
           labelAlign="left"
-          initialValues={{ totalCopies: 1 }}
+          initialValues={{ total_copies: 1 }}
         >
           <Row gutter={24}>
             <Col span={16}>
@@ -120,14 +153,23 @@ const AddBookModal = ({ modal2Open, setModal2Open }) => {
                 label="Category"
                 name="category"
                 rules={[
-                  { required: true, message: "Please enter the book category" },
+                  {
+                    required: true,
+                    message: "Please select the book category",
+                  },
                 ]}
               >
-                <Input placeholder="Enter Book Category" />
+                <Select placeholder="Select category:">
+                  <Option value="Trending">Trending</Option>
+                  <Option value="Romance">Romance</Option>
+                  <Option value="Kids">Kids</Option>
+                  <Option value="Thriller">Thriller</Option>
+                  <Option value="Textbooks">Textbooks</Option>
+                </Select>
               </Form.Item>
               <Form.Item
                 label="Published Date"
-                name="publishedDate"
+                name="published_date"
                 rules={[
                   { required: true, message: "Please select a published date" },
                 ]}
@@ -136,7 +178,7 @@ const AddBookModal = ({ modal2Open, setModal2Open }) => {
               </Form.Item>
               <Form.Item
                 label="Total Copies"
-                name="totalCopies"
+                name="total_copies"
                 rules={[
                   { required: true, message: "Please enter total copies" },
                 ]}
@@ -164,6 +206,7 @@ const AddBookModal = ({ modal2Open, setModal2Open }) => {
                 Back
               </Button>
               <Button
+                key="confirm"
                 type="primary"
                 onClick={handleConfirm}
                 style={{
@@ -198,17 +241,16 @@ const AddBookModal = ({ modal2Open, setModal2Open }) => {
               <strong>Title:</strong> {bookData.title}
             </p>
             <p>
-              <strong>Author:</strong> {bookData.author}
+              <strong>Author:</strong> {bookData.author_name}
             </p>
             <p>
               <strong>Category:</strong> {bookData.category}
             </p>
             <p>
-              <strong>Published Date:</strong>{" "}
-              {bookData.publishedDate?.format("YYYY-MM-DD")}
+              <strong>Published Date:</strong> {bookData.published_date}
             </p>
             <p>
-              <strong>Total Copies:</strong> {bookData.totalCopies}
+              <strong>Total Copies:</strong> {bookData.total_copies}
             </p>
             <p>
               <strong>Description:</strong> {bookData.description}

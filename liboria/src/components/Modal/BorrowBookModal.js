@@ -2,9 +2,8 @@ import React, { useEffect } from "react";
 import { Modal, Form, Input, DatePicker, Row, Col, Button, Select } from "antd";
 import dayjs from "dayjs";
 
-const { Option } = Select;
-
 const BorrowBookModal = ({ open, onClose, onSubmit, initialValues }) => {
+  const { Option } = Select;
   const [form] = Form.useForm();
   const colProps = { xs: 24, md: 12 };
 

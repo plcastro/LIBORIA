@@ -1,7 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { Modal, Form, Input, Button, Space, message, Select } from "antd";
 const { Option } = Select;
-const StaffModal = ({ isVisible, mode, onClose, onSave, selectedStaff }) => {
+const StaffModal = ({
+  isVisible,
+  mode,
+  onClose,
+  onSave,
+  selectedStaff,
+  currentUserId,
+}) => {
   const [form] = Form.useForm();
   const isEditMode = mode === "edit";
   const isAddMode = mode === "add";
@@ -80,6 +87,7 @@ const StaffModal = ({ isVisible, mode, onClose, onSave, selectedStaff }) => {
       form.resetFields();
       setPreviewData(null);
       setIsPreviewConfirmOpen(false);
+      window.location.reload();
       onClose();
     } catch (err) {
       console.error(err);
@@ -260,27 +268,34 @@ const StaffModal = ({ isVisible, mode, onClose, onSave, selectedStaff }) => {
               Are you sure you want to delete{" "}
               <strong>{selectedStaff?.name}</strong>?
             </p>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                gap: 10,
-                marginTop: 20,
-              }}
-            >
-              <Button onClick={onClose}>No</Button>
-              <Button
-                type="primary"
-                onClick={handleOpenConfirmDelete}
+
+            {selectedStaff?.userid === currentUserId ? (
+              <p style={{ color: "red" }}>
+                You cannot delete the account you are currently logged in with.
+              </p>
+            ) : (
+              <div
                 style={{
-                  backgroundColor: "#000",
-                  color: "#fff",
-                  border: "none",
+                  display: "flex",
+                  justifyContent: "center",
+                  gap: 10,
+                  marginTop: 20,
                 }}
               >
-                Yes, Delete
-              </Button>
-            </div>
+                <Button onClick={onClose}>No</Button>
+                <Button
+                  type="primary"
+                  onClick={handleOpenConfirmDelete}
+                  style={{
+                    backgroundColor: "#000",
+                    color: "#fff",
+                    border: "none",
+                  }}
+                >
+                  Yes, Delete
+                </Button>
+              </div>
+            )}
           </>
         )}
       </Modal>
@@ -302,9 +317,6 @@ const StaffModal = ({ isVisible, mode, onClose, onSave, selectedStaff }) => {
             </p>
             <p>
               <strong>Username:</strong> {previewData.username}
-            </p>
-            <p>
-              <strong>Password:</strong> {previewData.password}
             </p>
             <div
               style={{

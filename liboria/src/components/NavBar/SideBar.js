@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Menu, Button } from "antd";
+import { Menu, Button, message } from "antd";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   BookOutlined,
@@ -15,9 +15,42 @@ import ReturnIcon from "../../assets/return.png";
 const Sidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [current, setCurrent] = useState("");
-  const user = JSON.parse(localStorage.getItem("currentUser")) || {};
 
+  const [current, setCurrent] = useState("");
+  const [user, setUser] = useState({});
+
+  const currentUserId = JSON.parse(localStorage.getItem("currentUser"))?.userid;
+
+  // Fetch user info based on user ID
+  const fetchUserInfo = async (userid) => {
+    if (!userid) return;
+    try {
+      const res = await fetch(`http://localhost:8000/api/users/${userid}`);
+      if (!res.ok) throw new Error("Failed to fetch user info");
+      const data = await res.json();
+      setUser(data);
+    } catch (err) {
+      console.error(err);
+      message.error("Failed to load user info");
+    }
+  };
+
+  useEffect(() => {
+    fetchUserInfo(currentUserId);
+
+    // Listen for user updates
+    const handleUserUpdate = (e) => {
+      setUser(e.detail);
+    };
+
+    window.addEventListener("userUpdated", handleUserUpdate);
+
+    return () => {
+      window.removeEventListener("userUpdated", handleUserUpdate);
+    };
+  }, [currentUserId]);
+
+  // Update selected menu based on path
   useEffect(() => {
     if (location.pathname.includes("/dashboard/view/borrow")) setCurrent("1");
     else if (location.pathname.includes("/dashboard/view/return"))
@@ -78,13 +111,7 @@ const Sidebar = () => {
             style={{ maxWidth: "200px", width: "100%" }}
           />
           <h3 style={{ margin: "20px 0 10px" }}>{user.name}</h3>
-          <p
-            style={{
-              color: "#ccc",
-              margin: "10px 0",
-              fontSize: "14px",
-            }}
-          >
+          <p style={{ color: "#ccc", margin: "10px 0", fontSize: "14px" }}>
             {user.account_type}
           </p>
         </div>
@@ -93,7 +120,7 @@ const Sidebar = () => {
           theme="dark"
           mode="inline"
           selectedKeys={[current]}
-          defaultOpenKeys={["sub1"]}
+          defaultOpenKeys={["sub1", "sub2"]}
           onClick={onClickMenu}
           style={{ flex: 1, borderInline: "none", backgroundColor: "#001529" }}
           items={[

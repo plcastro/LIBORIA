@@ -32,4 +32,7 @@ router.post("/verify-reset-token", userController.verifyResetToken);
 // RESET PASSWORD - Set new password using reset token
 router.post("/reset-password", userController.resetPassword);
 
+// GET borrowing records
+router.get("/records", userController.getBorrowingRecords);
+
 module.exports = router;
