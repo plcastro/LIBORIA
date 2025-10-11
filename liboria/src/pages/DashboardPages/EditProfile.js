@@ -1,140 +1,209 @@
-import React, { useEffect } from "react";
-import { Button, Form, Input, Select, Space, Modal, message } from "antd";
+import React, { useState, useEffect } from "react";
+import { SearchOutlined, PlusOutlined } from "@ant-design/icons";
+import { Input, Row, Col, Button, Table, message } from "antd";
+import AddBookModal from "../../components/Modal/AddBookModal";
+import EditBookModal from "../../components/Modal/EditBookModal";
 
-const SubmitButton = ({ form, children }) => {
-  const [submittable, setSubmittable] = React.useState(false);
-  const values = Form.useWatch([], form);
-  const user = JSON.parse(localStorage.getItem("currentUser")) || {};
+const DisplayBook = () => {
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState("");
+  const [books, setBooks] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [selectedBook, setSelectedBook] = useState(null);
 
-  React.useEffect(() => {
-    form
-      .validateFields({ validateOnly: true })
-      .then(() => setSubmittable(true))
-      .catch(() => setSubmittable(false));
-  }, [form, values]);
-
-  return (
-    <Button
-      type="primary"
-      htmlType="submit"
-      disabled={!submittable}
-      style={{ backgroundColor: "#000", color: "#fff", width: "200px" }}
-    >
-      {children}
-    </Button>
-  );
-};
-
-const EditProfile = ({ initialData, isVisible, onClose, onSave }) => {
-  const [form] = Form.useForm();
-
-  useEffect(() => {
-    if (initialData) {
-      form.setFieldsValue({
-        username: initialData.username,
-        fullname: initialData.fullname,
-        email: initialData.email,
-        role: initialData.role,
-      });
+  // Fetch all books
+  const fetchBooks = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch("http://localhost:8000/api/books");
+      if (!response.ok) throw new Error("Failed to fetch books");
+      const data = await response.json();
+      setBooks(data);
+    } catch (error) {
+      console.error(error);
+      message.error("Failed to load books");
+    } finally {
+      setLoading(false);
     }
-  }, [initialData, form]);
-
-  const onFinish = (values) => {
-    const { password, confirmPassword } = values;
-    if (password !== confirmPassword) {
-      message.error("Password and Confirm password do not match!");
-      return;
-    }
-    onSave(values);
-    message.success("Profile updated successfully!");
   };
 
+  // Search books
+  const onSearch = async () => {
+    if (!searchValue.trim()) return fetchBooks();
+
+    try {
+      const response = await fetch(
+        `http://localhost:8000/api/books/search?q=${encodeURIComponent(
+          searchValue
+        )}`
+      );
+      if (!response.ok) throw new Error("Search failed");
+      const data = await response.json();
+      setBooks(data);
+      message.success(`Found ${data.length} books matching "${searchValue}"`);
+    } catch (error) {
+      console.error(error);
+      message.error("Search failed");
+    }
+  };
+
+  // Delete a book
+  const deleteBook = async (bookId) => {
+    try {
+      const response = await fetch(
+        `http://localhost:8000/api/books/${bookId}`,
+        { method: "DELETE" }
+      );
+      if (response.ok) {
+        message.success("Book deleted successfully");
+        fetchBooks();
+      } else {
+        const data = await response.json();
+        message.error(data.error || "Failed to delete book");
+      }
+    } catch (error) {
+      console.error(error);
+      message.error("Failed to delete book");
+    }
+  };
+
+  // Handle add and edit success
+  const handleBookUpdated = () => {
+    fetchBooks();
+    setEditModalOpen(false);
+  };
+  const handleBookCreated = () => {
+    fetchBooks();
+    setModalOpen(false);
+  };
+
+  useEffect(() => {
+    fetchBooks();
+  }, []);
+
+  const handleBorrow = (record) => {
+    message.info(`Borrow clicked for: ${record.title}`);
+  };
+
+  const handleEdit = (record) => {
+    setSelectedBook(record);
+    setEditModalOpen(true);
+  };
+
+  const columns = [
+    {
+      title: "Image",
+      dataIndex: "image",
+      key: "image",
+      render: (text, record) => (
+        <img
+          src={record.image ? record.image : "https://via.placeholder.com/60"}
+          alt={record.title}
+          style={{
+            width: "60px",
+            height: "80px",
+            objectFit: "cover",
+            borderRadius: "4px",
+          }}
+        />
+      ),
+    },
+    { title: "Author Name", dataIndex: "author_name", key: "author_name" },
+    { title: "Book Title", dataIndex: "title", key: "title" },
+    { title: "Category", dataIndex: "category", key: "category" },
+    { title: "Total Copies", dataIndex: "total_copies", key: "total_copies" },
+    {
+      title: "Available Copies",
+      key: "available_copies",
+      render: (_, record) => <span>{record.available_copies} copies</span>,
+    },
+    {
+      title: "Action",
+      key: "action",
+      render: (_, record) => (
+        <div style={{ display: "flex", gap: "12px" }}>
+          <a onClick={() => handleBorrow(record)} style={{ color: "#3a5eff" }}>
+            Borrow
+          </a>
+          <a onClick={() => handleEdit(record)} style={{ color: "#3aff4a" }}>
+            Edit
+          </a>
+          <a onClick={() => deleteBook(record.id)} style={{ color: "#ff3a3a" }}>
+            Delete
+          </a>
+        </div>
+      ),
+    },
+  ];
+
   return (
-    <Modal
-      title="Edit Profile Information"
-      open={isVisible}
-      onCancel={onClose}
-      footer={null}
-    >
-      <Form
-        form={form}
-        name="editProfileForm"
-        layout="vertical"
-        onFinish={onFinish}
-        autoComplete="off"
+    <>
+      <Row
+        align="middle"
+        justify="space-between"
+        style={{
+          marginBottom: "15px",
+        }}
       >
-        <Form.Item
-          name="username"
-          label="Username"
-          rules={[{ required: true, message: "Please input your Username!" }]}
-        >
-          <Input />
-        </Form.Item>
-        <Form.Item
-          name="fullname"
-          label="Name"
-          rules={[{ required: true, message: "Please input your Full Name!" }]}
-        >
-          <Input />
-        </Form.Item>
-        <Form.Item
-          name="email"
-          label="Email"
-          rules={[
-            {
-              required: true,
-              type: "email",
-              message: "Please input a valid Email!",
-            },
-          ]}
-        >
-          <Input />
-        </Form.Item>
-        <Form.Item
-          name="role"
-          label="Role"
-          rules={[{ required: true, message: "Please select a Role!" }]}
-        >
-          <Select>
-            <Select.Option value="Admin">Admin</Select.Option>
-            <Select.Option value="Librarian">Librarian</Select.Option>
-          </Select>
-        </Form.Item>
-        <Form.Item
-          name="password"
-          label="New Password"
-          rules={[
-            { required: true, message: "Please enter your new password" },
-          ]}
-        >
-          <Input.Password minLength={8} />
-        </Form.Item>
+        <Col xs={24} sm={12} md={10}>
+          <Input
+            prefix={<SearchOutlined />}
+            placeholder="Search book"
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.target.value)}
+            onPressEnter={onSearch}
+            style={{ height: "40px" }}
+          />
+        </Col>
 
-        <Form.Item
-          name="confirmPassword"
-          label="Confirm New Password"
-          rules={[
-            { required: true, message: "Please re-enter your new password" },
-          ]}
-        >
-          <Input.Password minLength={8} />
-        </Form.Item>
+        <Col>
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            style={{
+              backgroundColor: "#1600a3",
+              border: "none",
+              height: "40px",
+              fontWeight: 500,
+            }}
+            onClick={() => setModalOpen(true)}
+          >
+            Add Book
+          </Button>
+        </Col>
+      </Row>
 
-        <Form.Item>
-          <Space align="baseline">
-            <SubmitButton form={form}>Save Changes</SubmitButton>
-            <Button
-              onClick={onClose}
-              htmlType="button"
-              style={{ width: "200px" }}
-            >
-              Cancel
-            </Button>
-          </Space>
-        </Form.Item>
-      </Form>
-    </Modal>
+      <h2 style={{ fontSize: "clamp(24px, 4vw, 40px)" }}>Books</h2>
+
+      <Table
+        columns={columns}
+        dataSource={books}
+        rowKey="id"
+        loading={loading}
+        pagination={false}
+        scroll={{
+          y: books.length > 10 ? 650 : undefined,
+          x: "max-content",
+        }}
+      />
+
+      <AddBookModal
+        modal2Open={modalOpen}
+        setModal2Open={setModalOpen}
+        onBookCreated={handleBookCreated}
+      />
+
+      {selectedBook && (
+        <EditBookModal
+          modalOpen={editModalOpen}
+          setModalOpen={setEditModalOpen}
+          book={selectedBook}
+          onBookUpdated={handleBookUpdated}
+        />
+      )}
+    </>
   );
 };
 
-export default EditProfile;
+export default DisplayBook;

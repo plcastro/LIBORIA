@@ -41,7 +41,6 @@ const DashboardLayout = () => {
 
   // Map URL paths to page titles
   const pageMap = {
-    "/dashboard/view/books": "Show Books",
     "/dashboard/view/borrow": "Borrow Books",
     "/dashboard/view/return": "Return Books",
     "/dashboard/view/records": "View Records",

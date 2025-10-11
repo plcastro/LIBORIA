@@ -19,17 +19,15 @@ const Sidebar = () => {
   const user = JSON.parse(localStorage.getItem("currentUser")) || {};
 
   useEffect(() => {
-    if (location.pathname.includes("/dashboard/view/books")) setCurrent("1");
-    else if (location.pathname.includes("/dashboard/view/borrow"))
-      setCurrent("2");
+    if (location.pathname.includes("/dashboard/view/borrow")) setCurrent("1");
     else if (location.pathname.includes("/dashboard/view/return"))
-      setCurrent("3");
+      setCurrent("2");
     else if (location.pathname.includes("/dashboard/view/records"))
-      setCurrent("4");
+      setCurrent("3");
     else if (location.pathname.includes("/dashboard/view/staff"))
-      setCurrent("5");
+      setCurrent("4");
     else if (location.pathname.includes("/dashboard/view/profile"))
-      setCurrent("6");
+      setCurrent("5");
     else setCurrent("");
   }, [location.pathname]);
 
@@ -37,21 +35,18 @@ const Sidebar = () => {
     setCurrent(e.key);
     switch (e.key) {
       case "1":
-        navigate("/dashboard/view/books");
-        break;
-      case "2":
         navigate("/dashboard/view/borrow");
         break;
-      case "3":
+      case "2":
         navigate("/dashboard/view/return");
         break;
-      case "4":
+      case "3":
         navigate("/dashboard/view/records");
         break;
-      case "5":
+      case "4":
         navigate("/dashboard/view/staff");
         break;
-      case "6":
+      case "5":
         navigate("/dashboard/view/profile");
         break;
       default:
@@ -109,7 +104,7 @@ const Sidebar = () => {
               children: [
                 {
                   key: "1",
-                  label: "Books",
+                  label: "Borrow Books",
                   icon: (
                     <img
                       src={BookIcon}
@@ -118,19 +113,9 @@ const Sidebar = () => {
                     />
                   ),
                 },
+
                 {
                   key: "2",
-                  label: "Borrow Book",
-                  icon: (
-                    <img
-                      src={ReturnIcon}
-                      alt="Borrow"
-                      style={{ width: 18, height: 18 }}
-                    />
-                  ),
-                },
-                {
-                  key: "3",
                   label: "Return Book",
                   icon: (
                     <img
@@ -141,7 +126,7 @@ const Sidebar = () => {
                   ),
                 },
                 {
-                  key: "4",
+                  key: "3",
                   label: "View Records",
                   icon: <UnorderedListOutlined />,
                 },
@@ -153,7 +138,7 @@ const Sidebar = () => {
               icon: <UserOutlined />,
               children: [
                 {
-                  key: "5",
+                  key: "4",
                   label: "View Staff",
                   icon: <UnorderedListOutlined />,
                 },
