@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Modal, Form, Input, Button, Space, message } from "antd";
-
+import { Modal, Form, Input, Button, Space, message, Select } from "antd";
+const { Option } = Select;
 const StaffModal = ({ isVisible, mode, onClose, onSave, selectedStaff }) => {
   const [form] = Form.useForm();
   const isEditMode = mode === "edit";
@@ -17,8 +17,11 @@ const StaffModal = ({ isVisible, mode, onClose, onSave, selectedStaff }) => {
   useEffect(() => {
     if (isEditMode && selectedStaff) {
       form.setFieldsValue({
+        userid: selectedStaff.userid,
         name: selectedStaff.name,
         email: selectedStaff.email,
+        username: selectedStaff.username,
+        account_type: selectedStaff.account_type,
       });
     } else {
       form.resetFields();
@@ -42,12 +45,46 @@ const StaffModal = ({ isVisible, mode, onClose, onSave, selectedStaff }) => {
     }
   };
 
-  const finalizeSave = (dataToSave) => {
-    onSave(dataToSave);
-    form.resetFields();
-    setPreviewData(null);
-    setIsPreviewConfirmOpen(false);
-    onClose();
+  const finalizeSave = async (dataToSave) => {
+    try {
+      if (isAddMode) {
+        const res = await fetch("http://localhost:8000/api/users", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(dataToSave),
+        });
+
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.message || "Failed to add staff.");
+
+        message.success("Staff added successfully!");
+        onSave(result); // refresh list
+      } else if (isEditMode) {
+        const res = await fetch(
+          `http://localhost:8000/api/users/${selectedStaff.userid}`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(dataToSave),
+          }
+        );
+
+        const result = await res.json();
+        if (!res.ok)
+          throw new Error(result.message || "Failed to update staff.");
+
+        message.success("Staff updated successfully!");
+        onSave(result);
+      }
+
+      form.resetFields();
+      setPreviewData(null);
+      setIsPreviewConfirmOpen(false);
+      onClose();
+    } catch (err) {
+      console.error(err);
+      message.error(err.message || "Something went wrong.");
+    }
   };
 
   const handleCancelClick = () => {
@@ -110,7 +147,7 @@ const StaffModal = ({ isVisible, mode, onClose, onSave, selectedStaff }) => {
               name="name"
               label="Name"
               rules={[
-                { required: true, message: "Please input the name!" },
+                { required: true, message: "Please input name!" },
                 {
                   pattern: /^[A-Za-z\s]+$/,
                   message: "Name should only contain letters and spaces.",
@@ -118,7 +155,7 @@ const StaffModal = ({ isVisible, mode, onClose, onSave, selectedStaff }) => {
               ]}
             >
               <Input
-                placeholder="Enter staff name"
+                placeholder="Enter name"
                 onChange={(e) => {
                   const onlyLetters = e.target.value.replace(
                     /[^A-Za-z\s]/g,
@@ -128,7 +165,6 @@ const StaffModal = ({ isVisible, mode, onClose, onSave, selectedStaff }) => {
                 }}
               />
             </Form.Item>
-
             <Form.Item
               name="email"
               label="Email"
@@ -141,6 +177,64 @@ const StaffModal = ({ isVisible, mode, onClose, onSave, selectedStaff }) => {
               ]}
             >
               <Input placeholder="Enter staff email" />
+            </Form.Item>
+            <Form.Item
+              name="username"
+              label="Username"
+              rules={[
+                { required: true, message: "Please input a username!" },
+                {
+                  pattern: /^[a-zA-Z0-9_]+$/,
+                  message:
+                    "Username can only contain letters, numbers, and underscores.",
+                },
+              ]}
+            >
+              <Input placeholder="Enter username" min={8} />
+            </Form.Item>
+            {isAddMode && (
+              <>
+                <Form.Item
+                  name="password"
+                  label="Password"
+                  rules={[
+                    { required: true, message: "Please input password!" },
+                  ]}
+                >
+                  <Input.Password placeholder="Enter password" />
+                </Form.Item>
+
+                <Form.Item
+                  name="confirmpassword"
+                  label="Confirm Password"
+                  dependencies={["password"]}
+                  rules={[
+                    { required: true, message: "Please re-enter password!" },
+                    ({ getFieldValue }) => ({
+                      validator(_, value) {
+                        if (!value || getFieldValue("password") === value) {
+                          return Promise.resolve();
+                        }
+                        return Promise.reject("Passwords do not match!");
+                      },
+                    }),
+                  ]}
+                >
+                  <Input.Password placeholder="Re-enter password" />
+                </Form.Item>
+              </>
+            )}
+            <Form.Item
+              name="account_type"
+              label="Role"
+              rules={[
+                { required: true, message: "Please select user's role!" },
+              ]}
+            >
+              <Select placeholder="Select user's role:">
+                <Option value="Librarian">Librarian</Option>
+                <Option value="Admin">Admin</Option>
+              </Select>
             </Form.Item>
 
             <Form.Item>
@@ -205,6 +299,12 @@ const StaffModal = ({ isVisible, mode, onClose, onSave, selectedStaff }) => {
             </p>
             <p>
               <strong>Email:</strong> {previewData.email}
+            </p>
+            <p>
+              <strong>Username:</strong> {previewData.username}
+            </p>
+            <p>
+              <strong>Password:</strong> {previewData.password}
             </p>
             <div
               style={{

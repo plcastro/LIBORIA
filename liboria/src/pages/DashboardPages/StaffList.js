@@ -7,7 +7,9 @@ const StaffList = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
+  const storedUser = JSON.parse(localStorage.getItem("currentUser"));
+  const currentUserName = storedUser?.name;
+  const currentUser = localStorage.getItem("name");
   const loadAllStaff = async () => {
     setLoading(true);
     setError("");
@@ -45,15 +47,31 @@ const StaffList = () => {
       key: (data.length + 1).toString(),
       name: values.name,
       email: values.email,
+      username: values.username,
+      password: values.password,
+      account_type: values.account_type,
     };
     setData((prev) => [...prev, newStaff]);
     message.success("New staff added successfully!");
   };
 
-  const handleEdit = (record) => {
-    setModalMode("edit");
-    setSelectedStaff(record);
-    setModalVisible(true);
+  const handleEdit = async (record) => {
+    try {
+      const res = await fetch(
+        `http://localhost:8000/api/users/` + record.userid
+      );
+      const userData = await res.json();
+      if (res.ok) {
+        setSelectedStaff(userData);
+        setModalMode("edit");
+        setModalVisible(true);
+      } else {
+        message.error("Failed to load user details");
+      }
+    } catch (err) {
+      console.error(err);
+      message.error("Network error");
+    }
   };
 
   const handleSaveEdit = (updatedValues) => {
@@ -90,6 +108,7 @@ const StaffList = () => {
     { title: "User ID", dataIndex: "userid", key: "userid" },
     { title: "Name", dataIndex: "name", key: "name" },
     { title: "Email", dataIndex: "email", key: "email" },
+    { title: "Role", dataIndex: "account_type", key: "account_type" },
     {
       title: "Action",
       key: "action",
@@ -115,13 +134,17 @@ const StaffList = () => {
             danger
             size="small"
             icon={<DeleteOutlined />}
+            disabled={record.name === currentUserName}
             onClick={() => handleDelete(record)}
             style={{
-              backgroundColor: "#ff4d4f",
+              backgroundColor:
+                record.name === currentUserName ? "#ccc" : "#ff4d4f",
               height: "30px",
               color: "white",
               border: "none",
               maxWidth: "100px",
+              cursor:
+                record.name === currentUserName ? "not-allowed" : "pointer",
             }}
           >
             Delete
