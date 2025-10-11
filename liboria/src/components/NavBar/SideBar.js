@@ -142,7 +142,7 @@ const Sidebar = () => {
                   label: "View Staff",
                   icon: <UnorderedListOutlined />,
                 },
-                { key: "6", label: "My Profile", icon: <ContactsOutlined /> },
+                { key: "5", label: "My Profile", icon: <ContactsOutlined /> },
               ],
             },
           ]}
