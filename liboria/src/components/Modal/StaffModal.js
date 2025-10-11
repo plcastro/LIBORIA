@@ -19,6 +19,9 @@ const StaffModal = ({
   const [isPreviewConfirmOpen, setIsPreviewConfirmOpen] = useState(false);
   const [previewData, setPreviewData] = useState(null);
   const [submittable, setSubmittable] = useState(false);
+  const loggedInUserId = JSON.parse(
+    localStorage.getItem("currentUser")
+  )?.userid;
   const values = Form.useWatch([], form);
 
   useEffect(() => {
@@ -62,9 +65,13 @@ const StaffModal = ({
         });
 
         const result = await res.json();
-        if (!res.ok) throw new Error(result.message || "Failed to add staff.");
+        if (!res.ok) {
+          alert(result.message || "Email/Username already exists");
+          return;
+        }
 
         message.success("Staff added successfully!");
+        alert("Staff added successfully!.");
         onSave(result); // refresh list
       } else if (isEditMode) {
         const res = await fetch(
@@ -77,9 +84,10 @@ const StaffModal = ({
         );
 
         const result = await res.json();
-        if (!res.ok)
-          throw new Error(result.message || "Failed to update staff.");
-
+        if (!res.ok) {
+          alert(result.message || "Email/Username already exists");
+          return;
+        }
         message.success("Staff updated successfully!");
         onSave(result);
       }
@@ -117,12 +125,36 @@ const StaffModal = ({
   const handleCancelCancel = () => setIsCancelConfirmOpen(false);
 
   const handleOpenConfirmDelete = () => setIsConfirmDeleteOpen(true);
-  const handleConfirmDelete = () => {
-    onSave(selectedStaff);
-    setIsConfirmDeleteOpen(false);
-    form.resetFields();
-    onClose();
+
+  const handleConfirmDelete = async () => {
+    try {
+      if (!selectedStaff || selectedStaff.userid === currentUserId) {
+        message.error("You cannot delete your own account.");
+        setIsConfirmDeleteOpen(false);
+        return;
+      }
+
+      const res = await fetch(
+        `http://localhost:8000/api/users/${selectedStaff.userid}`,
+        { method: "DELETE" }
+      );
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message || "Failed to delete user.");
+      }
+
+      message.success("User deleted successfully!");
+      onSave();
+      setIsConfirmDeleteOpen(false);
+      form.resetFields();
+      onClose();
+    } catch (err) {
+      console.error(err);
+      message.error(err.message || "Something went wrong.");
+    }
   };
+
   const handleCancelDelete = () => setIsConfirmDeleteOpen(false);
 
   const handleXClose = () => {
@@ -269,32 +301,35 @@ const StaffModal = ({
               <strong>{selectedStaff?.name}</strong>?
             </p>
 
-            {selectedStaff?.userid === currentUserId ? (
-              <p style={{ color: "red" }}>
-                You cannot delete the account you are currently logged in with.
-              </p>
-            ) : (
-              <div
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                gap: 10,
+                marginTop: 20,
+              }}
+            >
+              <Button onClick={onClose} style={{ width: 232 }}>
+                No
+              </Button>
+              <Button
+                type="primary"
+                onClick={handleOpenConfirmDelete}
                 style={{
-                  display: "flex",
-                  justifyContent: "center",
-                  gap: 10,
-                  marginTop: 20,
+                  backgroundColor: "#000",
+                  color: "#fff",
+                  border: "none",
                 }}
+                disabled={selectedStaff?.userid === loggedInUserId} // disable if same user
               >
-                <Button onClick={onClose}>No</Button>
-                <Button
-                  type="primary"
-                  onClick={handleOpenConfirmDelete}
-                  style={{
-                    backgroundColor: "#000",
-                    color: "#fff",
-                    border: "none",
-                  }}
-                >
-                  Yes, Delete
-                </Button>
-              </div>
+                Yes, Delete
+              </Button>
+            </div>
+
+            {selectedStaff?.userid === loggedInUserId && (
+              <p style={{ color: "red", marginTop: 10 }}>
+                You cannot delete your own account while logged in.
+              </p>
             )}
           </>
         )}
@@ -317,6 +352,9 @@ const StaffModal = ({
             </p>
             <p>
               <strong>Username:</strong> {previewData.username}
+            </p>
+            <p>
+              <strong>Role:</strong> {previewData.account_type}
             </p>
             <div
               style={{

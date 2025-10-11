@@ -1,35 +1,72 @@
-import React, { useEffect } from "react";
-import { Modal, Form, Input, InputNumber, message } from "antd";
-
+import React, { useState, useEffect } from "react";
+import {
+  Modal,
+  Input,
+  InputNumber,
+  message,
+  Form,
+  DatePicker,
+  Row,
+  Col,
+} from "antd";
+import dayjs from "dayjs";
 const EditBookModal = ({ modalOpen, setModalOpen, book, onBookUpdated }) => {
   const [form] = Form.useForm();
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (book) {
-      form.setFieldsValue(book);
+      form.setFieldsValue({
+        title: book.title,
+        author_name: book.author_name,
+        category: book.category,
+        published_date: book.published_date ? dayjs(book.published_date) : null,
+        total_copies: book.total_copies,
+        available_copies: book.available_copies,
+        description: book.description,
+        image: book.image,
+      });
     }
   }, [book, form]);
 
-  const handleSave = async () => {
+  const handleOk = async () => {
     try {
       const values = await form.validateFields();
+      setLoading(true);
 
-      const response = await fetch(
-        `http://localhost:8000/api/books/${book.id}`,
+      const payload = {
+        ...values,
+        published_date: values.published_date
+          ? values.published_date.format("YYYY-MM-DD")
+          : null,
+      };
+
+      const res = await fetch(
+        `http://localhost:8000/api/books/${book.book_id}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(values),
+          body: JSON.stringify(payload),
         }
       );
 
-      if (!response.ok) throw new Error("Failed to update book");
+      const data = await res.json();
 
-      message.success("Book updated successfully");
-      onBookUpdated();
-    } catch (error) {
-      console.error(error);
+      if (!res.ok) {
+        alert(data.error);
+        return;
+      }
+
+      message.success(data.message);
+
+      if (onBookUpdated) onBookUpdated({ ...book, ...payload });
+      setModalOpen(false);
+      window.location.reload();
+    } catch (err) {
+      console.error(err);
       message.error("Failed to update book");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -38,33 +75,102 @@ const EditBookModal = ({ modalOpen, setModalOpen, book, onBookUpdated }) => {
       title="Edit Book"
       open={modalOpen}
       onCancel={() => setModalOpen(false)}
-      onOk={handleSave}
+      onOk={handleOk}
       okText="Save"
+      confirmLoading={loading}
+      width={600}
+      centered
+      initialValues={{ total_copies: 1 }}
     >
-      <Form layout="vertical" form={form}>
-        <Form.Item name="title" label="Book Title" rules={[{ required: true }]}>
-          <Input />
-        </Form.Item>
-        <Form.Item
-          name="author_name"
-          label="Author Name"
-          rules={[{ required: true }]}
-        >
-          <Input />
-        </Form.Item>
-        <Form.Item name="category" label="Category">
-          <Input />
-        </Form.Item>
-        <Form.Item
-          name="total_copies"
-          label="Total Copies"
-          rules={[{ required: true }]}
-        >
-          <InputNumber min={1} style={{ width: "100%" }} />
-        </Form.Item>
-        <Form.Item name="image" label="Image URL">
-          <Input />
-        </Form.Item>
+      <Form form={form} layout="vertical">
+        <Row gutter={16}>
+          <Col span={12}>
+            <Form.Item label="Image URL" name="image">
+              <Input />
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item label="Title" name="title" rules={[{ required: true }]}>
+              <Input />
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item
+              label="Author Name"
+              name="author_name"
+              rules={[{ required: true }]}
+            >
+              <Input />
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item
+              label="Category"
+              name="category"
+              rules={[{ required: true }]}
+            >
+              <Input />
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item label="Published Date" name="published_date">
+              <DatePicker style={{ width: "100%" }} />
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item
+              label="Total Copies"
+              name="total_copies"
+              rules={[
+                { required: true },
+                ({ getFieldValue }) => ({
+                  validator(_, value) {
+                    const available = getFieldValue("available_copies") || 0;
+                    if (value >= available) {
+                      return Promise.resolve();
+                    }
+                    return Promise.reject(
+                      new Error(
+                        "Total copies cannot be less than available copies"
+                      )
+                    );
+                  },
+                }),
+              ]}
+            >
+              <InputNumber min={1} style={{ width: "100%" }} />
+            </Form.Item>
+          </Col>
+
+          <Col span={12}>
+            <Form.Item
+              label="Available Copies"
+              name="available_copies"
+              rules={[
+                { required: true },
+                ({ getFieldValue }) => ({
+                  validator(_, value) {
+                    const total = getFieldValue("total_copies") || 0;
+                    if (value <= total) {
+                      return Promise.resolve();
+                    }
+                    return Promise.reject(
+                      new Error("Available copies cannot exceed total copies")
+                    );
+                  },
+                }),
+              ]}
+            >
+              <InputNumber min={0} style={{ width: "100%" }} />
+            </Form.Item>
+          </Col>
+
+          <Col span={24}>
+            <Form.Item label="Description" name="description">
+              <Input.TextArea rows={3} />
+            </Form.Item>
+          </Col>
+        </Row>
       </Form>
     </Modal>
   );

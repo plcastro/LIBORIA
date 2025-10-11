@@ -110,18 +110,17 @@ const AddBookModal = ({ modal2Open, setModal2Open, onBookCreated }) => {
           form.resetFields();
           setModal2Open(false);
         }}
-        width={800}
+        width={600}
       >
         <Form
           form={form}
-          labelCol={{ span: 8 }}
-          wrapperCol={{ span: 15 }}
-          layout="horizontal"
+          layout="vertical"
           labelAlign="left"
           initialValues={{ total_copies: 1 }}
         >
           <Row gutter={24}>
-            <Col span={16}>
+            {/* Left Column */}
+            <Col xs={24} sm={12}>
               <Form.Item
                 label="Image"
                 name="image"
@@ -167,6 +166,10 @@ const AddBookModal = ({ modal2Open, setModal2Open, onBookCreated }) => {
                   <Option value="Textbooks">Textbooks</Option>
                 </Select>
               </Form.Item>
+            </Col>
+
+            {/* Right Column */}
+            <Col xs={24} sm={12}>
               <Form.Item
                 label="Published Date"
                 name="published_date"
@@ -176,13 +179,7 @@ const AddBookModal = ({ modal2Open, setModal2Open, onBookCreated }) => {
               >
                 <DatePicker style={{ width: "100%" }} />
               </Form.Item>
-              <Form.Item
-                label="Total Copies"
-                name="total_copies"
-                rules={[
-                  { required: true, message: "Please enter total copies" },
-                ]}
-              >
+              <Form.Item label="Total Copies" name="total_copies">
                 <InputNumber min={1} style={{ width: "100%" }} />
               </Form.Item>
               <Form.Item label="Book Description" name="description">

@@ -7,9 +7,9 @@ const StaffList = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const storedUser = JSON.parse(localStorage.getItem("currentUser"));
-  const currentUserId = storedUser?.userid;
 
+  // Get current logged-in user
+  const currentUserId = JSON.parse(localStorage.getItem("currentUser"))?.userid;
   const loadAllStaff = async () => {
     setLoading(true);
     setError("");
@@ -37,7 +37,7 @@ const StaffList = () => {
   const [modalMode, setModalMode] = useState("add");
   const [selectedStaff, setSelectedStaff] = useState(null);
 
-  const handleAddStaff = () => {
+  const handleAddStaff = async () => {
     setModalMode("add");
     setSelectedStaff(null);
     setModalVisible(true);
@@ -103,6 +103,7 @@ const StaffList = () => {
     } else if (modalMode === "delete") {
       handleConfirmDelete(values);
     }
+    loadAllStaff();
   };
 
   const columns = [
@@ -115,44 +116,46 @@ const StaffList = () => {
       title: "Action",
       key: "action",
       width: 150,
-      render: (_, record) => (
-        <Space size="small">
-          <Button
-            type="primary"
-            size="small"
-            icon={<EditOutlined />}
-            onClick={() => handleEdit(record)}
-            style={{
-              backgroundColor: "black",
-              height: "30px",
-              color: "white",
-              border: "none",
-              maxWidth: "100px",
-            }}
-          >
-            Edit
-          </Button>
-          <Button
-            danger
-            size="small"
-            icon={<DeleteOutlined />}
-            disabled={record.userid === currentUserId}
-            onClick={() => handleDelete(record)}
-            style={{
-              backgroundColor:
-                record.userid === currentUserId ? "#ccc" : "#ff4d4f",
-              height: "30px",
-              color: "white",
-              border: "none",
-              maxWidth: "100px",
-              cursor:
-                record.userid === currentUserId ? "not-allowed" : "pointer",
-            }}
-          >
-            Delete
-          </Button>
-        </Space>
-      ),
+      render: (_, record) => {
+        const isCurrentUser = record.userid === currentUserId; // disable if logged-in user
+        return (
+          <Space size="small">
+            <Button
+              type="primary"
+              size="small"
+              icon={<EditOutlined />}
+              onClick={() => handleEdit(record)}
+              style={{
+                backgroundColor: "black",
+                height: "30px",
+                color: "white",
+                border: "none",
+                maxWidth: "100px",
+              }}
+            >
+              Edit
+            </Button>
+
+            <Button
+              danger
+              size="small"
+              icon={<DeleteOutlined />}
+              disabled={isCurrentUser} // disable for logged-in user
+              onClick={() => handleDelete(record)}
+              style={{
+                backgroundColor: isCurrentUser ? "#ccc" : "#ff4d4f",
+                height: "30px",
+                color: "white",
+                border: "none",
+                maxWidth: "100px",
+                cursor: isCurrentUser ? "not-allowed" : "pointer",
+              }}
+            >
+              Delete
+            </Button>
+          </Space>
+        );
+      },
     },
   ];
 
@@ -192,6 +195,7 @@ const StaffList = () => {
         onClose={() => setModalVisible(false)}
         onSave={handleSave}
         selectedStaff={selectedStaff}
+        currentUserId={currentUserId}
       />
     </div>
   );

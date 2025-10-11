@@ -98,7 +98,7 @@ const BorrowBookModal = ({ open, onClose, onSubmit, initialValues }) => {
         <Row gutter={[24, 8]}>
           <Col {...colProps}>
             <Form.Item name="name" label="Name" rules={[{ required: true }]}>
-              <Input />
+              <Input autoComplete />
             </Form.Item>
           </Col>
 

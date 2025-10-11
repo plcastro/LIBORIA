@@ -40,7 +40,6 @@ export default function App() {
           <Route path="view/records" element={<ViewRecords />} />
           <Route path="view/staff" element={<StaffList />} />
           <Route path="view/profile" element={<ProfilePage />} />
-          <Route path="edit/profile" element={<EditProfile />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>

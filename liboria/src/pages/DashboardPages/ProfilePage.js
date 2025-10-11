@@ -31,7 +31,7 @@ const ProfilePage = () => {
         <Card
           style={{
             maxWidth: "450px",
-            width: "90%",
+            width: "100%",
             height: "100%",
             margin: "auto",
             boxShadow: "0 5px 15px rgba(0, 0, 0, 0.34)",
@@ -49,11 +49,17 @@ const ProfilePage = () => {
             <Row style={{ rowStyle, textAlign: "left" }}>
               <Divider>Personal Information</Divider>
               <Col>
-                <p>Name: {user.name || "John Doe"}</p>
-                <br />
-                <p>Email: {user.email || "john.doe@gmail.com"}</p>
-                <br />
-                <p>Role: {user.account_type || "Librarian"}</p>
+                <p style={{ fontSize: "clamp(12px, 14px, 16px)" }}>
+                  <strong>Name:</strong> {user.name || "John Doe"}
+                </p>
+
+                <p style={{ fontSize: "clamp(12px, 14px, 16px)" }}>
+                  <strong>Email:</strong> {user.email || "john.doe@gmail.com"}
+                </p>
+
+                <p style={{ fontSize: "clamp(12px, 14px, 16px)" }}>
+                  <strong>Role:</strong> {user.account_type || "Librarian"}
+                </p>
               </Col>
             </Row>
             <Row justify="center" style={rowStyle}>
@@ -67,7 +73,7 @@ const ProfilePage = () => {
                   }}
                   onClick={() => setIsModalOpen(true)}
                 >
-                  Edit Profile
+                  Change Password
                 </Button>
               </Col>
             </Row>

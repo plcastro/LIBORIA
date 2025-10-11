@@ -62,7 +62,6 @@ const Home = () => {
             style={{
               backgroundColor: "white",
               color: "black",
-              fontWeight: "bold",
             }}
           >
             Get Started

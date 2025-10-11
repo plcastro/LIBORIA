@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Table, Tag, Input } from "antd";
+import { Table, Tag, Input, Card } from "antd";
 import ReturnBookModal from "../../components/Modal/ReturnBookModal";
 
 const REASONS = [
@@ -111,37 +111,39 @@ const ReturnBooks = () => {
 
   return (
     <>
-      <Input
-        type="search"
-        placeholder="Search data"
-        onChange={(e) => setSearchText(e.target.value)}
-        style={{
-          maxWidth: 300,
-          width: "100%",
-          height: "40px",
-          marginBottom: "20px",
-        }}
-      />
-      <Table
-        columns={columns.map((col) => ({ ...col, width: col.width || 150 }))}
-        dataSource={filteredData}
-        rowKey="borrow_id"
-        pagination={false}
-        scroll={{
-          y: filteredData.length > 10 ? 650 : undefined,
-          x: "max-content",
-        }}
-        loading={loading}
-        style={{ tableLayout: "fixed" }}
-      />
-      <ReturnBookModal
-        open={isModalOpen}
-        onClose={handleModalClose}
-        onSubmit={handleSubmit}
-        initialValues={selectedRecord}
-        REASONS={REASONS}
-      />
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      <Card>
+        <Input
+          type="search"
+          placeholder="Search data"
+          onChange={(e) => setSearchText(e.target.value)}
+          style={{
+            maxWidth: 300,
+            width: "100%",
+            height: "40px",
+            marginBottom: "20px",
+          }}
+        />
+        <Table
+          columns={columns.map((col) => ({ ...col, width: col.width || 150 }))}
+          dataSource={filteredData}
+          rowKey="borrow_id"
+          pagination={false}
+          scroll={{
+            y: filteredData.length > 10 ? 650 : undefined,
+            x: "max-content",
+          }}
+          loading={loading}
+          style={{ tableLayout: "fixed" }}
+        />
+        <ReturnBookModal
+          open={isModalOpen}
+          onClose={handleModalClose}
+          onSubmit={handleSubmit}
+          initialValues={selectedRecord}
+          REASONS={REASONS}
+        />
+        {error && <p style={{ color: "red" }}>{error}</p>}
+      </Card>
     </>
   );
 };

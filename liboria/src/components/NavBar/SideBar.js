@@ -164,11 +164,15 @@ const Sidebar = () => {
               label: "User Management",
               icon: <UserOutlined />,
               children: [
-                {
-                  key: "4",
-                  label: "View Staff",
-                  icon: <UnorderedListOutlined />,
-                },
+                ...(user.account_type !== "librarian" // <-- use the user object here
+                  ? [
+                      {
+                        key: "4",
+                        label: "View Staff",
+                        icon: <UnorderedListOutlined />,
+                      },
+                    ]
+                  : []),
                 { key: "5", label: "My Profile", icon: <ContactsOutlined /> },
               ],
             },

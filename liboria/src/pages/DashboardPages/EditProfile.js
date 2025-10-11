@@ -24,24 +24,6 @@ const SubmitButton = ({ form, children }) => {
   );
 };
 
-// Helper to check email uniqueness
-const checkEmailUnique = async (email, userId) => {
-  try {
-    const response = await fetch(
-      "http://localhost:8000/api/users/check-email",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, userId }),
-      }
-    );
-    const data = await response.json();
-    return data.unique; // true if unique, false if exists
-  } catch {
-    return false;
-  }
-};
-
 const EditProfile = ({ initialData, isVisible, onClose, onSave }) => {
   const [form] = Form.useForm();
 
@@ -68,13 +50,6 @@ const EditProfile = ({ initialData, isVisible, onClose, onSave }) => {
     const user = JSON.parse(localStorage.getItem("currentUser")) || {};
     const userId = user.userid || user._id || user.id;
 
-    // Check email uniqueness before saving
-    const isEmailUnique = await checkEmailUnique(email, userId);
-    if (!isEmailUnique) {
-      message.error("Email is already registered. Please use another.");
-      return;
-    }
-
     try {
       const response = await fetch(
         `http://localhost:8000/api/users/${userId}`,
@@ -82,9 +57,6 @@ const EditProfile = ({ initialData, isVisible, onClose, onSave }) => {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            username: values.username,
-            name: values.fullname,
-            email: values.email,
             password: values.password,
           }),
         }
@@ -119,6 +91,7 @@ const EditProfile = ({ initialData, isVisible, onClose, onSave }) => {
       open={isVisible}
       onCancel={onClose}
       footer={null}
+      centered
     >
       <Form
         form={form}
@@ -127,32 +100,14 @@ const EditProfile = ({ initialData, isVisible, onClose, onSave }) => {
         onFinish={onFinish}
         autoComplete="off"
       >
-        <Form.Item
-          name="username"
-          label="Username"
-          rules={[{ required: true, message: "Please input your Username!" }]}
-        >
-          <Input />
+        <Form.Item name="username" label="Username">
+          <Input readOnly />
         </Form.Item>
-        <Form.Item
-          name="fullname"
-          label="Name"
-          rules={[{ required: true, message: "Please input your Full Name!" }]}
-        >
-          <Input />
+        <Form.Item name="fullname" label="Name">
+          <Input readOnly />
         </Form.Item>
-        <Form.Item
-          name="email"
-          label="Email"
-          rules={[
-            {
-              required: true,
-              type: "email",
-              message: "Please input a valid Email!",
-            },
-          ]}
-        >
-          <Input />
+        <Form.Item name="email" label="Email">
+          <Input readOnly />
         </Form.Item>
         <Form.Item
           name="password"
@@ -174,7 +129,7 @@ const EditProfile = ({ initialData, isVisible, onClose, onSave }) => {
         </Form.Item>
         <Form.Item>
           <Space align="baseline">
-            <SubmitButton form={form}>Save Changes</SubmitButton>
+            <SubmitButton form={form}>Save Password</SubmitButton>
             <Button
               onClick={onClose}
               htmlType="button"
