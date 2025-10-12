@@ -17,6 +17,8 @@ router.post("/register", userController.register);
 // UPDATE user
 router.put("/:id", userController.updateUser);
 
+// UPDATE user password
+router.put("/check-pass/:id", userController.updateUserPassword);
 // DELETE user
 router.delete("/:id", userController.deleteUser);
 

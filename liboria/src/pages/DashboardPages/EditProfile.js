@@ -39,10 +39,18 @@ const EditProfile = ({ initialData, isVisible, onClose, onSave }) => {
     const user = JSON.parse(localStorage.getItem("currentUser")) || {};
     const userId = user.userid || user._id || user.id;
 
+    // 🧠 Compare with old password (assuming it's stored in currentUser)
+    if (password === user.password) {
+      messageApi.error(
+        "New password cannot be the same as your current password."
+      );
+      return;
+    }
+
     try {
       setLoading(true);
       const response = await fetch(
-        `http://localhost:8000/api/users/${userId}`,
+        `http://localhost:8000/api/users/check-pass/${userId}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -58,9 +66,10 @@ const EditProfile = ({ initialData, isVisible, onClose, onSave }) => {
 
         messageApi.success("Password updated successfully!");
         onSave();
+        form.resetFields();
         onClose();
       } else {
-        messageApi.error(data.error || "Failed to update password.");
+        messageApi.error("Failed to update password.");
       }
     } catch (err) {
       messageApi.error("Network error. Please try again.");

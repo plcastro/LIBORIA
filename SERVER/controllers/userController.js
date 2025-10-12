@@ -335,6 +335,34 @@ const updateUser = (req, res) => {
     });
   });
 };
+const updateUserPassword = (req, res) => {
+  const { password } = req.body;
+  const { id } = req.params;
+
+  // Get current user password first
+  const getQuery = "SELECT password FROM users WHERE id = ?";
+  db.query(getQuery, [id], (err, results) => {
+    if (err) return res.status(500).json({ error: "Server error" });
+    if (!results.length)
+      return res.status(404).json({ error: "User not found" });
+
+    const oldPassword = results[0].password;
+
+    if (password === oldPassword) {
+      return res
+        .status(400)
+        .json({ error: "New password cannot be the same as the current one." });
+    }
+
+    // Continue with update
+    const updateQuery = "UPDATE users SET password = ? WHERE id = ?";
+    db.query(updateQuery, [password, id], (err2) => {
+      if (err2)
+        return res.status(500).json({ error: "Failed to update password" });
+      res.json({ message: "Password updated successfully" });
+    });
+  });
+};
 
 // DELETE user
 const deleteUser = (req, res) => {
@@ -613,6 +641,7 @@ module.exports = {
   getUserById,
   createUser,
   register,
+  updateUserPassword,
   updateUser,
   deleteUser,
   login,

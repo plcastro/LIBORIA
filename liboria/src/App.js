@@ -1,5 +1,4 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import "antd/dist/reset.css";
 import RootLayout from "./layout/RootLayout";
 import DashboardLayout from "./layout/DashboardLayout";
 import Home from "./pages/MainWebPages/Home";
