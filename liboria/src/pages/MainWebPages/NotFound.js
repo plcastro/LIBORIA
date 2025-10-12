@@ -13,7 +13,7 @@ const NotFound = () => {
 
   const goBackToPrevPage = () => {
     if (pathname.startsWith("/dashboard")) {
-      navigate("/dashboard/view/books");
+      navigate("/dashboard/view/borrow");
     } else {
       navigate("/home");
     }
