@@ -145,30 +145,20 @@ const EditBookModal = ({ modalOpen, setModalOpen, book, onBookUpdated }) => {
                   }),
                 ]}
               >
-                <InputNumber min={1} style={{ width: "100%" }} />
+                <InputNumber
+                  min={1}
+                  style={{ width: "100%" }}
+                  disabled={book.borrowedCount > 0} // Disable when book has borrowed copies
+                />
               </Form.Item>
             </Col>
-
             <Col span={12}>
               <Form.Item
                 label="Available Copies"
                 name="available_copies"
-                rules={[
-                  { required: true },
-                  ({ getFieldValue }) => ({
-                    validator(_, value) {
-                      const total = getFieldValue("total_copies") || 0;
-                      if (value <= total) {
-                        return Promise.resolve();
-                      }
-                      return Promise.reject(
-                        new Error("Available copies cannot exceed total copies")
-                      );
-                    },
-                  }),
-                ]}
+                rules={[{ required: true }]}
               >
-                <InputNumber min={0} style={{ width: "100%" }} />
+                <InputNumber min={0} style={{ width: "100%" }} disabled />
               </Form.Item>
             </Col>
 

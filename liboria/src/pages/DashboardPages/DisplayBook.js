@@ -118,9 +118,13 @@ const DisplayBook = () => {
         <div>
           <a
             onClick={() => handleBorrow(record)}
-            style={{ color: "#3a5eff", marginRight: 16 }}
+            style={{
+              color: record.available_copies === 0 ? "#999" : "#0c7236ff",
+              marginRight: 16,
+            }}
+            disabled={record.available_copies === 0}
           >
-            Borrow
+            {record.available_copies === 0 ? "Unavailable" : "Borrow"}
           </a>
           <a
             onClick={() => handleUpdateBook(record)}
@@ -141,14 +145,14 @@ const DisplayBook = () => {
 
   return (
     <Card>
-      <Row align="middle" justify="space-between">
+      <Row align="stretch" justify="space-between" style={{ marginBottom: 12 }}>
         <Col xs={24} sm={12} md={10} lg={5}>
           <Input
             prefix={<SearchOutlined />}
             placeholder="Search book"
             value={searchValue}
             onChange={(e) => setSearchValue(e.target.value)}
-            style={{ height: 40, marginBottom: 12 }}
+            style={{ height: 40, marginBottom: 5 }}
           />
         </Col>
 
@@ -157,11 +161,11 @@ const DisplayBook = () => {
             type="primary"
             icon={<PlusOutlined />}
             style={{
+              margin: 0,
               backgroundColor: "#1600a3",
               border: "none",
               height: 40,
               width: "100%",
-              marginBottom: 12,
               fontWeight: 500,
             }}
             onClick={() => setAddModalOpen(true)}
@@ -177,7 +181,7 @@ const DisplayBook = () => {
         rowKey="id"
         loading={loading}
         pagination={false}
-        scroll={{ y: books.length > 10 ? 600 : undefined, x: "max-content" }}
+        scroll={{ y: books.length > 10 ? 400 : undefined, x: "max-content" }}
       />
 
       <AddBookModal
