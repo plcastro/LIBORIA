@@ -10,6 +10,7 @@ import {
   Col,
 } from "antd";
 import dayjs from "dayjs";
+
 const EditBookModal = ({ modalOpen, setModalOpen, book, onBookUpdated }) => {
   const [messageApi, contextHolder] = message.useMessage();
   const [form] = Form.useForm();
@@ -59,15 +60,21 @@ const EditBookModal = ({ modalOpen, setModalOpen, book, onBookUpdated }) => {
       }
 
       messageApi.success("Book updated successfully");
-
       if (onBookUpdated) onBookUpdated({ ...book, ...payload });
       setModalOpen(false);
-      window.location.reload();
     } catch (err) {
       console.error(err);
       messageApi.error("Failed to update book");
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Update available copies if total copies is lowered below available
+  const handleTotalCopiesChange = (value) => {
+    const currentAvailable = form.getFieldValue("available_copies") || 0;
+    if (value < currentAvailable) {
+      form.setFieldsValue({ available_copies: value });
     }
   };
 
@@ -83,7 +90,6 @@ const EditBookModal = ({ modalOpen, setModalOpen, book, onBookUpdated }) => {
         confirmLoading={loading}
         width={600}
         centered
-        initialValues={{ total_copies: 1 }}
       >
         <Form form={form} layout="vertical">
           <Row gutter={16}>
@@ -133,9 +139,7 @@ const EditBookModal = ({ modalOpen, setModalOpen, book, onBookUpdated }) => {
                   ({ getFieldValue }) => ({
                     validator(_, value) {
                       const available = getFieldValue("available_copies") || 0;
-                      if (value >= available) {
-                        return Promise.resolve();
-                      }
+                      if (value >= available) return Promise.resolve();
                       return Promise.reject(
                         new Error(
                           "Total copies cannot be less than available copies"
@@ -148,7 +152,7 @@ const EditBookModal = ({ modalOpen, setModalOpen, book, onBookUpdated }) => {
                 <InputNumber
                   min={1}
                   style={{ width: "100%" }}
-                  disabled={book.borrowedCount > 0} // Disable when book has borrowed copies
+                  onChange={handleTotalCopiesChange}
                 />
               </Form.Item>
             </Col>
@@ -156,12 +160,22 @@ const EditBookModal = ({ modalOpen, setModalOpen, book, onBookUpdated }) => {
               <Form.Item
                 label="Available Copies"
                 name="available_copies"
-                rules={[{ required: true }]}
+                rules={[
+                  { required: true },
+                  ({ getFieldValue }) => ({
+                    validator(_, value) {
+                      const total = getFieldValue("total_copies") || 0;
+                      if (value <= total) return Promise.resolve();
+                      return Promise.reject(
+                        new Error("Available copies cannot exceed total copies")
+                      );
+                    },
+                  }),
+                ]}
               >
-                <InputNumber min={0} style={{ width: "100%" }} disabled />
+                <InputNumber min={0} style={{ width: "100%" }} />
               </Form.Item>
             </Col>
-
             <Col span={24}>
               <Form.Item label="Description" name="description">
                 <Input.TextArea rows={3} />

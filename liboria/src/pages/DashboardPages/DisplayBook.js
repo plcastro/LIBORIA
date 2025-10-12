@@ -117,12 +117,15 @@ const DisplayBook = () => {
       render: (_, record) => (
         <div>
           <a
-            onClick={() => handleBorrow(record)}
+            onClick={() => {
+              if (record.available_copies === 0) return;
+              handleBorrow(record);
+            }}
             style={{
               color: record.available_copies === 0 ? "#999" : "#0c7236ff",
               marginRight: 16,
+              cursor: record.available_copies === 0 ? "not-allowed" : "pointer",
             }}
-            disabled={record.available_copies === 0}
           >
             {record.available_copies === 0 ? "Unavailable" : "Borrow"}
           </a>
@@ -181,7 +184,10 @@ const DisplayBook = () => {
         rowKey="id"
         loading={loading}
         pagination={false}
-        scroll={{ y: books.length > 10 ? 400 : undefined, x: "max-content" }}
+        scroll={{
+          y: books.length > 10 ? "70vh" : undefined,
+          x: "max-content",
+        }}
       />
 
       <AddBookModal
