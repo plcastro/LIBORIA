@@ -9,6 +9,8 @@ const StaffModal = ({
   selectedStaff,
   currentUserId,
 }) => {
+  const [messageApi, contextHolder] = message.useMessage();
+  const [isSaving, setIsSaving] = useState(false);
   const [form] = Form.useForm();
   const isEditMode = mode === "edit";
   const isAddMode = mode === "add";
@@ -56,25 +58,20 @@ const StaffModal = ({
   };
 
   const finalizeSave = async (dataToSave) => {
+    if (isSaving) return; // prevent double trigger
+    setIsSaving(true);
+
     try {
+      let res, result;
+
       if (isAddMode) {
-        const res = await fetch("http://localhost:8000/api/users", {
+        res = await fetch("http://localhost:8000/api/users", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(dataToSave),
         });
-
-        const result = await res.json();
-        if (!res.ok) {
-          alert(result.message || "Email/Username already exists");
-          return;
-        }
-
-        message.success("Staff added successfully!");
-        alert("Staff added successfully!.");
-        onSave(result); // refresh list
       } else if (isEditMode) {
-        const res = await fetch(
+        res = await fetch(
           `http://localhost:8000/api/users/${selectedStaff.userid}`,
           {
             method: "PUT",
@@ -82,26 +79,31 @@ const StaffModal = ({
             body: JSON.stringify(dataToSave),
           }
         );
-
-        const result = await res.json();
-        if (!res.ok) {
-          alert(result.message || "Email/Username already exists");
-          return;
-        }
-        message.success("Staff updated successfully!");
-        onSave(result);
-        setTimeout(() => {
-          window.location.reload();
-        }, 1500);
-        onClose();
       }
+
+      result = await res.json();
+
+      if (!res.ok) {
+        messageApi.error(result.message || "Email/Username already exists");
+        setIsSaving(false);
+        return;
+      }
+
+      messageApi.success(
+        isAddMode ? "Staff added successfully!" : "Staff updated successfully!"
+      );
+
+      onSave(result); // notify parent once
+      onClose();
 
       form.resetFields();
       setPreviewData(null);
       setIsPreviewConfirmOpen(false);
     } catch (err) {
       console.error(err);
-      message.error(err.message || "Something went wrong.");
+      messageApi.error(err.message || "Something went wrong.");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -131,7 +133,7 @@ const StaffModal = ({
   const handleConfirmDelete = async () => {
     try {
       if (!selectedStaff || selectedStaff.userid === currentUserId) {
-        message.error("You cannot delete your own account.");
+        messageApi.error("You cannot delete your own account.");
         setIsConfirmDeleteOpen(false);
         return;
       }
@@ -146,14 +148,14 @@ const StaffModal = ({
         throw new Error(data.message || "Failed to delete user.");
       }
 
-      message.success("User deleted successfully!");
+      messageApi.success("User deleted successfully!");
       onSave();
       setIsConfirmDeleteOpen(false);
       form.resetFields();
       onClose();
     } catch (err) {
       console.error(err);
-      message.error(err.message || "Something went wrong.");
+      messageApi.error(err.message || "Something went wrong.");
     }
   };
 
@@ -170,6 +172,7 @@ const StaffModal = ({
 
   return (
     <>
+      {contextHolder}
       <Modal
         title={
           isAddMode
@@ -375,6 +378,7 @@ const StaffModal = ({
               <Button
                 type="primary"
                 onClick={() => finalizeSave(previewData)}
+                disabled={isSaving}
                 style={{ backgroundColor: "#000", color: "#fff", width: 232 }}
               >
                 Confirm

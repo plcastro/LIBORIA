@@ -16,6 +16,7 @@ import {
 const { TextArea } = Input;
 const { Option } = Select;
 const AddBookModal = ({ modal2Open, setModal2Open, onBookCreated }) => {
+  const [messageApi, contextHolder] = message.useMessage();
   const [form] = Form.useForm();
   const [bookData, setBookData] = useState(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
@@ -43,7 +44,7 @@ const AddBookModal = ({ modal2Open, setModal2Open, onBookCreated }) => {
       setIsConfirmOpen(true);
     } catch (err) {
       console.error(err);
-      message.error(err.message || "Failed to add book");
+      messageApi.error(err.message || "Failed to add book");
     }
   };
 
@@ -61,7 +62,7 @@ const AddBookModal = ({ modal2Open, setModal2Open, onBookCreated }) => {
 
       if (!response.ok) throw new Error(data.error || "Failed to add book");
 
-      message.success("Book added successfully!");
+      messageApi.success("Book added successfully!");
       form.resetFields();
       setIsConfirmOpen(false);
       setModal2Open(false);
@@ -69,7 +70,7 @@ const AddBookModal = ({ modal2Open, setModal2Open, onBookCreated }) => {
       if (onBookCreated) onBookCreated();
     } catch (err) {
       console.error(err);
-      message.error(err.message || "Failed to add book");
+      messageApi.error(err.message || "Failed to add book");
     }
   };
 
@@ -77,11 +78,12 @@ const AddBookModal = ({ modal2Open, setModal2Open, onBookCreated }) => {
     form.resetFields();
     setModal2Open(false);
     setIsDiscardOpen(false);
-    message.info("Book entry discarded.");
+    messageApi.info("Book entry discarded.");
   };
 
   return (
     <>
+      {contextHolder}
       <Modal
         title="ADD BOOK DETAILS"
         centered

@@ -4,6 +4,7 @@ import { EditOutlined, DeleteOutlined, PlusOutlined } from "@ant-design/icons";
 import StaffModal from "../../components/Modal/StaffModal";
 
 const StaffList = () => {
+  const [messageApi, contextHolder] = message.useMessage();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -53,7 +54,7 @@ const StaffList = () => {
       account_type: values.account_type,
     };
     setData((prev) => [...prev, newStaff]);
-    message.success("New staff added successfully!");
+    messageApi.success("New staff added successfully!");
   };
 
   const handleEdit = async (record) => {
@@ -67,7 +68,7 @@ const StaffList = () => {
         setModalMode("edit");
         setModalVisible(true);
       } else {
-        message.error("Failed to load user details");
+        messageApi.error("Failed to load user details");
       }
     } catch (err) {
       console.error(err);
@@ -81,7 +82,6 @@ const StaffList = () => {
         item.key === selectedStaff.key ? { ...item, ...updatedValues } : item
       )
     );
-    message.success("Staff information updated successfully!");
   };
 
   const handleDelete = (record) => {
@@ -161,7 +161,7 @@ const StaffList = () => {
 
   return (
     <div>
-      {/* style={{ position: "relative", paddingBottom: "80px" }} */}
+      {contextHolder}
       <Button
         type="primary"
         icon={<PlusOutlined />}
