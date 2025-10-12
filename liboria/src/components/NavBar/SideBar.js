@@ -164,7 +164,7 @@ const Sidebar = () => {
               label: "User Management",
               icon: <UserOutlined />,
               children: [
-                ...(user.account_type !== "librarian" // <-- use the user object here
+                ...(user.account_type !== "librarian"
                   ? [
                       {
                         key: "4",

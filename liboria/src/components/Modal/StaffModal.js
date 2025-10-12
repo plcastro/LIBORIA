@@ -90,13 +90,15 @@ const StaffModal = ({
         }
         message.success("Staff updated successfully!");
         onSave(result);
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
+        onClose();
       }
 
       form.resetFields();
       setPreviewData(null);
       setIsPreviewConfirmOpen(false);
-      window.location.reload();
-      onClose();
     } catch (err) {
       console.error(err);
       message.error(err.message || "Something went wrong.");

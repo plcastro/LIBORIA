@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useState } from "react";
 import { Button, Form, Input, Space, Modal, message } from "antd";
 
 const SubmitButton = ({ form, children }) => {
@@ -25,122 +25,113 @@ const SubmitButton = ({ form, children }) => {
 };
 
 const EditProfile = ({ initialData, isVisible, onClose, onSave }) => {
+  const [messageApi, contextHolder] = message.useMessage();
   const [form] = Form.useForm();
-
-  useEffect(() => {
-    // Get current user info from localStorage if initialData is not provided
-    const user =
-      initialData || JSON.parse(localStorage.getItem("currentUser")) || {};
-    form.setFieldsValue({
-      username: user.username || "",
-      fullname: user.name || user.fullname || "",
-      email: user.email || "",
-      role: user.role || "",
-    });
-  }, [initialData, form]);
+  const [loading, setLoading] = useState(false);
 
   const onFinish = async (values) => {
-    const { password, confirmPassword, email } = values;
+    const { password, confirmPassword } = values;
     if (password !== confirmPassword) {
-      message.error("Password and Confirm password do not match!");
+      messageApi.error("Password and Confirm password do not match!");
       return;
     }
 
-    // Get current user info from localStorage
     const user = JSON.parse(localStorage.getItem("currentUser")) || {};
     const userId = user.userid || user._id || user.id;
 
     try {
+      setLoading(true);
       const response = await fetch(
         `http://localhost:8000/api/users/${userId}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            password: values.password,
-          }),
+          body: JSON.stringify({ password }),
         }
       );
+
       const data = await response.json();
+
       if (response.ok) {
-        const updatedUser = {
-          ...user,
-          username: data.username,
-          name: data.name,
-          email: data.email,
-        };
+        const updatedUser = { ...user, ...data };
         localStorage.setItem("currentUser", JSON.stringify(updatedUser));
-        message.success("Profile updated successfully!");
-        onSave(updatedUser);
+
+        messageApi.success("Password updated successfully!");
+        onSave();
         onClose();
       } else {
-        if (data.error && data.error.toLowerCase().includes("username")) {
-          message.error("Username is already taken. Please choose another.");
-        } else {
-          message.error(data.error || "Failed to update profile.");
-        }
+        messageApi.error(data.error || "Failed to update password.");
       }
     } catch (err) {
-      message.error("Network error. Please try again.");
+      messageApi.error("Network error. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <Modal
-      title="Edit Profile Information"
-      open={isVisible}
-      onCancel={onClose}
-      footer={null}
-      centered
-    >
-      <Form
-        form={form}
-        name="editProfileForm"
-        layout="vertical"
-        onFinish={onFinish}
-        autoComplete="off"
+    <>
+      {contextHolder}
+      <Modal
+        title="Edit Profile Information"
+        open={isVisible}
+        onCancel={onClose}
+        footer={null}
+        centered
       >
-        <Form.Item name="username" label="Username">
-          <Input readOnly />
-        </Form.Item>
-        <Form.Item name="fullname" label="Name">
-          <Input readOnly />
-        </Form.Item>
-        <Form.Item name="email" label="Email">
-          <Input readOnly />
-        </Form.Item>
-        <Form.Item
-          name="password"
-          label="New Password"
-          rules={[
-            { required: true, message: "Please enter your new password" },
-          ]}
+        <Form
+          form={form}
+          name="editProfileForm"
+          layout="vertical"
+          onFinish={onFinish}
+          initialValues={initialData}
+          autoComplete="off"
         >
-          <Input.Password minLength={8} />
-        </Form.Item>
-        <Form.Item
-          name="confirmPassword"
-          label="Confirm New Password"
-          rules={[
-            { required: true, message: "Please re-enter your new password" },
-          ]}
-        >
-          <Input.Password minLength={8} />
-        </Form.Item>
-        <Form.Item>
-          <Space align="baseline">
-            <SubmitButton form={form}>Save Password</SubmitButton>
-            <Button
-              onClick={onClose}
-              htmlType="button"
-              style={{ width: "200px" }}
-            >
-              Cancel
-            </Button>
-          </Space>
-        </Form.Item>
-      </Form>
-    </Modal>
+          <Form.Item name="username" label="Username">
+            <Input readOnly />
+          </Form.Item>
+          <Form.Item name="name" label="Name">
+            <Input readOnly />
+          </Form.Item>
+          <Form.Item name="email" label="Email">
+            <Input readOnly />
+          </Form.Item>
+
+          <Form.Item
+            name="password"
+            label="New Password"
+            rules={[
+              { required: true, message: "Please enter your new password" },
+            ]}
+          >
+            <Input.Password minLength={8} />
+          </Form.Item>
+
+          <Form.Item
+            name="confirmPassword"
+            label="Confirm New Password"
+            rules={[
+              { required: true, message: "Please re-enter your new password" },
+            ]}
+          >
+            <Input.Password minLength={8} />
+          </Form.Item>
+
+          <Form.Item>
+            <Space align="baseline">
+              <SubmitButton form={form}>Save Password</SubmitButton>
+              <Button
+                onClick={onClose}
+                htmlType="button"
+                style={{ width: "200px" }}
+              >
+                Cancel
+              </Button>
+            </Space>
+          </Form.Item>
+        </Form>
+      </Modal>
+    </>
   );
 };
 

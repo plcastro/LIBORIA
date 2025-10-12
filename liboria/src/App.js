@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import "antd/dist/reset.css";
 import RootLayout from "./layout/RootLayout";
 import DashboardLayout from "./layout/DashboardLayout";
 import Home from "./pages/MainWebPages/Home";
@@ -13,7 +14,6 @@ import ReturnBooks from "./pages/DashboardPages/ReturnBooks";
 import ViewRecords from "./pages/DashboardPages/ViewRecords";
 import StaffList from "./pages/DashboardPages/StaffList";
 import ProfilePage from "./pages/DashboardPages/ProfilePage";
-import EditProfile from "./pages/DashboardPages/EditProfile";
 
 export default function App() {
   return (

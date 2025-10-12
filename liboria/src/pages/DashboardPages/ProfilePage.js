@@ -1,90 +1,97 @@
-import React, { useState } from "react";
-import { Card, Divider, Button, Row, Col, Avatar } from "antd";
+import React, { useState, useEffect } from "react";
+import { Card, Divider, Button, Row, Col, Avatar, Spin, message } from "antd";
 import { EditOutlined, UserOutlined } from "@ant-design/icons";
 import EditProfile from "./EditProfile";
 
 const ProfilePage = () => {
-  const user = JSON.parse(localStorage.getItem("currentUser")) || {
-    username: "John Doe",
-    name: "John Doe",
-    email: "john.doe@gmail.com",
-    role: "Librarian",
-  };
+  const [user, setUser] = useState({});
 
-  const [profile, setProfile] = useState(user);
+  const currentUserId = JSON.parse(localStorage.getItem("currentUser"))?.userid;
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const handleProfileUpdate = (updatedData) => {
-    setProfile(updatedData);
-    localStorage.setItem("currentUser", JSON.stringify(updatedData));
-    setIsModalOpen(false);
+  const fetchUserInfo = async (userid) => {
+    if (!userid) return;
+    try {
+      const res = await fetch(`http://localhost:8000/api/users/${userid}`);
+      if (!res.ok) throw new Error("Failed to fetch user info");
+      const data = await res.json();
+      setUser(data);
+    } catch (err) {
+      console.error(err);
+      message.error("Failed to load user info");
+    }
   };
 
-  const rowStyle = {
-    width: "100%",
-    margin: "auto",
-  };
+  useEffect(() => {
+    fetchUserInfo(currentUserId);
+
+    // Listen for user updates
+    const handleUserUpdate = (e) => {
+      setUser(e.detail);
+    };
+
+    window.addEventListener("userUpdated", handleUserUpdate);
+
+    return () => {
+      window.removeEventListener("userUpdated", handleUserUpdate);
+    };
+  }, [currentUserId]);
 
   return (
     <>
-      <div style={{ margin: "5% auto" }}>
-        <Card
-          style={{
-            maxWidth: "450px",
-            width: "100%",
-            height: "100%",
-            margin: "auto",
-            boxShadow: "0 5px 15px rgba(0, 0, 0, 0.34)",
-          }}
-        >
-          <Row>
-            <Row style={{ margin: "auto", textAlign: "center" }}>
-              <Col span={24}>
-                <Avatar size={128} icon={<UserOutlined />} />
-                <p style={{ marginTop: "20px" }}>
-                  {user.username || "John Doe"}
-                </p>
-              </Col>
-            </Row>
-            <Row style={{ rowStyle, textAlign: "left" }}>
-              <Divider>Personal Information</Divider>
-              <Col>
-                <p style={{ fontSize: "clamp(12px, 14px, 16px)" }}>
-                  <strong>Name:</strong> {user.name || "John Doe"}
-                </p>
+      <Card
+        style={{
+          maxWidth: "450px",
+          width: "100%",
+          margin: "auto",
+          boxShadow: "0 5px 15px rgba(0, 0, 0, 0.34)",
+        }}
+      >
+        <Row style={{ textAlign: "center", marginBottom: "20px" }}>
+          <Col span={24}>
+            <Avatar size={128} icon={<UserOutlined />} />
+            <p style={{ marginTop: "20px" }}>{user.username}</p>
+          </Col>
+        </Row>
 
-                <p style={{ fontSize: "clamp(12px, 14px, 16px)" }}>
-                  <strong>Email:</strong> {user.email || "john.doe@gmail.com"}
-                </p>
+        <Divider>Personal Information</Divider>
+        <Row style={{ textAlign: "left" }}>
+          <Col>
+            <p>
+              <strong>Name:</strong> {user.name}
+            </p>
+            <p>
+              <strong>Email:</strong> {user.email}
+            </p>
+            <p>
+              <strong>Role:</strong> {user.account_type}
+            </p>
+          </Col>
+        </Row>
 
-                <p style={{ fontSize: "clamp(12px, 14px, 16px)" }}>
-                  <strong>Role:</strong> {user.account_type || "Librarian"}
-                </p>
-              </Col>
-            </Row>
-            <Row justify="center" style={rowStyle}>
-              <Col lg={24} style={{ textAlign: "center" }}>
-                <Button
-                  icon={<EditOutlined />}
-                  style={{
-                    width: "100%",
-                    backgroundColor: "#000",
-                    color: "#fff",
-                  }}
-                  onClick={() => setIsModalOpen(true)}
-                >
-                  Change Password
-                </Button>
-              </Col>
-            </Row>
-          </Row>
-        </Card>
-      </div>
+        <Row justify="center" style={{ marginTop: "20px" }}>
+          <Col span={24} style={{ textAlign: "center" }}>
+            <Button
+              icon={<EditOutlined />}
+              style={{
+                width: "100%",
+                backgroundColor: "#000",
+                color: "#fff",
+              }}
+              onClick={() => setIsModalOpen(true)}
+            >
+              Change Password
+            </Button>
+          </Col>
+        </Row>
+      </Card>
+
       <EditProfile
-        initialData={profile}
+        initialData={user}
         isVisible={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onSave={handleProfileUpdate}
+        onSave={fetchUserInfo} // refresh after saving
       />
     </>
   );
