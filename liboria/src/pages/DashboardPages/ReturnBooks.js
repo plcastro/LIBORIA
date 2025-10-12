@@ -206,7 +206,7 @@ const ReturnBooks = () => {
         <ReturnBookModal
           open={isModalOpen}
           onClose={handleModalClose}
-          onSubmit={handleSubmit}
+          onSubmit={handleSubmitReturn}
           initialValues={selectedRecord}
           REASONS={REASONS}
         />
