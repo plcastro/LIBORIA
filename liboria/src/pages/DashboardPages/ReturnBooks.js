@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { Table, Tag, Input, Card } from "antd";
+import { Table, Tag, Input, Card, message, Button } from "antd";
+import { ReloadOutlined } from "@ant-design/icons";
 import ReturnBookModal from "../../components/Modal/ReturnBookModal";
 
 const REASONS = [
+  { label: "None", value: "None" },
   { label: "Late Return", value: "Late Return" },
   { label: "Damaged", value: "Damaged" },
   { label: "Lost", value: "Lost" },
@@ -26,32 +28,60 @@ const ReturnBooks = () => {
     setSelectedRecord(null);
   };
 
-  const handleSubmit = (values) => {
-    console.log("Return submitted:", values);
+  const handleSubmitReturn = async (values) => {
+    try {
+      const returnData = {
+        borrow_id: selectedRecord.borrow_id,
+        violation: values.violation,
+        penalty: values.penalty || 0,
+        amount_paid: values.amount_paid || 0
+      };
+
+      const res = await fetch("http://localhost:8000/returned-books", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(returnData),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to return book");
+      }
+
+      message.success("Book returned successfully!");
+      handleModalClose();
+      fetchBorrowedBooks(); // Refresh the list
+    } catch (err) {
+      console.error("Return error:", err);
+      message.error(err.message);
+    }
   };
 
   // Load borrowed books from API
-  const handleBorrowedBookLoad = async () => {
+  const fetchBorrowedBooks = async () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch("http://localhost:8000/api/borrowed-books");
+      const response = await fetch("http://localhost:8000/borrowed-books");
+      if (!response.ok) throw new Error("Failed to fetch borrowed books");
+      
       const data = await response.json();
-      if (response.ok) {
-        setBorrowedBooks(data);
-      } else {
-        setError(data.error || "Failed to load borrowed books");
-      }
+      // Filter only active borrowed books (status = 'borrowed')
+      const activeBorrows = data.filter(book => book.status === 'borrowed');
+      setBorrowedBooks(activeBorrows);
     } catch (err) {
       console.error("Fetch error:", err);
-      setError("Network error. Please try again.");
+      setError(err.message);
+      message.error("Failed to load borrowed books");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    handleBorrowedBookLoad();
+    fetchBorrowedBooks();
   }, []);
 
   // Filter based on search
@@ -63,48 +93,86 @@ const ReturnBooks = () => {
     )
   );
 
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'borrowed': return 'blue';
+      case 'overdue': return 'red';
+      case 'returned': return 'green';
+      default: return 'default';
+    }
+  };
+
   const columns = [
     {
-      title: "ID",
+      title: "Borrow ID",
       dataIndex: "borrow_id",
       key: "borrow_id",
+      width: 100,
     },
     {
       title: "Borrower Name",
       dataIndex: "borrower_name",
       key: "borrower_name",
-      render: (_, record) => `${record.first_name} ${record.last_name}`,
+      width: 150,
     },
     {
       title: "Book Title",
       dataIndex: "title",
       key: "title",
+      width: 200,
+      render: (text) => (
+        <span style={{ whiteSpace: "normal", wordBreak: "break-word" }}>
+          {text}
+        </span>
+      ),
+    },
+    {
+      title: "Author",
+      dataIndex: "author_name",
+      key: "author_name",
+      width: 150,
     },
     {
       title: "Date Borrowed",
       dataIndex: "date_borrowed",
       key: "date_borrowed",
+      width: 120,
+      render: (date) => new Date(date).toLocaleDateString()
     },
     {
       title: "Due Date",
       dataIndex: "due_date",
       key: "due_date",
+      width: 120,
+      render: (date) => new Date(date).toLocaleDateString()
     },
     {
       title: "Status",
       dataIndex: "status",
       key: "status",
+      width: 100,
       render: (status) => (
-        <Tag color={status === "borrowed" ? "green" : "volcano"}>{status}</Tag>
+        <Tag color={getStatusColor(status)}>
+          {status?.charAt(0).toUpperCase() + status?.slice(1)}
+        </Tag>
       ),
     },
     {
       title: "Action",
       key: "action",
+      width: 100,
       render: (_, record) => (
-        <a onClick={() => handleReturn(record)} style={{ color: "red" }}>
+        <Button 
+          type="link" 
+          onClick={() => handleReturn(record)}
+          style={{ 
+            color: "#52c41a",
+            padding: 0,
+            fontWeight: 'bold'
+          }}
+        >
           Return
-        </a>
+        </Button>
       ),
     },
   ];
