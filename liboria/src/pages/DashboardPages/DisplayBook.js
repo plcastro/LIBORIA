@@ -93,7 +93,17 @@ const DisplayBook = () => {
       ),
     },
     { title: "Author Name", dataIndex: "author_name", key: "author_name" },
-    { title: "Book Title", dataIndex: "title", key: "title" },
+    {
+      title: "Book Title",
+      dataIndex: "title",
+      key: "title",
+      width: 200,
+      render: (_, record) => (
+        <span style={{ whiteSpace: "normal", wordBreak: "break-word" }}>
+          {record.title}
+        </span>
+      ),
+    },
     { title: "Category", dataIndex: "category", key: "category" },
     { title: "Total Copies", dataIndex: "total_copies", key: "total_copies" },
     {
