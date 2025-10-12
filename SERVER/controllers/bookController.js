@@ -1,4 +1,4 @@
-const db = require("../config/database"); // Import from config
+const db = require("../config/database");
 
 // GET all books
 const getBooks = (req, res) => {
@@ -186,7 +186,11 @@ const deleteBook = (req, res) => {
   const bookId = req.params.id;
 
   // 1. Check if book is currently borrowed
-  const checkQuery = "SELECT * FROM borrowed_books WHERE book_id = ?";
+  const checkQuery = `
+    SELECT * FROM borrowed_books 
+    WHERE book_id = ? AND status = 'borrowed'
+  `;
+  
   db.query(checkQuery, [bookId], (err, borrowResults) => {
     if (err) {
       console.error(err);

@@ -22,7 +22,7 @@ const DisplayBook = () => {
   const fetchBooks = async () => {
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:8000/api/books");
+      const res = await fetch("http://localhost:8000/books");
       if (!res.ok) throw new Error("Failed to fetch books");
       const data = await res.json();
       setBooks(data);
@@ -34,20 +34,45 @@ const DisplayBook = () => {
     }
   };
 
+  // Search books
+  const handleSearch = async (query) => {
+    if (!query) {
+      fetchBooks();
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      const res = await fetch(`http://localhost:8000/books/search?q=${encodeURIComponent(query)}`);
+      if (!res.ok) throw new Error("Failed to search books");
+      const data = await res.json();
+      setFilteredBooks(data);
+    } catch (err) {
+      console.error(err);
+      message.error("Failed to search books");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchBooks();
   }, []);
 
   // Filter books on search
   useEffect(() => {
-    const filtered = books.filter((book) =>
-      Object.values(book).some(
-        (value) =>
-          typeof value === "string" &&
-          value.toLowerCase().includes(searchValue.toLowerCase())
-      )
-    );
-    setFilteredBooks(filtered);
+    if (!searchValue) {
+      setFilteredBooks(books);
+    } else {
+      const filtered = books.filter((book) =>
+        Object.values(book).some(
+          (value) =>
+            typeof value === "string" &&
+            value.toLowerCase().includes(searchValue.toLowerCase())
+        )
+      );
+      setFilteredBooks(filtered);
+    }
   }, [searchValue, books]);
 
   // Open delete modal
@@ -57,10 +82,26 @@ const DisplayBook = () => {
   };
 
   // Confirm delete
-  const handleConfirmDelete = (book) => {
-    setBooks((prev) => prev.filter((b) => b.book_id !== book.book_id));
-    setFilteredBooks((prev) => prev.filter((b) => b.book_id !== book.book_id));
-    setDeleteModalOpen(false);
+  const handleConfirmDelete = async (book) => {
+    try {
+      const res = await fetch(`http://localhost:8000/books/${book.book_id}`, {
+        method: "DELETE",
+      });
+      
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to delete book");
+      }
+
+      setBooks((prev) => prev.filter((b) => b.book_id !== book.book_id));
+      setFilteredBooks((prev) => prev.filter((b) => b.book_id !== book.book_id));
+      message.success("Book deleted successfully");
+    } catch (err) {
+      console.error(err);
+      message.error(err.message);
+    } finally {
+      setDeleteModalOpen(false);
+    }
   };
 
   const handleUpdateBook = (book) => {
@@ -76,6 +117,19 @@ const DisplayBook = () => {
   const handleBookCreated = () => {
     fetchBooks();
     setAddModalOpen(false);
+    message.success("Book added successfully");
+  };
+
+  const handleBookUpdated = () => {
+    fetchBooks();
+    setEditModalOpen(false);
+    message.success("Book updated successfully");
+  };
+
+  const handleBookBorrowed = () => {
+    fetchBooks(); // Refresh to update available copies
+    setBorrowModalOpen(false);
+    message.success("Book borrowed successfully");
   };
 
   const columns = [
@@ -105,11 +159,24 @@ const DisplayBook = () => {
       ),
     },
     { title: "Category", dataIndex: "category", key: "category" },
-    { title: "Total Copies", dataIndex: "total_copies", key: "total_copies" },
+    { 
+      title: "Total Copies", 
+      dataIndex: "total_copies", 
+      key: "total_copies",
+      align: 'center'
+    },
     {
       title: "Available Copies",
       key: "available_copies",
-      render: (_, record) => <span>{record.available_copies} copies</span>,
+      align: 'center',
+      render: (_, record) => (
+        <span style={{ 
+          color: record.available_copies === 0 ? '#ff4d4f' : '#52c41a',
+          fontWeight: record.available_copies === 0 ? 'bold' : 'normal'
+        }}>
+          {record.available_copies} copies
+        </span>
+      ),
     },
     {
       title: "Action",
@@ -125,19 +192,20 @@ const DisplayBook = () => {
               color: record.available_copies === 0 ? "#999" : "#0c7236ff",
               marginRight: 16,
               cursor: record.available_copies === 0 ? "not-allowed" : "pointer",
+              fontWeight: record.available_copies === 0 ? 'normal' : 'bold'
             }}
           >
             {record.available_copies === 0 ? "Unavailable" : "Borrow"}
           </a>
           <a
             onClick={() => handleUpdateBook(record)}
-            style={{ color: "#000", marginRight: 16 }}
+            style={{ color: "#1890ff", marginRight: 16, cursor: "pointer" }}
           >
             Edit
           </a>
           <a
             onClick={() => handleDeleteBook(record)}
-            style={{ color: "#ff3a3a" }}
+            style={{ color: "#ff4d4f", cursor: "pointer" }}
           >
             Delete
           </a>
@@ -145,6 +213,7 @@ const DisplayBook = () => {
       ),
     },
   ];
+
 
   return (
     <Card>
