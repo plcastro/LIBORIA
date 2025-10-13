@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { Table, Button, Space, message } from "antd";
-import { EditOutlined, DeleteOutlined, PlusOutlined } from "@ant-design/icons";
+import { Table, Button, Space, message, Row, Col, Input, Card } from "antd";
+import {
+  EditOutlined,
+  DeleteOutlined,
+  PlusOutlined,
+  SearchOutlined,
+} from "@ant-design/icons";
 import StaffModal from "../../components/Modal/StaffModal";
 
 const StaffList = () => {
@@ -8,17 +13,19 @@ const StaffList = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [searchText, setSearchText] = useState("");
 
-  // Get current logged-in user
   const currentUserId = JSON.parse(localStorage.getItem("currentUser"))?.userid;
+
   const loadAllStaff = async () => {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("http://localhost:8000/api/users"); // GET all users
+      const res = await fetch("http://localhost:8000/api/users");
       const result = await res.json();
       if (res.ok) {
-        setData(result);
+        // Ensure each row has a unique key for Ant Design Table
+        setData(result.map((item) => ({ ...item, key: item.userid })));
       } else {
         setError(result.error || "Failed to load staff");
       }
@@ -38,28 +45,16 @@ const StaffList = () => {
   const [modalMode, setModalMode] = useState("add");
   const [selectedStaff, setSelectedStaff] = useState(null);
 
-  const handleAddStaff = async () => {
+  const handleAddStaff = () => {
     setModalMode("add");
     setSelectedStaff(null);
     setModalVisible(true);
   };
 
-  const handleSaveNewStaff = (values) => {
-    const newStaff = {
-      key: (data.length + 1).toString(),
-      name: values.name,
-      email: values.email,
-      username: values.username,
-      password: values.password,
-      account_type: values.account_type,
-    };
-    setData((prev) => [...prev, newStaff]);
-  };
-
   const handleEdit = async (record) => {
     try {
       const res = await fetch(
-        `http://localhost:8000/api/users/` + record.userid
+        `http://localhost:8000/api/users/${record.userid}`
       );
       const userData = await res.json();
       if (res.ok) {
@@ -75,35 +70,27 @@ const StaffList = () => {
     }
   };
 
-  const handleSaveEdit = (updatedValues) => {
-    setData((prev) =>
-      prev.map((item) =>
-        item.key === selectedStaff.key ? { ...item, ...updatedValues } : item
-      )
-    );
-  };
-
   const handleDelete = (record) => {
     setModalMode("delete");
     setSelectedStaff(record);
     setModalVisible(true);
   };
 
-  const handleConfirmDelete = (record) => {
-    setData((prev) => prev.filter((record) => record.userid !== record.userid));
-    message.success("Staff deleted successfully!");
+  const handleSave = () => {
+    loadAllStaff(); // reload table after add/edit/delete
   };
 
-  const handleSave = (values) => {
-    if (modalMode === "add") {
-      handleSaveNewStaff(values);
-    } else if (modalMode === "edit") {
-      handleSaveEdit(values);
-    } else if (modalMode === "delete") {
-      handleConfirmDelete(values);
-    }
-    loadAllStaff();
-  };
+  // --- SEARCH ---
+  const filteredData = data.filter((item) => {
+    if (!searchText) return true; // show all if empty
+    const text = searchText.toLowerCase();
+    return (
+      item.name?.toLowerCase().includes(text) ||
+      item.email?.toLowerCase().includes(text) ||
+      item.username?.toLowerCase().includes(text) ||
+      item.account_type?.toLowerCase().includes(text)
+    );
+  });
 
   const columns = [
     { title: "User ID", dataIndex: "userid", key: "userid" },
@@ -116,7 +103,7 @@ const StaffList = () => {
       key: "action",
       width: 150,
       render: (_, record) => {
-        const isCurrentUser = record.userid === currentUserId; // disable if logged-in user
+        const isCurrentUser = record.userid === currentUserId;
         return (
           <Space size="small">
             <Button
@@ -134,12 +121,11 @@ const StaffList = () => {
             >
               Edit
             </Button>
-
             <Button
               danger
               size="small"
               icon={<DeleteOutlined />}
-              disabled={isCurrentUser} // disable for logged-in user
+              disabled={isCurrentUser}
               onClick={() => handleDelete(record)}
               style={{
                 backgroundColor: isCurrentUser ? "#ccc" : "#ff4d4f",
@@ -159,44 +145,69 @@ const StaffList = () => {
   ];
 
   return (
-    <div>
+    <>
       {contextHolder}
-      <Button
-        type="primary"
-        icon={<PlusOutlined />}
-        onClick={handleAddStaff}
-        style={{
-          position: "fixed",
-          bottom: "20px",
-          right: "40px",
-          backgroundColor: "black",
-          color: "#fff",
-          width: 200,
-          height: 40,
-          fontWeight: 500,
-          borderRadius: "6px",
-        }}
-      >
-        Add Staff
-      </Button>
-      <Table
-        columns={columns}
-        dataSource={data}
-        pagination={false}
-        scroll={{
-          y: data.length > 10 ? 650 : undefined, // vertical scroll
-          x: "max-content", // horizontal scroll
-        }}
-      />
-      <StaffModal
-        isVisible={modalVisible}
-        mode={modalMode}
-        onClose={() => setModalVisible(false)}
-        onSave={handleSave}
-        selectedStaff={selectedStaff}
-        currentUserId={currentUserId}
-      />
-    </div>
+      <Card>
+        <Row
+          align="stretch"
+          justify="space-between"
+          style={{ marginBottom: 12 }}
+        >
+          <Col xs={24} sm={12} md={10} lg={5}>
+            <Input
+              type="search"
+              placeholder="Search data"
+              prefix={<SearchOutlined />} // ✅ must wrap in JSX
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              style={{
+                maxWidth: 300,
+                width: "100%",
+                height: "40px",
+                marginBottom: 5,
+              }}
+            />
+          </Col>
+
+          <Col xs={24} sm={12} md={10} lg={4}>
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={handleAddStaff}
+              style={{
+                width: "100%",
+                margin: 0,
+                backgroundColor: "#1600a3",
+                border: "none",
+                height: 40,
+                fontWeight: 500,
+              }}
+            >
+              Add Staff
+            </Button>
+          </Col>
+        </Row>
+
+        <Table
+          columns={columns}
+          dataSource={filteredData}
+          pagination={false}
+          scroll={{
+            y: filteredData.length > 10 ? 650 : undefined,
+            x: "max-content",
+          }}
+        />
+
+        <StaffModal
+          isVisible={modalVisible}
+          mode={modalMode}
+          onClose={() => setModalVisible(false)}
+          onSave={handleSave}
+          selectedStaff={selectedStaff}
+          currentUserId={currentUserId}
+        />
+      </Card>
+    </>
   );
 };
 

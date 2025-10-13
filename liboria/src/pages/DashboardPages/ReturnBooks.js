@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Table, Tag, Input, Card, message, Button } from "antd";
-import { ReloadOutlined } from "@ant-design/icons";
+import { ReloadOutlined, SearchOutlined } from "@ant-design/icons";
 import ReturnBookModal from "../../components/Modal/ReturnBookModal";
 
 const REASONS = [
@@ -156,6 +156,7 @@ const ReturnBooks = () => {
         <Input
           type="search"
           placeholder="Search data"
+          prefix={<SearchOutlined />}
           onChange={(e) => setSearchText(e.target.value)}
           style={{
             maxWidth: 300,
