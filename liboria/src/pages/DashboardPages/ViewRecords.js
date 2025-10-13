@@ -26,8 +26,6 @@ const ViewRecords = () => {
     setLoading(true);
     try {
       const response = await fetch("http://localhost:8000/api/records");
-      if (!response.ok) throw new Error("Failed to fetch records");
-      
       const data = await response.json();
       setRecords(data);
     } catch (err) {
@@ -47,18 +45,6 @@ const ViewRecords = () => {
       value?.toString().toLowerCase().includes(searchTerm.toLowerCase())
     )
   );
-
-  const getStatusColor = (status, returnedDate) => {
-    if (returnedDate) return 'green';
-    if (status === 'Borrowed') return 'blue';
-    if (status === 'Returned') return 'green';
-    return 'orange';
-  };
-
-  const getStatusText = (status, returnedDate) => {
-    if (returnedDate) return 'Returned';
-    return status || 'Borrowed';
-  };
 
   const columns = [
     {
@@ -108,21 +94,19 @@ const ViewRecords = () => {
       dataIndex: "date_borrowed",
       key: "date_borrowed",
       width: 120,
-      render: (date) => new Date(date).toLocaleDateString()
     },
     {
       title: "Due Date",
       dataIndex: "due_date",
       key: "due_date",
       width: 120,
-      render: (date) => new Date(date).toLocaleDateString()
     },
     {
       title: "Returned Date",
       dataIndex: "returned_date",
       key: "returned_date",
       width: 120,
-      render: (date) => date ? new Date(date).toLocaleDateString() : "-",
+      render: (date) => date || "-",
     },
     {
       title: "Violation",
@@ -146,7 +130,7 @@ const ViewRecords = () => {
       render: (penalty) => (
         <span
           style={{
-            color: !penalty || penalty === "0.00" || penalty === 0 ? "#52c41a" : "#ff4d4f",
+            color: !penalty || penalty === "0.00" ? "#52c41a" : "#ff4d4f",
             fontWeight: "bold",
           }}
         >
@@ -160,9 +144,9 @@ const ViewRecords = () => {
       key: "status",
       width: 100,
       render: (status, record) => {
-        const currentStatus = getStatusText(status, record.returned_date);
-        const color = getStatusColor(status, record.returned_date);
-        
+        const isReturned = record.returned_date;
+        const currentStatus = status || (isReturned ? "Returned" : "Borrowed");
+
         return (
           <Tag color={color} style={{ margin: 0 }}>
             {currentStatus}
@@ -199,16 +183,6 @@ const ViewRecords = () => {
               allowClear
             />
           </Col>
-          <Col xs={24} sm={12} md={10} lg={5}>
-            <Button 
-              icon={<ReloadOutlined />} 
-              onClick={fetchRecords}
-              loading={loading}
-              style={{ width: '100%', height: 40 }}
-            >
-              Refresh Records
-            </Button>
-          </Col>
         </Row>
 
         <Table
@@ -217,16 +191,10 @@ const ViewRecords = () => {
             ...record,
             key: record.borrow_id, // Use borrow_id as key instead of id
           }))}
-          loading={loading}
-          pagination={{
-            pageSize: 10,
-            showSizeChanger: true,
-            showQuickJumper: true,
-            showTotal: (total, range) => 
-              `${range[0]}-${range[1]} of ${total} records`
-          }}
+          pagination={false}
           scroll={{
-            x: 'max-content',
+            y: records.length > 10 ? 600 : undefined,
+            x: "max-content",
           }}
           locale={{
             emptyText: loading ? <Spin size="large" /> : "No records found",
