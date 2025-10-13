@@ -75,7 +75,7 @@ const returnBook = (req, res) => {
       FROM borrowed_books bb
       JOIN books b ON bb.book_id = b.id
       JOIN borrowers bor ON bb.borrower_id = bor.id
-      WHERE bb.borrow_id = ? AND bb.status = 'borrowed'
+      WHERE bb.borrow_id = ? AND bb.status = 'Borrowed'
     `;
 
     db.query(getBorrowQuery, [borrow_id], (err, borrowResults) => {
@@ -260,10 +260,10 @@ const deleteReturnedBook = (req, res) => {
 
       const returnRecord = returnResults[0];
 
-      // Step 1: Update borrow record back to 'borrowed'
+      // Step 1: Update borrow record back to 'Borrowed'
       const updateBorrowQuery = `
         UPDATE borrowed_books 
-        SET status = 'borrowed', returned_date = NULL 
+        SET status = 'Borrowed', returned_date = NULL 
         WHERE borrow_id = ?
       `;
       db.query(
