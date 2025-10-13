@@ -335,6 +335,46 @@ const updateUser = (req, res) => {
     });
   });
 };
+
+const changePassword = (req, res) => {
+  const userId = req.params.id;
+  const { currPassword, newPassword } = req.body;
+
+  if (!currPassword || !newPassword) {
+    return res
+      .status(400)
+      .json({ error: "Both current and new passwords are required" });
+  }
+
+  const selectQuery = "SELECT password FROM users WHERE userid = ?";
+  db.query(selectQuery, [userId], (err, results) => {
+    if (err) {
+      console.error("DB select error:", err);
+      return res
+        .status(500)
+        .json({ error: "Database error while fetching user" });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    if (results[0].password !== currPassword) {
+      return res.status(400).json({ error: "Current password is incorrect" });
+    }
+
+    const updateQuery = "UPDATE users SET password = ? WHERE userid = ?";
+    db.query(updateQuery, [newPassword, userId], (err2) => {
+      if (err2) {
+        console.error("DB update error:", err2);
+        return res.status(500).json({ error: "Failed to update password" });
+      }
+
+      res.json({ message: "Password updated successfully" });
+    });
+  });
+};
+
 const updateUserPassword = (req, res) => {
   const { password } = req.body;
   const { id } = req.params; // this is actually userid
@@ -649,6 +689,7 @@ module.exports = {
   createUser,
   register,
   updateUserPassword,
+  changePassword,
   updateUser,
   deleteUser,
   login,

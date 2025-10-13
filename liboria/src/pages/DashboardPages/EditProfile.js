@@ -30,7 +30,8 @@ const EditProfile = ({ initialData, isVisible, onClose, onSave }) => {
   const [loading, setLoading] = useState(false);
 
   const onFinish = async (values) => {
-    const { password, confirmPassword } = values;
+    const { currPassword, password, confirmPassword } = values;
+
     if (password !== confirmPassword) {
       messageApi.error("Password and Confirm password do not match!");
       return;
@@ -39,11 +40,8 @@ const EditProfile = ({ initialData, isVisible, onClose, onSave }) => {
     const user = JSON.parse(localStorage.getItem("currentUser")) || {};
     const userId = user.userid || user._id || user.id;
 
-    // 🧠 Compare with old password (assuming it's stored in currentUser)
-    if (password === user.password) {
-      messageApi.error(
-        "New password cannot be the same as your current password."
-      );
+    if (password === currPassword) {
+      messageApi.error("New password cannot be the same as current password.");
       return;
     }
 
@@ -54,22 +52,18 @@ const EditProfile = ({ initialData, isVisible, onClose, onSave }) => {
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ password }),
+          body: JSON.stringify({ currPassword, newPassword: password }),
         }
       );
 
       const data = await response.json();
 
       if (response.ok) {
-        const updatedUser = { ...user, ...data };
-        localStorage.setItem("currentUser", JSON.stringify(updatedUser));
-
-        messageApi.success("Password updated successfully!");
-        onSave();
+        messageApi.success(data.message);
         form.resetFields();
         onClose();
       } else {
-        messageApi.error("Failed to update password.");
+        messageApi.error(data.error);
       }
     } catch (err) {
       messageApi.error("Network error. Please try again.");
@@ -86,7 +80,7 @@ const EditProfile = ({ initialData, isVisible, onClose, onSave }) => {
         open={isVisible}
         onCancel={onClose}
         footer={null}
-        centered
+        afterClose={() => form.resetFields()}
       >
         <Form
           form={form}
@@ -106,6 +100,15 @@ const EditProfile = ({ initialData, isVisible, onClose, onSave }) => {
             <Input readOnly />
           </Form.Item>
 
+          <Form.Item
+            name="currPassword"
+            label="Current Password"
+            rules={[
+              { required: true, message: "Please enter your current password" },
+            ]}
+          >
+            <Input.Password minLength={8} />
+          </Form.Item>
           <Form.Item
             name="password"
             label="New Password"
