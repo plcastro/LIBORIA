@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Button, Form, Input, Space, Modal, message } from "antd";
 
-const SubmitButton = ({ form, children }) => {
+const SubmitButton = ({ form, children, loading }) => {
   const [submittable, setSubmittable] = React.useState(false);
   const values = Form.useWatch([], form);
 
@@ -16,7 +16,8 @@ const SubmitButton = ({ form, children }) => {
     <Button
       type="primary"
       htmlType="submit"
-      disabled={!submittable}
+      disabled={!submittable || loading}
+      loading={loading}
       style={{ backgroundColor: "#000", color: "#fff", width: "200px" }}
     >
       {children}
@@ -31,24 +32,36 @@ const EditProfile = ({ initialData, isVisible, onClose, onSave }) => {
 
   const onFinish = async (values) => {
     const { password, confirmPassword } = values;
+    
+    // Validation
     if (password !== confirmPassword) {
       messageApi.error("Password and Confirm password do not match!");
+      return;
+    }
+
+    if (password.length < 8) {
+      messageApi.error("Password must be at least 8 characters long!");
       return;
     }
 
     const user = JSON.parse(localStorage.getItem("currentUser")) || {};
     const userId = user.userid || user._id || user.id;
 
-    // 🧠 Compare with old password (assuming it's stored in currentUser)
+    if (!userId) {
+      messageApi.error("User not found. Please log in again.");
+      return;
+    }
+
+    // Check if new password is same as current password
     if (password === user.password) {
-      messageApi.error(
-        "New password cannot be the same as your current password."
-      );
+      messageApi.error("New password cannot be the same as your current password.");
       return;
     }
 
     try {
       setLoading(true);
+      console.log("Updating password for user ID:", userId);
+      
       const response = await fetch(
         `http://localhost:8000/api/users/check-pass/${userId}`,
         {
@@ -59,9 +72,15 @@ const EditProfile = ({ initialData, isVisible, onClose, onSave }) => {
       );
 
       const data = await response.json();
+      console.log("Response status:", response.status);
+      console.log("Response data:", data);
 
       if (response.ok) {
-        const updatedUser = { ...user, ...data };
+        // Update localStorage with new user data (without storing password for security)
+        const updatedUser = { 
+          ...user
+          // Don't update the password in localStorage for security
+        };
         localStorage.setItem("currentUser", JSON.stringify(updatedUser));
 
         messageApi.success("Password updated successfully!");
@@ -69,9 +88,11 @@ const EditProfile = ({ initialData, isVisible, onClose, onSave }) => {
         form.resetFields();
         onClose();
       } else {
-        messageApi.error("Failed to update password.");
+        // Show the actual error message from backend
+        messageApi.error(data.error || "Failed to update password.");
       }
     } catch (err) {
+      console.error("Update password error:", err);
       messageApi.error("Network error. Please try again.");
     } finally {
       setLoading(false);

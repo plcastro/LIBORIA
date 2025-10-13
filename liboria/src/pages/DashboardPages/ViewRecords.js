@@ -6,15 +6,10 @@ import {
   Card,
   Row,
   Col,
-  Typography,
-  Space,
-  Button,
   message,
   Spin,
 } from "antd";
-import { SearchOutlined, ReloadOutlined } from "@ant-design/icons";
-
-const { Title } = Typography;
+import { SearchOutlined } from "@ant-design/icons";
 
 const ViewRecords = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -94,19 +89,21 @@ const ViewRecords = () => {
       dataIndex: "date_borrowed",
       key: "date_borrowed",
       width: 120,
+      render: (date) => new Date(date).toLocaleDateString()
     },
     {
       title: "Due Date",
       dataIndex: "due_date",
       key: "due_date",
       width: 120,
+      render: (date) => new Date(date).toLocaleDateString()
     },
     {
       title: "Returned Date",
       dataIndex: "returned_date",
       key: "returned_date",
       width: 120,
-      render: (date) => date || "-",
+      render: (date) => date ? new Date(date).toLocaleDateString() : "-",
     },
     {
       title: "Violation",
@@ -146,24 +143,23 @@ const ViewRecords = () => {
       render: (status, record) => {
         const isReturned = record.returned_date;
         const currentStatus = status || (isReturned ? "Returned" : "Borrowed");
+        
+        // Define color based on status
+        let tagColor = 'orange'; // default
+        if (currentStatus === 'Returned') {
+          tagColor = 'green';
+        } else if (currentStatus === 'Borrowed') {
+          tagColor = 'blue';
+        }
 
         return (
-          <Tag color={color} style={{ margin: 0 }}>
+          <Tag color={tagColor} style={{ margin: 0 }}>
             {currentStatus}
           </Tag>
         );
       },
     },
   ];
-
-  const handleSearch = (value) => {
-    setSearchTerm(value);
-  };
-
-  const handleReset = () => {
-    setSearchTerm("");
-    fetchRecords();
-  };
 
   return (
     <div style={{ minHeight: "100vh" }}>
@@ -179,8 +175,7 @@ const ViewRecords = () => {
               placeholder="Search records..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              style={{ height: 40 }}
-              allowClear
+              style={{ height: 40 }}              
             />
           </Col>
         </Row>
@@ -189,15 +184,21 @@ const ViewRecords = () => {
           columns={columns}
           dataSource={filteredRecords.map((record) => ({
             ...record,
-            key: record.borrow_id, // Use borrow_id as key instead of id
+            key: record.borrow_id,
           }))}
-          pagination={false}
+          loading={loading}
+          pagination={{
+            pageSize: 10,
+            showSizeChanger: true,
+            showQuickJumper: true,
+            showTotal: (total, range) => 
+              `${range[0]}-${range[1]} of ${total} records`
+          }}
           scroll={{
-            y: records.length > 10 ? 600 : undefined,
-            x: "max-content",
+            x: 'max-content',
           }}
           locale={{
-            emptyText: loading ? <Spin size="large" /> : "No records found",
+            emptyText: "No records found",
           }}
         />
       </Card>

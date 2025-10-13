@@ -335,31 +335,35 @@ const updateUser = (req, res) => {
     });
   });
 };
+// UPDATE user password
 const updateUserPassword = (req, res) => {
+  const userId = req.params.id;
   const { password } = req.body;
-  const { id } = req.params;
 
-  // Get current user password first
-  const getQuery = "SELECT password FROM users WHERE id = ?";
-  db.query(getQuery, [id], (err, results) => {
-    if (err) return res.status(500).json({ error: "Server error" });
-    if (!results.length)
-      return res.status(404).json({ error: "User not found" });
+  if (!password) {
+    return res.status(400).json({ error: "Password is required" });
+  }
 
-    const oldPassword = results[0].password;
+  const query = "UPDATE users SET password = ? WHERE userid = ?";
 
-    if (password === oldPassword) {
-      return res
-        .status(400)
-        .json({ error: "New password cannot be the same as the current one." });
+  db.query(query, [password, userId], (err, results) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: "Internal Server Error" });
     }
 
-    // Continue with update
-    const updateQuery = "UPDATE users SET password = ? WHERE id = ?";
-    db.query(updateQuery, [password, id], (err2) => {
-      if (err2)
-        return res.status(500).json({ error: "Failed to update password" });
-      res.json({ message: "Password updated successfully" });
+    if (results.affectedRows === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Return user info without password
+    const getQuery = "SELECT userid, username, name, email, account_type FROM users WHERE userid = ?";
+    db.query(getQuery, [userId], (err, userResults) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).json({ error: "Internal Server Error" });
+      }
+      res.json(userResults[0]);
     });
   });
 };
@@ -635,6 +639,8 @@ const getBorrowingRecords = (req, res) => {
     res.json(results);
   });
 };
+
+
 
 module.exports = {
   getUsers,
