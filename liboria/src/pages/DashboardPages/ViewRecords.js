@@ -195,11 +195,10 @@ const ViewRecords = () => {
           <Col xs={24} sm={12} md={10} lg={5}>
             <Input
               prefix={<SearchOutlined />}
-              placeholder="Search records..."
+              placeholder="Search records"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               style={{ height: 40 }}
-              allowClear
             />
           </Col>
           <Col xs={24} sm={12} md={10} lg={5}>
