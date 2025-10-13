@@ -56,10 +56,15 @@ const getReturnedBookById = (req, res) => {
 
 // RETURN a book (mark as returned)
 const returnBook = (req, res) => {
-  const { borrow_id, violation, penalty, amount_paid } = req.body;
+  const { borrow_id, violation, penalty, amount_paid, returned_date } =
+    req.body;
 
   if (!borrow_id) {
     return res.status(400).json({ error: "Borrow ID is required" });
+  }
+
+  if (!returned_date) {
+    return res.status(400).json({ error: "Returned date is required" });
   }
 
   db.beginTransaction((err) => {
@@ -68,7 +73,7 @@ const returnBook = (req, res) => {
       return res.status(500).json({ error: "Transaction start failed" });
     }
 
-    // Step 1: Get borrow record (no status filter)
+    // Step 1: Get borrow record
     const getBorrowQuery = `
       SELECT bb.*, b.title, b.book_id 
       FROM borrowed_books bb
@@ -77,105 +82,131 @@ const returnBook = (req, res) => {
     `;
 
     db.query(getBorrowQuery, [borrow_id], (err, borrowResults) => {
-      if (err) {
-        return db.rollback(() => {
-          console.error(err);
-          res.status(500).json({ error: "Failed to fetch borrow record" });
-        });
-      }
-
-      if (borrowResults.length === 0) {
-        return db.rollback(() => {
-          res.status(404).json({ error: "Borrow record not found" });
-        });
-      }
+      if (err)
+        return db.rollback(() =>
+          res.status(500).json({ error: "Failed to fetch borrow record" })
+        );
+      if (borrowResults.length === 0)
+        return db.rollback(() =>
+          res.status(404).json({ error: "Borrow record not found" })
+        );
 
       const borrowRecord = borrowResults[0];
 
       // Step 2: Check if already returned
       const checkReturnQuery = `SELECT * FROM returned_books WHERE borrow_id = ?`;
       db.query(checkReturnQuery, [borrow_id], (err, existing) => {
-        if (err) {
-          return db.rollback(() => {
-            console.error(err);
-            res.status(500).json({ error: "Failed to check existing returns" });
-          });
+        if (err)
+          return db.rollback(() =>
+            res.status(500).json({ error: "Failed to check existing returns" })
+          );
+        if (existing.length > 0)
+          return db.rollback(() =>
+            res.status(400).json({ error: "Book already returned" })
+          );
+
+        // Step 3: Determine stored violation
+        const storedViolation = Array.isArray(violation)
+          ? violation.includes("Lost Book")
+            ? "Lost Book"
+            : violation[0] || "None"
+          : violation || "None";
+
+        // Step 4: Validate amount_paid
+        if (
+          storedViolation !== "Lost Book" &&
+          penalty > 0 &&
+          (amount_paid === undefined || amount_paid < penalty)
+        ) {
+          return db.rollback(() =>
+            res
+              .status(400)
+              .json({ error: "Amount paid must cover the penalty" })
+          );
         }
 
-        if (existing.length > 0) {
-          return db.rollback(() => {
-            res.status(400).json({ error: "Book already returned" });
-          });
-        }
-
-        // Step 3: Insert new record in returned_books
+        // Step 5: Insert into returned_books
         const insertQuery = `
           INSERT INTO returned_books 
           (borrow_id, returned_date, violation, penalty, amount_paid)
-          VALUES (?, CURDATE(), ?, ?, ?)
+          VALUES (?, ?, ?, ?, ?)
         `;
 
         db.query(
           insertQuery,
-          [borrow_id, violation || "None", penalty || 0.0, amount_paid || 0.0],
+          [
+            borrow_id,
+            returned_date,
+            storedViolation,
+            penalty || 0,
+            amount_paid || 0,
+          ],
           (err, insertResults) => {
-            if (err) {
-              return db.rollback(() => {
-                console.error(err);
+            if (err)
+              return db.rollback(() =>
                 res
                   .status(500)
-                  .json({ error: "Failed to insert into returned_books" });
-              });
-            }
+                  .json({ error: "Failed to insert into returned_books" })
+              );
 
-            // Step 4: Update book available copies
-            if (violation !== "Lost") {
-              const updateBookQuery = `
-    UPDATE books
-    SET available_copies = available_copies + 1
-    WHERE book_id = ?
-  `;
-              db.query(updateBookQuery, [borrowRecord.book_id], (err) => {
-                if (err) {
-                  return db.rollback(() => {
-                    console.error(err);
-                    res
-                      .status(500)
-                      .json({ error: "Failed to update available copies" });
-                  });
-                }
+            // Step 6: Update book copies if not Lost
+            const updateCopiesPromise =
+              storedViolation !== "Lost Book"
+                ? new Promise((resolve, reject) => {
+                    const updateBookQuery = `
+                    UPDATE books
+                    SET available_copies = available_copies + 1
+                    WHERE book_id = ?
+                  `;
+                    db.query(updateBookQuery, [borrowRecord.book_id], (err) =>
+                      err ? reject(err) : resolve()
+                    );
+                  })
+                : Promise.resolve();
 
-                // Step 5: Commit transaction
-                db.commit((err) => {
-                  if (err) {
-                    return db.rollback(() => {
-                      console.error(err);
-                      res.status(500).json({ error: "Commit failed" });
+            updateCopiesPromise
+              .then(() => {
+                // Step 7: Update borrowed_books status
+                const status =
+                  storedViolation === "Lost Book" ? "Lost" : "Returned";
+                db.query(
+                  `UPDATE borrowed_books SET status = ? WHERE borrow_id = ?`,
+                  [status, borrow_id],
+                  (err) => {
+                    if (err)
+                      return db.rollback(() =>
+                        res
+                          .status(500)
+                          .json({
+                            error: "Failed to update borrowed_books status",
+                          })
+                      );
+
+                    // Step 8: Commit transaction
+                    db.commit((err) => {
+                      if (err)
+                        return db.rollback(() =>
+                          res.status(500).json({ error: "Commit failed" })
+                        );
+
+                      res.status(201).json({
+                        message:
+                          storedViolation === "Lost Book"
+                            ? "Book marked as lost"
+                            : "Book returned successfully",
+                        return_id: insertResults.insertId,
+                      });
                     });
                   }
-
-                  res.status(201).json({
-                    message: "Book returned successfully",
-                    return_id: insertResults.insertId,
-                  });
-                });
-              });
-            } else {
-              // For lost book, skip updating available copies
-              db.commit((err) => {
-                if (err) {
-                  return db.rollback(() => {
-                    console.error(err);
-                    res.status(500).json({ error: "Commit failed" });
-                  });
-                }
-
-                res.status(201).json({
-                  message: "Book marked as lost",
-                  return_id: insertResults.insertId,
-                });
-              });
-            }
+                );
+              })
+              .catch(() =>
+                db.rollback(() =>
+                  res
+                    .status(500)
+                    .json({ error: "Failed to update book copies" })
+                )
+              );
           }
         );
       });

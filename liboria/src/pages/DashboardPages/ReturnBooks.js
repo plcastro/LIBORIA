@@ -52,7 +52,7 @@ const ReturnBooks = () => {
     fetchBorrowedBooks();
   }, []);
 
-  // ✅ Filter search
+  //Filter search
   const filteredData = borrowedBooks.filter((record) =>
     Object.values(record).some(
       (value) =>
@@ -138,9 +138,9 @@ const ReturnBooks = () => {
           type="link"
           onClick={() => handleReturn(record)}
           style={{
-            color: "#52c41a",
-            padding: 0,
-            fontWeight: "bold",
+            backgroundColor: "#009148ff",
+            color: "#fff",
+            width: "100%",
           }}
         >
           Return
