@@ -109,7 +109,15 @@ const BorrowBookModal = ({ open, onClose, onSubmit, initialValues }) => {
         window.location.reload();
       } else {
         console.error("Borrow failed:", borrowData.error);
-        messageApi.error("Borrowed already borrowed this book!");
+        if (borrowData.error.includes("already borrowed")) {
+          messageApi.error("Student already borrowed this book!");
+        } else if (borrowData.error.includes("limit reached")) {
+          messageApi.error(
+            "Borrow limit reached. You can only borrow up to 3 books at a time."
+          );
+        } else {
+          messageApi.error("Failed to borrow book. Please try again.");
+        }
       }
     } catch (err) {
       console.error("Error while borrowing:", err);

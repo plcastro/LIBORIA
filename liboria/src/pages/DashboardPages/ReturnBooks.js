@@ -11,6 +11,7 @@ const REASONS = [
 ];
 
 const ReturnBooks = () => {
+  const [messageApi, contextHolder] = message.useMessage();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [searchText, setSearchText] = useState("");
@@ -28,38 +29,7 @@ const ReturnBooks = () => {
     setSelectedRecord(null);
   };
 
-  const handleSubmitReturn = async (values) => {
-    try {
-      const returnData = {
-        borrow_id: selectedRecord.borrow_id,
-        violation: values.violation,
-        penalty: values.penalty || 0,
-        amount_paid: values.amount_paid || 0,
-      };
-
-      const res = await fetch("http://localhost:8000/returned-books", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(returnData),
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "Failed to return book");
-      }
-
-      message.success("Book returned successfully!");
-      handleModalClose();
-      fetchBorrowedBooks(); // Refresh the list
-    } catch (err) {
-      console.error("Return error:", err);
-      message.error(err.message);
-    }
-  };
-
-  // Load borrowed books from API
+  // ✅ Fetch borrowed books list (only display logic)
   const fetchBorrowedBooks = async () => {
     setLoading(true);
     setError(null);
@@ -68,13 +38,12 @@ const ReturnBooks = () => {
       if (!response.ok) throw new Error("Failed to fetch borrowed books");
 
       const data = await response.json();
-      // Filter only active borrowed books (status = 'Pending')
       const activeBorrows = data.filter((book) => book.status === "Borrowed");
       setBorrowedBooks(activeBorrows);
     } catch (err) {
       console.error("Fetch error:", err);
       setError(err.message);
-      message.error("Failed to load borrowed books");
+      messageApi.error("Failed to load borrowed books");
     } finally {
       setLoading(false);
     }
@@ -84,7 +53,7 @@ const ReturnBooks = () => {
     fetchBorrowedBooks();
   }, []);
 
-  // Filter based on search
+  // ✅ Filter search
   const filteredData = borrowedBooks.filter((record) =>
     Object.values(record).some(
       (value) =>
@@ -183,6 +152,7 @@ const ReturnBooks = () => {
 
   return (
     <>
+      {contextHolder}
       <Card>
         <Input
           type="search"
@@ -195,6 +165,7 @@ const ReturnBooks = () => {
             marginBottom: "20px",
           }}
         />
+
         <Table
           columns={columns.map((col) => ({ ...col, width: col.width || 150 }))}
           dataSource={filteredData}
@@ -207,13 +178,15 @@ const ReturnBooks = () => {
           loading={loading}
           style={{ tableLayout: "fixed" }}
         />
+
+        {/* Modal handles the return process */}
         <ReturnBookModal
           open={isModalOpen}
           onClose={handleModalClose}
-          onSubmit={handleSubmitReturn}
           initialValues={selectedRecord}
           REASONS={REASONS}
         />
+
         {error && <p style={{ color: "red" }}>{error}</p>}
       </Card>
     </>

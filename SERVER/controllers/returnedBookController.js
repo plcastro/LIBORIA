@@ -62,19 +62,17 @@ const returnBook = (req, res) => {
     return res.status(400).json({ error: "Borrow ID is required" });
   }
 
-  // Start transaction
   db.beginTransaction((err) => {
     if (err) {
       console.error(err);
-      return res.status(500).json({ error: "Internal Server Error" });
+      return res.status(500).json({ error: "Transaction start failed" });
     }
 
-    // Step 1: Get borrow record details
+    // Step 1: Get borrow record
     const getBorrowQuery = `
-      SELECT bb.*, b.title, b.id as book_id, bor.first_name, bor.last_name 
+      SELECT bb.*, b.title, b.id AS book_id 
       FROM borrowed_books bb
       JOIN books b ON bb.book_id = b.id
-      JOIN borrowers bor ON bb.borrower_id = bor.id
       WHERE bb.borrow_id = ? AND bb.status = 'Borrowed'
     `;
 
@@ -82,102 +80,85 @@ const returnBook = (req, res) => {
       if (err) {
         return db.rollback(() => {
           console.error(err);
-          res.status(500).json({ error: "Internal Server Error" });
+          res.status(500).json({ error: "Failed to fetch borrow record" });
         });
       }
 
       if (borrowResults.length === 0) {
         return db.rollback(() => {
-          res.status(404).json({ error: "Active borrow record not found" });
+          res
+            .status(404)
+            .json({ error: "Borrow record not found or already returned" });
         });
       }
 
       const borrowRecord = borrowResults[0];
 
-      // Step 2: Create return record
-      const returnQuery = `
+      const insertQuery = `
         INSERT INTO returned_books 
-        (borrow_id, returned_date, violation, penalty, amount_paid) 
+        (borrow_id, returned_date, violation, penalty, amount_paid)
         VALUES (?, CURDATE(), ?, ?, ?)
       `;
 
       db.query(
-        returnQuery,
+        insertQuery,
         [borrow_id, violation || "None", penalty || 0.0, amount_paid || 0.0],
-        (err, returnResults) => {
+        (err, insertResults) => {
           if (err) {
             return db.rollback(() => {
               console.error(err);
-              res.status(500).json({ error: "Internal Server Error" });
+              res
+                .status(500)
+                .json({ error: "Failed to insert into returned_books" });
             });
           }
 
-          // Step 3: Update borrow record status to 'returned'
           const updateBorrowQuery = `
-          UPDATE borrowed_books 
-          SET status = 'returned', returned_date = CURDATE() 
-          WHERE borrow_id = ?
-        `;
-          db.query(updateBorrowQuery, [borrow_id], (err, updateResults) => {
+            UPDATE borrowed_books
+            SET status = 'Returned'
+            WHERE borrow_id = ?
+          `;
+
+          db.query(updateBorrowQuery, [borrow_id], (err) => {
             if (err) {
               return db.rollback(() => {
                 console.error(err);
-                res.status(500).json({ error: "Internal Server Error" });
+                res
+                  .status(500)
+                  .json({ error: "Failed to update borrowed_books" });
               });
             }
 
-            // Step 4: Update book available copies (+1)
-            const updateBookQuery =
-              "UPDATE books SET available_copies = available_copies + 1 WHERE id = ?";
-            db.query(
-              updateBookQuery,
-              [borrowRecord.book_id],
-              (err, bookResults) => {
+            const updateBookQuery = `
+              UPDATE books
+              SET available_copies = available_copies + 1
+              WHERE id = ?
+            `;
+
+            db.query(updateBookQuery, [borrowRecord.book_id], (err) => {
+              if (err) {
+                return db.rollback(() => {
+                  console.error(err);
+                  res
+                    .status(500)
+                    .json({ error: "Failed to update available copies" });
+                });
+              }
+
+              db.commit((err) => {
                 if (err) {
                   return db.rollback(() => {
                     console.error(err);
-                    res.status(500).json({ error: "Internal Server Error" });
+                    res.status(500).json({ error: "Commit failed" });
                   });
                 }
 
-                // Commit transaction
-                db.commit((err) => {
-                  if (err) {
-                    return db.rollback(() => {
-                      console.error(err);
-                      res.status(500).json({ error: "Internal Server Error" });
-                    });
-                  }
-
-                  // Get the complete return record with details
-                  const getQuery = `
-                SELECT rb.*, 
-                       bb.book_id, bb.borrower_id,
-                       b.title, b.author, b.isbn,
-                       bor.first_name, bor.last_name, bor.email,
-                       bb.borrowed_date, bb.due_date
-                FROM returned_books rb
-                JOIN borrowed_books bb ON rb.borrow_id = bb.borrow_id
-                JOIN books b ON bb.book_id = b.id
-                JOIN borrowers bor ON bb.borrower_id = bor.id
-                WHERE rb.return_id = ?
-              `;
-                  db.query(
-                    getQuery,
-                    [returnResults.insertId],
-                    (err, finalResults) => {
-                      if (err) {
-                        console.error(err);
-                        return res
-                          .status(500)
-                          .json({ error: "Internal Server Error" });
-                      }
-                      res.status(201).json(finalResults[0]);
-                    }
-                  );
+                res.status(201).json({
+                  message: "Book returned successfully",
+                  return_id: insertResults.insertId,
                 });
-              }
-            );
+              });
+            });
           });
         }
       );
