@@ -4,7 +4,6 @@ import { ReloadOutlined } from "@ant-design/icons";
 import ReturnBookModal from "../../components/Modal/ReturnBookModal";
 
 const REASONS = [
-  { label: "None", value: "None" },
   { label: "Late Return", value: "Late Return" },
   { label: "Damaged", value: "Damaged" },
   { label: "Lost", value: "Lost" },

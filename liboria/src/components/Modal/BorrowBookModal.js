@@ -73,7 +73,6 @@ const BorrowBookModal = ({ open, onClose, onSubmit, initialValues }) => {
       const values = await form.validateFields();
       const name = values.name.trim();
 
-      // ✅ Borrower payload
       const borrowerPayload = {
         name,
         year_level: values.year_level,
@@ -134,7 +133,7 @@ const BorrowBookModal = ({ open, onClose, onSubmit, initialValues }) => {
         onClose();
         form.resetFields();
         messageApi.success(
-          "Borrowed " + borrowData.book_title + " successfully!"
+          "Borrowed " + initialValues.book_title + " successfully!"
         );
         window.location.reload();
       } else {
