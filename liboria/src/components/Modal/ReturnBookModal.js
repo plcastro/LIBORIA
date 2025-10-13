@@ -63,7 +63,25 @@ const ReturnBookModal = ({ open, onClose, initialValues, REASONS }) => {
         amount_paid: values.inCash || 0,
       };
 
-      // 1️⃣ Insert the record into returned_books
+      // 1️⃣ Update borrowed_books status to 'Returned'
+      const updateRes = await fetch(
+        `http://localhost:8000/api/borrowed-books/${initialValues.borrow_id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: "Returned" }),
+        }
+      );
+
+      const updateData = await updateRes.json();
+
+      if (!updateRes.ok) {
+        console.error("Failed to update borrowed_books:", updateData.error);
+        messageApi.error("Failed to update borrowed book status.");
+        return;
+      }
+
+      // 2️⃣ Insert the record into returned_books
       const insertRes = await fetch(
         "http://localhost:8000/api/returned-books",
         {
@@ -81,30 +99,10 @@ const ReturnBookModal = ({ open, onClose, initialValues, REASONS }) => {
         return;
       }
 
-      // 2️⃣ Update the borrow book status to 'Returned'
-      const updateRes = await fetch(
-        `http://localhost:8000/api/borrowed-books/${initialValues.borrow_id}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            due_date: initialValues.due_date, // keep original due_date
-            status: "Returned",
-          }),
-        }
-      );
-
-      const updateData = await updateRes.json();
-
-      if (!updateRes.ok) {
-        console.error("Failed to update borrowed_books:", updateData.error);
-        messageApi.error("Failed to update borrowed book status.");
-        return;
-      }
-
       messageApi.success("Book successfully returned!");
       form.resetFields();
       onClose();
+      window.location.reload();
     } catch (err) {
       console.error("Error while returning book:", err);
       messageApi.error(
