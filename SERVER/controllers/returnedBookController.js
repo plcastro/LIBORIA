@@ -114,7 +114,7 @@ const returnBook = (req, res) => {
 
           // Step 4: Validate amount if not Lost
           if (
-            !violationsArray.includes("Lost Book") &&
+            !violationsArray.includes("Lost") &&
             penalty > 0 &&
             (amount_paid === undefined || amount_paid < penalty)
           ) {
@@ -149,7 +149,7 @@ const returnBook = (req, res) => {
                 );
 
               // Step 6: Update book available copies if not Lost
-              const updateCopiesPromise = !violationsArray.includes("Lost Book")
+              const updateCopiesPromise = !violationsArray.includes("Lost")
                 ? new Promise((resolve, reject) => {
                     db.query(
                       `UPDATE books SET available_copies = available_copies + 1 WHERE book_id = ?`,
@@ -162,7 +162,7 @@ const returnBook = (req, res) => {
               updateCopiesPromise
                 .then(() => {
                   // Step 7: Update borrowed_books status
-                  const status = violationsArray.includes("Lost Book")
+                  const status = violationsArray.includes("Lost")
                     ? "Lost"
                     : "Returned";
                   db.query(
@@ -171,11 +171,9 @@ const returnBook = (req, res) => {
                     (err) => {
                       if (err)
                         return db.rollback(() =>
-                          res
-                            .status(500)
-                            .json({
-                              error: "Failed to update borrowed_books status",
-                            })
+                          res.status(500).json({
+                            error: "Failed to update borrowed_books status",
+                          })
                         );
 
                       db.commit((err) => {
@@ -185,7 +183,7 @@ const returnBook = (req, res) => {
                           );
 
                         res.status(201).json({
-                          message: violationsArray.includes("Lost Book")
+                          message: violationsArray.includes("Lost")
                             ? "Book marked as lost"
                             : "Book returned successfully",
                           return_id: insertResults.insertId,

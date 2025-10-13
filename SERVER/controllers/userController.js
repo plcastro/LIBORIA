@@ -570,9 +570,9 @@ const resetPassword = (req, res) => {
       .json({ error: "Password must be at least 8 characters" });
   }
 
-  // First verify the token is valid
+  // First verify the token is valid and get current password
   const verifyQuery =
-    "SELECT userid FROM users WHERE reset_token = ? AND reset_token_expiry > NOW()";
+    "SELECT userid, password FROM users WHERE reset_token = ? AND reset_token_expiry > NOW()";
 
   db.query(verifyQuery, [token], (err, results) => {
     if (err) {
@@ -585,6 +585,13 @@ const resetPassword = (req, res) => {
     }
 
     const user = results[0];
+
+    // Check if new password is the same as current password
+    if (user.password === newPassword) {
+      return res.status(400).json({
+        error: "New password cannot be the same as your current password.",
+      });
+    }
 
     // Update password and clear reset token
     const updatePasswordQuery =
