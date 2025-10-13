@@ -18,22 +18,19 @@ const ReturnBookModal = ({ open, onClose, initialValues, REASONS }) => {
   const [messageApi, contextHolder] = message.useMessage();
   const colProps = { xs: 24, md: 12 };
 
-  // Recalculate penalty and handle violations
+  // Calculate penalty based on returned date and violations
   const recalculatePenalty = () => {
     const returnedDate = form.getFieldValue("returnedDate") || dayjs();
     const dueDate = dayjs(initialValues?.due_date);
-    const selectedViolations = form.getFieldValue("violation") || [];
+    let violations = form.getFieldValue("violation") || [];
 
-    let violations = [...selectedViolations];
-
-    // Automatically add "Late Return" if returned date is past due
+    // Automatically add/remove "Late Return"
     if (returnedDate.isAfter(dueDate)) {
       if (!violations.includes("Late Return")) violations.push("Late Return");
     } else {
       violations = violations.filter((v) => v !== "Late Return");
     }
 
-    // Update violations in form
     form.setFieldsValue({ violation: violations });
 
     // Calculate penalty
@@ -45,9 +42,6 @@ const ReturnBookModal = ({ open, onClose, initialValues, REASONS }) => {
     if (violations.includes("Lost")) penalty += 200;
 
     form.setFieldsValue({ penalty });
-
-    // If lost, auto-fill Amount Paid to match penalty
-    if (violations.includes("Lost")) form.setFieldsValue({ inCash: penalty });
   };
 
   useEffect(() => {
@@ -100,8 +94,10 @@ const ReturnBookModal = ({ open, onClose, initialValues, REASONS }) => {
 
       const payload = {
         borrow_id: initialValues.borrow_id,
-        returned_date: dayjs(values.returnedDate).format("YYYY-MM-DD"),
-        violation: Array.isArray(values.violation) ? values.violation[0] : "",
+        returned_date: dayjs(values.returnedDate).format("YYYY-MM-DD"), // convert to string
+        violation: Array.isArray(values.violation)
+          ? values.violation
+          : [values.violation || "None"],
         penalty: values.penalty || 0,
         amount_paid: values.inCash || 0,
       };
@@ -138,6 +134,23 @@ const ReturnBookModal = ({ open, onClose, initialValues, REASONS }) => {
         return;
       }
 
+      // Only increment available copies for None, Damaged, Late Return
+      if (
+        !values.violation.includes("Lost") &&
+        values.violation.every(
+          (v) => v === "None" || v === "Damaged" || v === "Late Return"
+        )
+      ) {
+        await fetch(
+          `http://localhost:8000/api/books/${initialValues.book_id}`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ incrementAvailable: 1 }), // tell backend to increase copies
+          }
+        );
+      }
+
       messageApi.success("Book successfully returned!");
       form.resetFields();
       onClose();
@@ -169,6 +182,12 @@ const ReturnBookModal = ({ open, onClose, initialValues, REASONS }) => {
             </Col>
 
             <Col {...colProps}>
+              <Form.Item name="bookTitle" label="Book Title">
+                <Input readOnly />
+              </Form.Item>
+            </Col>
+
+            <Col {...colProps}>
               <Form.Item name="penalty" label="Penalty (PHP)">
                 <InputNumber
                   style={{ width: "100%" }}
@@ -182,8 +201,32 @@ const ReturnBookModal = ({ open, onClose, initialValues, REASONS }) => {
             </Col>
 
             <Col {...colProps}>
-              <Form.Item name="bookTitle" label="Book Title">
-                <Input readOnly />
+              <Form.Item
+                name="returnedDate"
+                label="Returned Date"
+                rules={[
+                  { required: true, message: "Returned date is required" },
+                ]}
+              >
+                <DatePicker
+                  style={{ width: "100%" }}
+                  onChange={handleReturnedDateChange}
+                  disabledDate={(current) => {
+                    const borrowDate = dayjs(initialValues.date_borrowed);
+                    return current && current.isBefore(borrowDate, "day");
+                  }}
+                />
+              </Form.Item>
+            </Col>
+
+            <Col {...colProps}>
+              <Form.Item name="violation" label="Violation">
+                <Select
+                  mode="tags"
+                  placeholder="Select Reason"
+                  options={REASONS}
+                  onChange={handleViolationChange}
+                />
               </Form.Item>
             </Col>
 
@@ -227,26 +270,6 @@ const ReturnBookModal = ({ open, onClose, initialValues, REASONS }) => {
                     </Form.Item>
                   );
                 }}
-              </Form.Item>
-            </Col>
-
-            <Col {...colProps}>
-              <Form.Item name="returnedDate" label="Returned Date">
-                <DatePicker
-                  style={{ width: "100%" }}
-                  onChange={handleReturnedDateChange}
-                />
-              </Form.Item>
-            </Col>
-
-            <Col {...colProps}>
-              <Form.Item name="violation" label="Violation">
-                <Select
-                  mode="tags"
-                  placeholder="Select Reason"
-                  options={REASONS}
-                  onChange={handleViolationChange}
-                />
               </Form.Item>
             </Col>
           </Row>
