@@ -145,38 +145,50 @@ const DisplayBook = () => {
       title: "_",
       dataIndex: "image",
       key: "image",
-      width: 70,
+      width: 100,
       render: (_, record) => (
         <img
           src={record.image || "https://via.placeholder.com/60"}
           alt={record.title}
-          style={{ width: 60, height: 80, objectFit: "cover", borderRadius: 4 }}
+          style={{
+            width: 100,
+            height: 140,
+            objectFit: "cover",
+            borderRadius: 4,
+          }}
         />
       ),
     },
-    { title: "Author Name", dataIndex: "author_name", key: "author_name" },
+    {
+      title: "Author Name",
+      dataIndex: "author_name",
+      key: "author_name",
+      width: 200,
+    },
     {
       title: "Book Title",
       dataIndex: "title",
       key: "title",
-      width: 200,
+      width: 250,
       render: (_, record) => (
         <span style={{ whiteSpace: "normal", wordBreak: "break-word" }}>
           {record.title}
         </span>
       ),
     },
-    { title: "Category", dataIndex: "category", key: "category" },
+    { title: "Category", dataIndex: "category", key: "category", width: 150 },
     {
       title: "Total Copies",
       dataIndex: "total_copies",
       key: "total_copies",
       align: "center",
+      width: 150,
     },
     {
       title: "Available Copies",
       key: "available_copies",
       align: "center",
+      width: 150,
       render: (_, record) => (
         <span
           style={{
@@ -191,34 +203,48 @@ const DisplayBook = () => {
     {
       title: "Action",
       key: "action",
+      align: "center",
       render: (_, record) => (
         <div>
-          <a
+          <Button
             onClick={() => {
               if (record.available_copies === 0) return;
               handleBorrow(record);
             }}
             style={{
-              color: record.available_copies === 0 ? "#999" : "#0c7236ff",
+              width: "max-content",
+              color: "#fff",
+              backgroundColor:
+                record.available_copies === 0 ? "#999" : "#009148ff",
               marginRight: 16,
               cursor: record.available_copies === 0 ? "not-allowed" : "pointer",
-              fontWeight: record.available_copies === 0 ? "normal" : "bold",
             }}
           >
             {record.available_copies === 0 ? "Unavailable" : "Borrow"}
-          </a>
-          <a
+          </Button>
+          <Button
             onClick={() => handleUpdateBook(record)}
-            style={{ color: "#1890ff", marginRight: 16, cursor: "pointer" }}
+            style={{
+              width: "max-content",
+              backgroundColor: "#002ae6ff",
+              color: "#fff",
+              marginRight: 16,
+              cursor: "pointer",
+            }}
           >
             Edit
-          </a>
-          <a
+          </Button>
+          <Button
             onClick={() => handleDeleteBook(record)}
-            style={{ color: "#ff4d4f", cursor: "pointer" }}
+            style={{
+              width: "max-content",
+              color: "#fff",
+              backgroundColor: "#ff4d4f",
+              cursor: "pointer",
+            }}
           >
             Delete
-          </a>
+          </Button>
         </div>
       ),
     },
