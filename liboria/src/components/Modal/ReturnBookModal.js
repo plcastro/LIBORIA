@@ -51,8 +51,24 @@ const ReturnBookModal = ({ open, onClose, initialValues, REASONS }) => {
 
     form.setFieldsValue({ penalty, violation: selectedViolations });
   };
+
   const handleFinish = async (values) => {
     try {
+      // Validation: Ensure amount paid is entered and enough
+      if (
+        values.inCash === undefined ||
+        values.inCash === null ||
+        values.inCash === ""
+      ) {
+        messageApi.error("Please enter the amount paid before returning.");
+        return;
+      }
+
+      if (values.inCash < values.penalty) {
+        messageApi.error("Amount paid cannot be less than the penalty.");
+        return;
+      }
+
       const payload = {
         borrow_id: initialValues.borrow_id,
         returned_date: dayjs(values.returnedDate).format("YYYY-MM-DD"),
@@ -63,13 +79,17 @@ const ReturnBookModal = ({ open, onClose, initialValues, REASONS }) => {
         amount_paid: values.inCash || 0,
       };
 
-      // 1️⃣ Update borrowed_books status to 'Returned'
+      const status =
+        Array.isArray(values.violation) && values.violation.includes("Lost")
+          ? "Lost"
+          : "Returned";
+
       const updateRes = await fetch(
         `http://localhost:8000/api/borrowed-books/${initialValues.borrow_id}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ status: "Returned" }),
+          body: JSON.stringify({ status }),
         }
       );
 
@@ -154,7 +174,24 @@ const ReturnBookModal = ({ open, onClose, initialValues, REASONS }) => {
             </Col>
 
             <Col {...colProps}>
-              <Form.Item name="inCash" label="Amount Paid">
+              <Form.Item
+                name="inCash"
+                label="Amount Paid"
+                rules={[
+                  {
+                    required: true,
+                    message: "Please enter the amount paid before returning.",
+                  },
+                  {
+                    validator: (_, value) =>
+                      value >= 0
+                        ? Promise.resolve()
+                        : Promise.reject(
+                            new Error("Amount paid cannot be negative.")
+                          ),
+                  },
+                ]}
+              >
                 <InputNumber
                   style={{ width: "100%" }}
                   min={0}
