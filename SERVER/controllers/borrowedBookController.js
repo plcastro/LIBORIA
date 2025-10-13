@@ -239,17 +239,17 @@ const borrowBook = (req, res) => {
 // UPDATE borrowed book (extend due date, update status, etc.)
 const updateBorrowedBook = (req, res) => {
   const borrowId = req.params.id;
-  const { due_date, status } = req.body;
+  const { status } = req.body;
 
   const query = `
     UPDATE borrowed_books 
-    SET due_date = ?, status = ?
+    SET status = ?
     WHERE borrow_id = ?
   `;
 
-  db.query(query, [due_date, status, borrowId], (err, results) => {
+  db.query(query, [status, borrowId], (err, results) => {
     if (err) {
-      console.error(err);
+      console.error("Error updating borrowed_books:", err);
       return res.status(500).json({ error: "Internal Server Error" });
     }
 
@@ -257,7 +257,7 @@ const updateBorrowedBook = (req, res) => {
       return res.status(404).json({ error: "Borrow record not found" });
     }
 
-    // Get updated record
+    // Fetch updated record for response
     const getQuery = `
       SELECT 
         bb.*, 
@@ -272,10 +272,14 @@ const updateBorrowedBook = (req, res) => {
 
     db.query(getQuery, [borrowId], (err, borrowResults) => {
       if (err) {
-        console.error(err);
+        console.error("Error fetching updated borrow record:", err);
         return res.status(500).json({ error: "Internal Server Error" });
       }
-      res.json(borrowResults[0]);
+
+      res.json({
+        message: "Borrowed book status updated successfully",
+        updatedRecord: borrowResults[0],
+      });
     });
   });
 };

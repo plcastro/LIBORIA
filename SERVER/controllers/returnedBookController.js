@@ -68,12 +68,12 @@ const returnBook = (req, res) => {
       return res.status(500).json({ error: "Transaction start failed" });
     }
 
-    // Step 1: Get borrow record
+    // Step 1: Get borrow record (no status filter)
     const getBorrowQuery = `
-      SELECT bb.*, b.title, b.id AS book_id 
+      SELECT bb.*, b.title, b.book_id 
       FROM borrowed_books bb
-      JOIN books b ON bb.book_id = b.id
-      WHERE bb.borrow_id = ? AND bb.status = 'Borrowed'
+      JOIN books b ON bb.book_id = b.book_id
+      WHERE bb.borrow_id = ?
     `;
 
     db.query(getBorrowQuery, [borrow_id], (err, borrowResults) => {
@@ -86,53 +86,53 @@ const returnBook = (req, res) => {
 
       if (borrowResults.length === 0) {
         return db.rollback(() => {
-          res
-            .status(404)
-            .json({ error: "Borrow record not found or already returned" });
+          res.status(404).json({ error: "Borrow record not found" });
         });
       }
 
       const borrowRecord = borrowResults[0];
 
-      const insertQuery = `
-        INSERT INTO returned_books 
-        (borrow_id, returned_date, violation, penalty, amount_paid)
-        VALUES (?, CURDATE(), ?, ?, ?)
-      `;
+      // Step 2: Check if already returned
+      const checkReturnQuery = `SELECT * FROM returned_books WHERE borrow_id = ?`;
+      db.query(checkReturnQuery, [borrow_id], (err, existing) => {
+        if (err) {
+          return db.rollback(() => {
+            console.error(err);
+            res.status(500).json({ error: "Failed to check existing returns" });
+          });
+        }
 
-      db.query(
-        insertQuery,
-        [borrow_id, violation || "None", penalty || 0.0, amount_paid || 0.0],
-        (err, insertResults) => {
-          if (err) {
-            return db.rollback(() => {
-              console.error(err);
-              res
-                .status(500)
-                .json({ error: "Failed to insert into returned_books" });
-            });
-          }
+        if (existing.length > 0) {
+          return db.rollback(() => {
+            res.status(400).json({ error: "Book already returned" });
+          });
+        }
 
-          const updateBorrowQuery = `
-            UPDATE borrowed_books
-            SET status = 'Returned'
-            WHERE borrow_id = ?
-          `;
+        // Step 3: Insert new record in returned_books
+        const insertQuery = `
+          INSERT INTO returned_books 
+          (borrow_id, returned_date, violation, penalty, amount_paid)
+          VALUES (?, CURDATE(), ?, ?, ?)
+        `;
 
-          db.query(updateBorrowQuery, [borrow_id], (err) => {
+        db.query(
+          insertQuery,
+          [borrow_id, violation || "None", penalty || 0.0, amount_paid || 0.0],
+          (err, insertResults) => {
             if (err) {
               return db.rollback(() => {
                 console.error(err);
                 res
                   .status(500)
-                  .json({ error: "Failed to update borrowed_books" });
+                  .json({ error: "Failed to insert into returned_books" });
               });
             }
 
+            // Step 4: Update book available copies
             const updateBookQuery = `
               UPDATE books
               SET available_copies = available_copies + 1
-              WHERE id = ?
+              WHERE book_id = ?
             `;
 
             db.query(updateBookQuery, [borrowRecord.book_id], (err) => {
@@ -145,6 +145,7 @@ const returnBook = (req, res) => {
                 });
               }
 
+              // Step 5: Commit all changes
               db.commit((err) => {
                 if (err) {
                   return db.rollback(() => {
@@ -159,9 +160,9 @@ const returnBook = (req, res) => {
                 });
               });
             });
-          });
-        }
-      );
+          }
+        );
+      });
     });
   });
 };
