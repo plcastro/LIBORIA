@@ -1,20 +1,6 @@
 import React, { useState, useEffect } from "react";
-import {
-  Input,
-  Table,
-  Tag,
-  Card,
-  Row,
-  Col,
-  Typography,
-  Space,
-  Button,
-  message,
-  Spin,
-} from "antd";
-import { SearchOutlined, ReloadOutlined } from "@ant-design/icons";
-
-const { Title } = Typography;
+import { Input, Table, Tag, Card, Row, Col, message, Spin } from "antd";
+import { SearchOutlined } from "@ant-design/icons";
 
 const ViewRecords = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -26,8 +12,6 @@ const ViewRecords = () => {
     setLoading(true);
     try {
       const response = await fetch("http://localhost:8000/api/records");
-      if (!response.ok) throw new Error("Failed to fetch records");
-
       const data = await response.json();
       setRecords(data);
     } catch (err) {
@@ -47,18 +31,6 @@ const ViewRecords = () => {
       value?.toString().toLowerCase().includes(searchTerm.toLowerCase())
     )
   );
-
-  const getStatusColor = (status, returnedDate) => {
-    if (returnedDate) return "green";
-    if (status === "Borrowed") return "blue";
-    if (status === "Returned") return "green";
-    return "orange";
-  };
-
-  const getStatusText = (status, returnedDate) => {
-    if (returnedDate) return "Returned";
-    return status || "Borrowed";
-  };
 
   const columns = [
     {
@@ -146,10 +118,7 @@ const ViewRecords = () => {
       render: (penalty) => (
         <span
           style={{
-            color:
-              !penalty || penalty === "0.00" || penalty === 0
-                ? "#52c41a"
-                : "#ff4d4f",
+            color: !penalty || penalty === "0.00" ? "#52c41a" : "#ff4d4f",
             fontWeight: "bold",
           }}
         >
@@ -163,26 +132,25 @@ const ViewRecords = () => {
       key: "status",
       width: 100,
       render: (status, record) => {
-        const currentStatus = getStatusText(status, record.returned_date);
-        const color = getStatusColor(status, record.returned_date);
+        const isReturned = record.returned_date;
+        const currentStatus = status || (isReturned ? "Returned" : "Borrowed");
+
+        // Define color based on status
+        let tagColor = "orange"; // default
+        if (currentStatus === "Returned") {
+          tagColor = "green";
+        } else if (currentStatus === "Borrowed") {
+          tagColor = "blue";
+        }
 
         return (
-          <Tag color={color} style={{ margin: 0 }}>
+          <Tag color={tagColor} style={{ margin: 0 }}>
             {currentStatus}
           </Tag>
         );
       },
     },
   ];
-
-  const handleSearch = (value) => {
-    setSearchTerm(value);
-  };
-
-  const handleReset = () => {
-    setSearchTerm("");
-    fetchRecords();
-  };
 
   return (
     <div style={{ minHeight: "100vh" }}>
@@ -201,32 +169,22 @@ const ViewRecords = () => {
               style={{ height: 40 }}
             />
           </Col>
-          <Col xs={24} sm={12} md={10} lg={5}>
-            <Button
-              icon={<ReloadOutlined />}
-              onClick={fetchRecords}
-              loading={loading}
-              style={{ width: "100%", height: 40 }}
-            >
-              Refresh Records
-            </Button>
-          </Col>
         </Row>
 
         <Table
           columns={columns}
           dataSource={filteredRecords.map((record) => ({
             ...record,
-            key: record.borrow_id, // Use borrow_id as key instead of id
+            key: record.borrow_id,
           }))}
           loading={loading}
           pagination={false}
           scroll={{
-            y: filteredRecords.length > 10 ? 650 : undefined,
+            y: filteredRecords.length > 10 ? "60vh" : undefined,
             x: "max-content",
           }}
           locale={{
-            emptyText: loading ? <Spin size="large" /> : "No records found",
+            emptyText: "No records found",
           }}
         />
       </Card>
