@@ -18,6 +18,7 @@ const ReturnBookModal = ({ open, onClose, initialValues, REASONS }) => {
   const [messageApi, contextHolder] = message.useMessage();
   const colProps = { xs: 24, md: 12 };
 
+  // Recalculate penalty and handle violations
   const recalculatePenalty = () => {
     const returnedDate = form.getFieldValue("returnedDate") || dayjs();
     const dueDate = dayjs(initialValues?.due_date);
@@ -54,13 +55,13 @@ const ReturnBookModal = ({ open, onClose, initialValues, REASONS }) => {
       const today = dayjs();
       const dueDate = dayjs(initialValues.due_date);
       const daysLate = today.isAfter(dueDate) ? today.diff(dueDate, "day") : 0;
-      const latePenalty = daysLate * 10;
 
-      const initialViolations = daysLate > 0 ? ["Late Return"] : ["None"];
+      const initialViolations = daysLate > 0 ? ["Late Return"] : [];
+
       form.setFieldsValue({
         name: initialValues.borrower_name,
         bookTitle: initialValues.title,
-        penalty: latePenalty,
+        penalty: daysLate * 10,
         inCash: 0,
         returnedDate: today,
         violation: initialViolations,
@@ -82,17 +83,17 @@ const ReturnBookModal = ({ open, onClose, initialValues, REASONS }) => {
 
   const handleFinish = async (values) => {
     try {
-      const isNone =
-        !values.violation ||
-        values.violation.length === 0 ||
-        values.violation.includes("None");
+      const hasViolation = values.violation && values.violation.length > 0;
 
-      if (!isNone && (values.inCash === undefined || values.inCash === null)) {
+      if (
+        hasViolation &&
+        (values.inCash === undefined || values.inCash === null)
+      ) {
         messageApi.error("Please enter the amount paid before returning.");
         return;
       }
 
-      if (!isNone && values.inCash < values.penalty) {
+      if (hasViolation && values.inCash < values.penalty) {
         messageApi.error("Amount paid cannot be less than the penalty.");
         return;
       }
@@ -100,15 +101,14 @@ const ReturnBookModal = ({ open, onClose, initialValues, REASONS }) => {
       const payload = {
         borrow_id: initialValues.borrow_id,
         returned_date: dayjs(values.returnedDate).format("YYYY-MM-DD"),
-        violation: Array.isArray(values.violation)
-          ? values.violation[0] || "None"
-          : "None",
+        violation: Array.isArray(values.violation) ? values.violation[0] : "",
         penalty: values.penalty || 0,
         amount_paid: values.inCash || 0,
       };
 
       const status = values.violation.includes("Lost") ? "Lost" : "Returned";
 
+      // Update borrowed_books status
       const updateRes = await fetch(
         `http://localhost:8000/api/borrowed-books/${initialValues.borrow_id}`,
         {
@@ -119,11 +119,11 @@ const ReturnBookModal = ({ open, onClose, initialValues, REASONS }) => {
       );
 
       if (!updateRes.ok) {
-        const updateData = await updateRes.json();
         messageApi.error("Failed to update borrowed book status.");
         return;
       }
 
+      // Insert into returned_books
       const insertRes = await fetch(
         "http://localhost:8000/api/returned-books",
         {
@@ -134,7 +134,6 @@ const ReturnBookModal = ({ open, onClose, initialValues, REASONS }) => {
       );
 
       if (!insertRes.ok) {
-        const insertData = await insertRes.json();
         messageApi.error("Failed to insert return record.");
         return;
       }
@@ -194,8 +193,7 @@ const ReturnBookModal = ({ open, onClose, initialValues, REASONS }) => {
               >
                 {({ getFieldValue }) => {
                   const violation = getFieldValue("violation") || [];
-                  const isNone =
-                    violation.length === 0 || violation.includes("None");
+                  const hasViolation = violation.length > 0;
 
                   return (
                     <Form.Item
@@ -203,7 +201,7 @@ const ReturnBookModal = ({ open, onClose, initialValues, REASONS }) => {
                       label="Amount Paid"
                       rules={[
                         {
-                          required: !isNone,
+                          required: hasViolation,
                           message:
                             "Please enter the amount paid before returning.",
                         },
@@ -220,7 +218,7 @@ const ReturnBookModal = ({ open, onClose, initialValues, REASONS }) => {
                       <InputNumber
                         style={{ width: "100%" }}
                         min={0}
-                        disabled={isNone}
+                        disabled={!hasViolation}
                         formatter={(v) =>
                           `₱ ${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
                         }
