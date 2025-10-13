@@ -62,12 +62,15 @@ const AddBookModal = ({ modal2Open, setModal2Open, onBookCreated }) => {
 
       if (!response.ok) throw new Error(data.error || "Failed to add book");
 
-      messageApi.success("Book added successfully!");
       form.resetFields();
       setIsConfirmOpen(false);
       setModal2Open(false);
 
       if (onBookCreated) onBookCreated();
+      messageApi.success("Book added successfully");
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
     } catch (err) {
       console.error(err);
       messageApi.error(err.message || "Failed to add book");
