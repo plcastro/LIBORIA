@@ -129,23 +129,39 @@ const returnBook = (req, res) => {
             }
 
             // Step 4: Update book available copies
-            const updateBookQuery = `
-              UPDATE books
-              SET available_copies = available_copies + 1
-              WHERE book_id = ?
-            `;
+            if (violation !== "Lost") {
+              const updateBookQuery = `
+    UPDATE books
+    SET available_copies = available_copies + 1
+    WHERE book_id = ?
+  `;
+              db.query(updateBookQuery, [borrowRecord.book_id], (err) => {
+                if (err) {
+                  return db.rollback(() => {
+                    console.error(err);
+                    res
+                      .status(500)
+                      .json({ error: "Failed to update available copies" });
+                  });
+                }
 
-            db.query(updateBookQuery, [borrowRecord.book_id], (err) => {
-              if (err) {
-                return db.rollback(() => {
-                  console.error(err);
-                  res
-                    .status(500)
-                    .json({ error: "Failed to update available copies" });
+                // Step 5: Commit transaction
+                db.commit((err) => {
+                  if (err) {
+                    return db.rollback(() => {
+                      console.error(err);
+                      res.status(500).json({ error: "Commit failed" });
+                    });
+                  }
+
+                  res.status(201).json({
+                    message: "Book returned successfully",
+                    return_id: insertResults.insertId,
+                  });
                 });
-              }
-
-              // Step 5: Commit all changes
+              });
+            } else {
+              // For lost book, skip updating available copies
               db.commit((err) => {
                 if (err) {
                   return db.rollback(() => {
@@ -155,11 +171,11 @@ const returnBook = (req, res) => {
                 }
 
                 res.status(201).json({
-                  message: "Book returned successfully",
+                  message: "Book marked as lost",
                   return_id: insertResults.insertId,
                 });
               });
-            });
+            }
           }
         );
       });

@@ -36,12 +36,44 @@ const BorrowBookModal = ({ open, onClose, onSubmit, initialValues }) => {
     }
   }, [open, initialValues, form]);
 
+  // 🔍 Auto-fill borrower details if they already exist
+  const handleNameBlur = async () => {
+    const name = form.getFieldValue("name")?.trim();
+    if (!name) return;
+
+    try {
+      const res = await fetch("http://localhost:8000/api/borrowers");
+      if (!res.ok) throw new Error("Failed to fetch borrowers");
+      const borrowers = await res.json();
+
+      const borrower = borrowers.find(
+        (b) => b.name.toLowerCase() === name.toLowerCase()
+      );
+
+      if (borrower) {
+        form.setFieldsValue({
+          year_level: borrower.year_level,
+          course: borrower.course,
+        });
+        messageApi.info("Borrower found — auto-filled details.");
+      } else {
+        form.setFieldsValue({
+          year_level: "",
+          course: "",
+        });
+        messageApi.warning("New borrower detected — please fill out details.");
+      }
+    } catch (err) {
+      console.error("Error fetching borrower:", err);
+    }
+  };
+
   const handleBorrow = async () => {
     try {
-      const values = await form.validateFields(); // validate form
+      const values = await form.validateFields();
       const name = values.name.trim();
 
-      // Prepare borrower payload
+      // ✅ Borrower payload
       const borrowerPayload = {
         name,
         year_level: values.year_level,
@@ -49,7 +81,7 @@ const BorrowBookModal = ({ open, onClose, onSubmit, initialValues }) => {
         created_at: dayjs(values.created_at).format("YYYY-MM-DD"),
       };
 
-      // Fetch all borrowers
+      // Fetch existing borrowers
       const borrowersRes = await fetch("http://localhost:8000/api/borrowers");
       if (!borrowersRes.ok) throw new Error("Failed to fetch borrowers");
       const borrowers = await borrowersRes.json();
@@ -59,7 +91,7 @@ const BorrowBookModal = ({ open, onClose, onSubmit, initialValues }) => {
         (b) => b.name.toLowerCase() === name.toLowerCase()
       );
 
-      // If not exists, create a new borrower
+      // Create borrower if not existing
       if (!borrower) {
         const createRes = await fetch("http://localhost:8000/api/borrowers", {
           method: "POST",
@@ -76,7 +108,7 @@ const BorrowBookModal = ({ open, onClose, onSubmit, initialValues }) => {
         borrower = await createRes.json();
       }
 
-      // Prepare borrow record payload
+      // Borrow payload
       const borrowPayload = {
         borrower_id: borrower.borrower_id,
         book_id: initialValues.book_id,
@@ -85,7 +117,7 @@ const BorrowBookModal = ({ open, onClose, onSubmit, initialValues }) => {
         status: "Borrowed",
       };
 
-      // Send borrow record to backend
+      // Insert borrow record
       const borrowRes = await fetch(
         "http://localhost:8000/api/borrowed-books",
         {
@@ -98,10 +130,8 @@ const BorrowBookModal = ({ open, onClose, onSubmit, initialValues }) => {
       const borrowData = await borrowRes.json();
 
       if (borrowRes.ok) {
-        console.log("Borrow successful:", borrowData);
         onSubmit(borrowData);
         onClose();
-
         form.resetFields();
         messageApi.success(
           "Borrowed " + borrowData.book_title + " successfully!"
@@ -124,22 +154,17 @@ const BorrowBookModal = ({ open, onClose, onSubmit, initialValues }) => {
     }
   };
 
-  const handleFinish = (values) => {
-    onSubmit(values);
-    onClose();
-    form.resetFields();
-  };
-
-  //limit 14 days
+  // Limit 14 days
   const disabledDate = (current) => {
     const borrowDate = form.getFieldValue("created_at") || dayjs();
-    const minDate = borrowDate.add(1, "day"); // exclude today
+    const minDate = borrowDate.add(1, "day");
     const maxDate = borrowDate.add(14, "day");
     return (
       current &&
       (current.isBefore(minDate, "day") || current.isAfter(maxDate, "day"))
     );
   };
+
   return (
     <>
       {contextHolder}
@@ -161,11 +186,11 @@ const BorrowBookModal = ({ open, onClose, onSubmit, initialValues }) => {
           </div>
         }
       >
-        <Form form={form} layout="vertical" onFinish={handleFinish}>
+        <Form form={form} layout="vertical">
           <Row gutter={[24, 8]}>
             <Col {...colProps}>
               <Form.Item name="name" label="Name" rules={[{ required: true }]}>
-                <Input autoComplete />
+                <Input onBlur={handleNameBlur} autoComplete="off" />
               </Form.Item>
             </Col>
 

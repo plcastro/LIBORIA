@@ -62,6 +62,7 @@ const EditBookModal = ({ modalOpen, setModalOpen, book, onBookUpdated }) => {
       messageApi.success("Book updated successfully");
       if (onBookUpdated) onBookUpdated({ ...book, ...payload });
       setModalOpen(false);
+      window.location.reload();
     } catch (err) {
       console.error(err);
       messageApi.error("Failed to update book");
@@ -72,8 +73,22 @@ const EditBookModal = ({ modalOpen, setModalOpen, book, onBookUpdated }) => {
 
   // Update available copies if total copies is lowered below available
   const handleTotalCopiesChange = (value) => {
-    const currentAvailable = form.getFieldValue("available_copies") || 0;
-    if (value < currentAvailable) {
+    const currentTotal = book.total_copies;
+    const currentAvailable = book.available_copies;
+    const borrowedCount = currentTotal - currentAvailable;
+
+    // If there are borrowed copies and user tries to reduce below current total
+    if (borrowedCount > 0 && value < currentTotal) {
+      messageApi.warning(
+        "You cannot decrease total copies while some books are still borrowed."
+      );
+      form.setFieldsValue({ total_copies: currentTotal });
+      return;
+    }
+
+    // Keep available_copies valid
+    const available = form.getFieldValue("available_copies") || 0;
+    if (value < available) {
       form.setFieldsValue({ available_copies: value });
     }
   };
