@@ -337,10 +337,10 @@ const updateUser = (req, res) => {
 };
 const updateUserPassword = (req, res) => {
   const { password } = req.body;
-  const { id } = req.params;
+  const { id } = req.params; // this is actually userid
 
   // Get current user password first
-  const getQuery = "SELECT password FROM users WHERE id = ?";
+  const getQuery = "SELECT password FROM users WHERE userid = ?"; // <-- fix column name
   db.query(getQuery, [id], (err, results) => {
     if (err) return res.status(500).json({ error: "Server error" });
     if (!results.length)
@@ -355,7 +355,7 @@ const updateUserPassword = (req, res) => {
     }
 
     // Continue with update
-    const updateQuery = "UPDATE users SET password = ? WHERE id = ?";
+    const updateQuery = "UPDATE users SET password = ? WHERE userid = ?"; // <-- fix column name
     db.query(updateQuery, [password, id], (err2) => {
       if (err2)
         return res.status(500).json({ error: "Failed to update password" });
