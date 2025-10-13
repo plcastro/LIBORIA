@@ -7,6 +7,7 @@ import DeleteBookModal from "../../components/Modal/DeleteBookModal";
 import BorrowBookModal from "../../components/Modal/BorrowBookModal";
 
 const DisplayBook = () => {
+  const [messageApi, contextHolder] = message.useMessage();
   const [books, setBooks] = useState([]);
   const [filteredBooks, setFilteredBooks] = useState([]);
   const [searchValue, setSearchValue] = useState("");
@@ -22,7 +23,7 @@ const DisplayBook = () => {
   const fetchBooks = async () => {
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:8000/books");
+      const res = await fetch("http://localhost:8000/api/books");
       if (!res.ok) throw new Error("Failed to fetch books");
       const data = await res.json();
       setBooks(data);
@@ -40,10 +41,12 @@ const DisplayBook = () => {
       fetchBooks();
       return;
     }
-    
+
     setLoading(true);
     try {
-      const res = await fetch(`http://localhost:8000/books/search?q=${encodeURIComponent(query)}`);
+      const res = await fetch(
+        `http://localhost:8000/api/books/search?q=${encodeURIComponent(query)}`
+      );
       if (!res.ok) throw new Error("Failed to search books");
       const data = await res.json();
       setFilteredBooks(data);
@@ -84,17 +87,22 @@ const DisplayBook = () => {
   // Confirm delete
   const handleConfirmDelete = async (book) => {
     try {
-      const res = await fetch(`http://localhost:8000/books/${book.book_id}`, {
-        method: "DELETE",
-      });
-      
+      const res = await fetch(
+        `http://localhost:8000/api/books/${book.book_id}`,
+        {
+          method: "DELETE",
+        }
+      );
+
       if (!res.ok) {
         const errorData = await res.json();
         throw new Error(errorData.error || "Failed to delete book");
       }
 
       setBooks((prev) => prev.filter((b) => b.book_id !== book.book_id));
-      setFilteredBooks((prev) => prev.filter((b) => b.book_id !== book.book_id));
+      setFilteredBooks((prev) =>
+        prev.filter((b) => b.book_id !== book.book_id)
+      );
       message.success("Book deleted successfully");
     } catch (err) {
       console.error(err);
@@ -159,21 +167,23 @@ const DisplayBook = () => {
       ),
     },
     { title: "Category", dataIndex: "category", key: "category" },
-    { 
-      title: "Total Copies", 
-      dataIndex: "total_copies", 
+    {
+      title: "Total Copies",
+      dataIndex: "total_copies",
       key: "total_copies",
-      align: 'center'
+      align: "center",
     },
     {
       title: "Available Copies",
       key: "available_copies",
-      align: 'center',
+      align: "center",
       render: (_, record) => (
-        <span style={{ 
-          color: record.available_copies === 0 ? '#ff4d4f' : '#52c41a',
-          fontWeight: record.available_copies === 0 ? 'bold' : 'normal'
-        }}>
+        <span
+          style={{
+            color: record.available_copies === 0 ? "#ff4d4f" : "#52c41a",
+            fontWeight: record.available_copies === 0 ? "bold" : "normal",
+          }}
+        >
           {record.available_copies} copies
         </span>
       ),
@@ -192,7 +202,7 @@ const DisplayBook = () => {
               color: record.available_copies === 0 ? "#999" : "#0c7236ff",
               marginRight: 16,
               cursor: record.available_copies === 0 ? "not-allowed" : "pointer",
-              fontWeight: record.available_copies === 0 ? 'normal' : 'bold'
+              fontWeight: record.available_copies === 0 ? "normal" : "bold",
             }}
           >
             {record.available_copies === 0 ? "Unavailable" : "Borrow"}
@@ -214,87 +224,93 @@ const DisplayBook = () => {
     },
   ];
 
-
   return (
-    <Card>
-      <Row align="stretch" justify="space-between" style={{ marginBottom: 12 }}>
-        <Col xs={24} sm={12} md={10} lg={5}>
-          <Input
-            prefix={<SearchOutlined />}
-            placeholder="Search book"
-            value={searchValue}
-            onChange={(e) => setSearchValue(e.target.value)}
-            style={{ height: 40, marginBottom: 5 }}
-          />
-        </Col>
+    <>
+      {contextHolder}
+      <Card>
+        <Row
+          align="stretch"
+          justify="space-between"
+          style={{ marginBottom: 12 }}
+        >
+          <Col xs={24} sm={12} md={10} lg={5}>
+            <Input
+              prefix={<SearchOutlined />}
+              placeholder="Search book"
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
+              style={{ height: 40, marginBottom: 5 }}
+            />
+          </Col>
 
-        <Col xs={24} sm={12} md={10} lg={5}>
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            style={{
-              margin: 0,
-              backgroundColor: "#1600a3",
-              border: "none",
-              height: 40,
-              width: "100%",
-              fontWeight: 500,
-            }}
-            onClick={() => setAddModalOpen(true)}
-          >
-            Add Book
-          </Button>
-        </Col>
-      </Row>
+          <Col xs={24} sm={12} md={10} lg={5}>
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              style={{
+                margin: 0,
+                backgroundColor: "#1600a3",
+                border: "none",
+                height: 40,
+                width: "100%",
+                fontWeight: 500,
+              }}
+              onClick={() => setAddModalOpen(true)}
+            >
+              Add Book
+            </Button>
+          </Col>
+        </Row>
 
-      <Table
-        columns={columns}
-        dataSource={filteredBooks}
-        rowKey="id"
-        loading={loading}
-        pagination={false}
-        scroll={{
-          y: books.length > 10 ? "70vh" : undefined,
-          x: "max-content",
-        }}
-      />
-
-      <AddBookModal
-        modal2Open={addModalOpen}
-        setModal2Open={setAddModalOpen}
-        onBookCreated={handleBookCreated}
-      />
-
-      {selectedBook && (
-        <EditBookModal
-          modalOpen={editModalOpen}
-          setModalOpen={setEditModalOpen}
-          book={selectedBook}
-          onBookUpdated={handleUpdateBook}
-        />
-      )}
-
-      {selectedBook && (
-        <BorrowBookModal
-          open={borrowModalOpen}
-          onClose={() => setBorrowModalOpen(false)}
-          initialValues={{ ...selectedBook, book_title: selectedBook.title }}
-          onSubmit={(data) => {
-            message.success(`Borrowed: ${data.book_title}`);
-            setBorrowModalOpen(false);
+        <Table
+          columns={columns}
+          dataSource={filteredBooks}
+          rowKey="id"
+          loading={loading}
+          pagination={false}
+          scroll={{
+            y: books.length > 10 ? "70vh" : undefined,
+            x: "max-content",
           }}
         />
-      )}
 
-      {selectedBook && (
-        <DeleteBookModal
-          open={deleteModalOpen}
-          setOpen={setDeleteModalOpen}
-          book={selectedBook}
-          onDelete={handleConfirmDelete}
+        <AddBookModal
+          modal2Open={addModalOpen}
+          setModal2Open={setAddModalOpen}
+          onBookCreated={handleBookCreated}
         />
-      )}
-    </Card>
+
+        {selectedBook && (
+          <EditBookModal
+            modalOpen={editModalOpen}
+            setModalOpen={setEditModalOpen}
+            book={selectedBook}
+            onBookUpdated={handleUpdateBook}
+          />
+        )}
+
+        {selectedBook && (
+          <BorrowBookModal
+            open={borrowModalOpen}
+            onClose={() => setBorrowModalOpen(false)}
+            initialValues={{ ...selectedBook, book_title: selectedBook.title }}
+            onSubmit={(data) => {
+              message.success(`Borrowed: ${data.book_title}`);
+              setBorrowModalOpen(false);
+            }}
+          />
+        )}
+
+        {selectedBook && (
+          <DeleteBookModal
+            open={deleteModalOpen}
+            setOpen={setDeleteModalOpen}
+            book={selectedBook}
+            onDelete={handleConfirmDelete}
+          />
+        )}
+      </Card>
+    </>
   );
 };
 

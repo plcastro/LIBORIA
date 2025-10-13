@@ -34,7 +34,7 @@ const ReturnBooks = () => {
         borrow_id: selectedRecord.borrow_id,
         violation: values.violation,
         penalty: values.penalty || 0,
-        amount_paid: values.amount_paid || 0
+        amount_paid: values.amount_paid || 0,
       };
 
       const res = await fetch("http://localhost:8000/returned-books", {
@@ -64,12 +64,12 @@ const ReturnBooks = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch("http://localhost:8000/borrowed-books");
+      const response = await fetch("http://localhost:8000/api/borrowed-books");
       if (!response.ok) throw new Error("Failed to fetch borrowed books");
-      
+
       const data = await response.json();
-      // Filter only active borrowed books (status = 'borrowed')
-      const activeBorrows = data.filter(book => book.status === 'borrowed');
+      // Filter only active borrowed books (status = 'Pending')
+      const activeBorrows = data.filter((book) => book.status === "Borrowed");
       setBorrowedBooks(activeBorrows);
     } catch (err) {
       console.error("Fetch error:", err);
@@ -95,10 +95,14 @@ const ReturnBooks = () => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'borrowed': return 'blue';
-      case 'overdue': return 'red';
-      case 'returned': return 'green';
-      default: return 'default';
+      case "Borrowed":
+        return "blue";
+      case "Overdue":
+        return "red";
+      case "Returned":
+        return "green";
+      default:
+        return "default";
     }
   };
 
@@ -137,14 +141,14 @@ const ReturnBooks = () => {
       dataIndex: "date_borrowed",
       key: "date_borrowed",
       width: 120,
-      render: (date) => new Date(date).toLocaleDateString()
+      render: (date) => new Date(date).toLocaleDateString(),
     },
     {
       title: "Due Date",
       dataIndex: "due_date",
       key: "due_date",
       width: 120,
-      render: (date) => new Date(date).toLocaleDateString()
+      render: (date) => new Date(date).toLocaleDateString(),
     },
     {
       title: "Status",
@@ -162,13 +166,13 @@ const ReturnBooks = () => {
       key: "action",
       width: 100,
       render: (_, record) => (
-        <Button 
-          type="link" 
+        <Button
+          type="link"
           onClick={() => handleReturn(record)}
-          style={{ 
+          style={{
             color: "#52c41a",
             padding: 0,
-            fontWeight: 'bold'
+            fontWeight: "bold",
           }}
         >
           Return
