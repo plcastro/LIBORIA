@@ -54,7 +54,6 @@ const StaffList = () => {
       account_type: values.account_type,
     };
     setData((prev) => [...prev, newStaff]);
-    messageApi.success("New staff added successfully!");
   };
 
   const handleEdit = async (record) => {
@@ -90,8 +89,8 @@ const StaffList = () => {
     setModalVisible(true);
   };
 
-  const handleConfirmDelete = (staff) => {
-    setData((prev) => prev.filter((item) => item.key !== staff.key));
+  const handleConfirmDelete = (record) => {
+    setData((prev) => prev.filter((record) => record.userid !== record.userid));
     message.success("Staff deleted successfully!");
   };
 

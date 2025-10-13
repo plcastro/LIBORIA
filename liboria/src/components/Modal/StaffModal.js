@@ -89,16 +89,15 @@ const StaffModal = ({
         return;
       }
 
-      messageApi.success(
-        isAddMode ? "Staff added successfully!" : "Staff updated successfully!"
-      );
-
       onSave(result); // notify parent once
       onClose();
 
       form.resetFields();
       setPreviewData(null);
       setIsPreviewConfirmOpen(false);
+      messageApi.success(
+        isAddMode ? "Staff added successfully!" : "Staff updated successfully!"
+      );
     } catch (err) {
       console.error(err);
       messageApi.error(err.message || "Something went wrong.");
@@ -132,7 +131,13 @@ const StaffModal = ({
 
   const handleConfirmDelete = async () => {
     try {
-      if (!selectedStaff || selectedStaff.userid === currentUserId) {
+      if (!selectedStaff) {
+        messageApi.error("No staff selected.");
+        setIsConfirmDeleteOpen(false);
+        return;
+      }
+
+      if (selectedStaff.userid === currentUserId) {
         messageApi.error("You cannot delete your own account.");
         setIsConfirmDeleteOpen(false);
         return;
@@ -143,13 +148,20 @@ const StaffModal = ({
         { method: "DELETE" }
       );
 
+      // Try parsing JSON safely
+      let data;
+      try {
+        data = await res.json();
+      } catch {
+        data = {};
+      }
+
       if (!res.ok) {
-        const data = await res.json();
         throw new Error(data.message || "Failed to delete user.");
       }
 
       messageApi.success("User deleted successfully!");
-      onSave();
+      onSave(); // notify parent
       setIsConfirmDeleteOpen(false);
       form.resetFields();
       onClose();
