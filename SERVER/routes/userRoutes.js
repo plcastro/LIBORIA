@@ -9,7 +9,7 @@ router.put("/:id", userController.updateUser);
 router.delete("/:id", userController.deleteUser);
 
 // Add this line for password updates
-router.put("/check-pass/:id", userController.updateUserPassword);
+router.put("/check-pass/:id", userController.changePassword);
 
 // Auth routes
 router.post("/login", userController.login);
