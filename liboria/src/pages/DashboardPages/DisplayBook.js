@@ -184,7 +184,7 @@ const DisplayBook = () => {
             fontWeight: record.available_copies === 0 ? "bold" : "normal",
           }}
         >
-          {record.available_copies} copies
+          {record.available_copies}
         </span>
       ),
     },
