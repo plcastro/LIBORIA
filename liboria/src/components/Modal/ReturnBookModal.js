@@ -77,34 +77,32 @@ const ReturnBookModal = ({ open, onClose, initialValues, REASONS }) => {
 
   const handleFinish = async (values) => {
     try {
-      const hasViolation = values.violation && values.violation.length > 0;
+      // Determine final violation to send as array
+      let violations = Array.isArray(values.violation) ? values.violation : [];
+      if (!violations.length) violations = ["None"];
 
-      if (
-        hasViolation &&
-        (values.inCash === undefined || values.inCash === null)
-      ) {
-        messageApi.error("Please enter the amount paid before returning.");
-        return;
-      }
+      const returnedDate = dayjs(values.returnedDate).format("YYYY-MM-DD");
 
-      if (hasViolation && values.inCash < values.penalty) {
-        messageApi.error("Amount paid cannot be less than the penalty.");
-        return;
+      // Check amount paid vs penalty if needed
+      if (violations.includes("Lost") === false && values.penalty > 0) {
+        if (!values.inCash || values.inCash < values.penalty) {
+          messageApi.error("Amount paid must cover the penalty.");
+          return;
+        }
       }
 
       const payload = {
         borrow_id: initialValues.borrow_id,
-        returned_date: dayjs(values.returnedDate).format("YYYY-MM-DD"), // convert to string
-        violation: Array.isArray(values.violation)
-          ? values.violation
-          : [values.violation || "None"],
+        returned_date: returnedDate,
+        violation: violations, // array for backend since VARCHAR
         penalty: values.penalty || 0,
         amount_paid: values.inCash || 0,
       };
 
-      const status = values.violation.includes("Lost") ? "Lost" : "Returned";
+      // Determine status
+      const status = violations.includes("Lost") ? "Lost" : "Returned";
 
-      // Update borrowed_books status
+      // 1. Update borrowed_books status
       const updateRes = await fetch(
         `http://localhost:8000/api/borrowed-books/${initialValues.borrow_id}`,
         {
@@ -119,7 +117,7 @@ const ReturnBookModal = ({ open, onClose, initialValues, REASONS }) => {
         return;
       }
 
-      // Insert into returned_books
+      // 2. Insert into returned_books
       const insertRes = await fetch(
         "http://localhost:8000/api/returned-books",
         {
@@ -134,24 +132,23 @@ const ReturnBookModal = ({ open, onClose, initialValues, REASONS }) => {
         return;
       }
 
-      // Only increment available copies for None, Damaged, Late Return
-      if (
-        !values.violation.includes("Lost") &&
-        values.violation.every(
-          (v) => v === "None" || v === "Damaged" || v === "Late Return"
-        )
-      ) {
+      // 3. Increment available copies if not lost
+      if (!violations.includes("Lost")) {
         await fetch(
           `http://localhost:8000/api/books/${initialValues.book_id}`,
           {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ incrementAvailable: 1 }), // tell backend to increase copies
+            body: JSON.stringify({ incrementAvailable: 1 }),
           }
         );
       }
 
-      messageApi.success("Book successfully returned!");
+      messageApi.success(
+        violations.includes("Lost")
+          ? "Book marked as lost!"
+          : "Book returned successfully!"
+      );
       form.resetFields();
       onClose();
       window.location.reload();

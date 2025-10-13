@@ -37,7 +37,7 @@ const ViewRecords = () => {
       title: "Borrow ID",
       dataIndex: "borrow_id",
       key: "borrow_id",
-      width: 100,
+      width: 120,
     },
     {
       title: "Borrower Name",
@@ -79,21 +79,21 @@ const ViewRecords = () => {
       title: "Borrowed Date",
       dataIndex: "date_borrowed",
       key: "date_borrowed",
-      width: 120,
+      width: 150,
       render: (date) => new Date(date).toLocaleDateString(),
     },
     {
       title: "Due Date",
       dataIndex: "due_date",
       key: "due_date",
-      width: 120,
+      width: 150,
       render: (date) => new Date(date).toLocaleDateString(),
     },
     {
       title: "Returned Date",
       dataIndex: "returned_date",
       key: "returned_date",
-      width: 120,
+      width: 150,
       render: (date) => (date ? new Date(date).toLocaleDateString() : "-"),
     },
     {

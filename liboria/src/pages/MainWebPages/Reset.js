@@ -9,6 +9,7 @@ const Reset = () => {
     newPassword: "",
     confirmPassword: "",
   });
+  const [currentPassword, setCurrentPassword] = useState("");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -36,6 +37,11 @@ const Reset = () => {
 
       if (response.ok) {
         setTokenValid(true);
+        // Note: Your backend needs to return currentPassword for this to work
+        // If it doesn't, we'll rely on server-side validation
+        if (data.currentPassword) {
+          setCurrentPassword(data.currentPassword);
+        }
       } else {
         setError(data.error || "Invalid or expired reset token");
         setTokenValid(false);
@@ -59,18 +65,24 @@ const Reset = () => {
       setError("Passwords do not match.");
       return false;
     }
-    return true;
+    // Only validate if we have the current password from the backend
+    if (currentPassword && formData.newPassword === currentPassword) {
+      setError("New password cannot be the same as your current password.");
+      return false;
+    }
+    return true; // Fixed: removed duplicate return statement
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setMessage("");
-    if (!validate()) return;
+
+    // Only run client-side validation if we have currentPassword
+    if (currentPassword && !validate()) return;
 
     setLoading(true);
     try {
-      // Use the correct endpoint: /api/users/reset-password
       const response = await fetch(
         "http://localhost:8000/api/users/reset-password",
         {
@@ -89,7 +101,16 @@ const Reset = () => {
         setMessage("Password reset successfully! Redirecting to login...");
         setTimeout(() => navigate("/login"), 2000);
       } else {
-        setError(data.error || "Failed to reset password.");
+        // Handle server-side validation for same password
+        if (
+          data.error &&
+          (data.error.includes("same as current") ||
+            data.error.includes("cannot be the same"))
+        ) {
+          setError("New password cannot be the same as your current password.");
+        } else {
+          setError(data.error || "Failed to reset password.");
+        }
       }
     } catch {
       setError("Network error. Please try again.");

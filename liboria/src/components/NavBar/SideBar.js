@@ -108,7 +108,7 @@ const Sidebar = () => {
           <img
             src={logo_dark}
             alt="Logo"
-            style={{ maxWidth: "200px", width: "100%" }}
+            style={{ maxWidth: "200px", width: "100%", marginTop: 50 }}
           />
           <h3 style={{ margin: "20px 0 10px" }}>{user.name}</h3>
           <p style={{ color: "#ccc", margin: "10px 0", fontSize: "14px" }}>

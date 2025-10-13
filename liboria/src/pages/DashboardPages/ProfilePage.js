@@ -42,9 +42,12 @@ const ProfilePage = () => {
     <>
       <Card
         style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
           maxWidth: "450px",
           width: "100%",
-          margin: "auto",
+          margin: "3% auto",
           boxShadow: "0 5px 15px rgba(0, 0, 0, 0.34)",
         }}
       >
