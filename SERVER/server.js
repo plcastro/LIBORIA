@@ -19,6 +19,7 @@ app.use("/api/books", bookRoutes);
 app.use("/api/borrowers", borrowerRoutes);
 app.use("/api/borrowed-books", borrowedBookRoutes);
 app.use("/api/returned-books", returnedBookRoutes);
+app.use("/api/records", require("./routes/recordRoutes"));
 
 app.listen(8000, () => {
   console.log(`Server is running at http://localhost:8000`);
