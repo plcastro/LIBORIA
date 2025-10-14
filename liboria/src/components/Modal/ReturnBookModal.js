@@ -84,7 +84,7 @@ const ReturnBookModal = ({ open, onClose, initialValues, REASONS }) => {
       const returnedDate = dayjs(values.returnedDate).format("YYYY-MM-DD");
 
       // Check amount paid vs penalty if needed
-      if (violations.includes("Lost") === false && values.penalty > 0) {
+      if (values.penalty > 0) {
         if (!values.inCash || values.inCash < values.penalty) {
           messageApi.error("Amount paid must cover the penalty.");
           return;
