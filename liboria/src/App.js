@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useEffect } from "react";
 import RootLayout from "./layout/RootLayout";
 import DashboardLayout from "./layout/DashboardLayout";
 import Home from "./pages/MainWebPages/Home";
@@ -15,6 +16,18 @@ import StaffList from "./pages/DashboardPages/StaffList";
 import ProfilePage from "./pages/DashboardPages/ProfilePage";
 
 export default function App() {
+  useEffect(() => {
+    const handleStorageChange = (event) => {
+      if (event.key === "rememberMe" && event.newValue === "false") {
+        localStorage.removeItem("currentUser");
+        window.location.href = "/login";
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, []);
+
   return (
     <BrowserRouter>
       <Routes>
