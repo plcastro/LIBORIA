@@ -5,8 +5,23 @@ import AddBookModal from "../../components/Modal/AddBookModal";
 import EditBookModal from "../../components/Modal/EditBookModal";
 import DeleteBookModal from "../../components/Modal/DeleteBookModal";
 import BorrowBookModal from "../../components/Modal/BorrowBookModal";
+import "../../App.css";
+const topOptions = [
+  { label: "topLeft", value: "topLeft" },
+  { label: "topCenter", value: "topCenter" },
+  { label: "topRight", value: "topRight" },
+  { label: "none", value: "none" },
+];
+const bottomOptions = [
+  { label: "bottomLeft", value: "bottomLeft" },
+  { label: "bottomCenter", value: "bottomCenter" },
+  { label: "bottomRight", value: "bottomRight" },
+  { label: "none", value: "none" },
+];
 
 const DisplayBook = () => {
+  const [top, setTop] = useState("topLeft");
+  const [bottom, setBottom] = useState("bottomRight");
   const [messageApi, contextHolder] = message.useMessage();
   const [books, setBooks] = useState([]);
   const [filteredBooks, setFilteredBooks] = useState([]);
@@ -103,7 +118,7 @@ const DisplayBook = () => {
       setFilteredBooks((prev) =>
         prev.filter((b) => b.book_id !== book.book_id)
       );
-      message.success("Book deleted successfully");
+      messageApi.success("Book deleted successfully");
     } catch (err) {
       console.error(err);
       message.error(err.message);
@@ -125,19 +140,19 @@ const DisplayBook = () => {
   const handleBookCreated = () => {
     fetchBooks();
     setAddModalOpen(false);
-    message.success("Book added successfully");
+    messageApi.success("Book added successfully");
   };
 
   const handleBookUpdated = () => {
     fetchBooks();
     setEditModalOpen(false);
-    message.success("Book updated successfully");
+    messageApi.success("Book updated successfully");
   };
 
   const handleBookBorrowed = () => {
     fetchBooks(); // Refresh to update available copies
     setBorrowModalOpen(false);
-    message.success("Book borrowed successfully");
+    messageApi.success("Book borrowed successfully");
   };
 
   const columns = [
@@ -145,7 +160,7 @@ const DisplayBook = () => {
       title: "_",
       dataIndex: "image",
       key: "image",
-      width: 100,
+      width: 150,
       render: (_, record) => (
         <img
           src={record.image || "https://via.placeholder.com/60"}
@@ -293,10 +308,12 @@ const DisplayBook = () => {
           dataSource={filteredBooks}
           rowKey="id"
           loading={loading}
-          pagination={false}
+          pagination={{
+            position: ["bottomRight"],
+            pageSize: 3,
+          }}
           scroll={{
-            y: books.length > 10 ? "70vh" : undefined,
-            x: "max-content",
+            y: 550,
           }}
         />
 

@@ -76,6 +76,9 @@ a.active {
 input {
   height: 30px;
 }
+.ant-pagination {
+  margin-top: 8px !important;
+}
 
 @media (max-width: 768px) {
   .dashboard-content {

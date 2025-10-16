@@ -40,11 +40,12 @@ const Login = () => {
     const isChecked = e.target.checked;
     setRememberMe(isChecked);
 
-    // If unchecking, remove saved credentials
     if (!isChecked) {
+      localStorage.setItem("rememberMe", "false"); // triggers other tabs
       localStorage.removeItem("rememberedUsername");
       localStorage.removeItem("rememberedPassword");
-      localStorage.removeItem("rememberMe");
+    } else {
+      localStorage.setItem("rememberMe", "true");
     }
   };
 
