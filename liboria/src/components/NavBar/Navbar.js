@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import "./Navbar.css";
-import logo_dark from "../../assets/liboria black.png";
 import { NavLink } from "react-router-dom";
 import { Drawer, Button, Grid, Menu } from "antd";
 import { MenuOutlined } from "@ant-design/icons";

@@ -74,7 +74,7 @@ const DashboardLayout = () => {
             onClose={() => setOpen(false)}
             open={open}
             width="300px"
-            bodyStyle={{ padding: 0 }}
+            body={(style = { padding: 0 })}
             style={{
               backgroundColor: "#001529",
               color: "white",
