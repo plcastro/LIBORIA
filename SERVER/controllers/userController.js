@@ -114,7 +114,7 @@ const createUser = (req, res) => {
           }
           res.status(201).json(userResults[0]);
         });
-      }
+      },
     );
   }
 };
@@ -170,7 +170,7 @@ const register = (req, res) => {
         // If error is because email column doesn't exist, continue with registration
         if (err.code === "ER_BAD_FIELD_ERROR") {
           console.log(
-            "Email column does not exist, continuing without email check"
+            "Email column does not exist, continuing without email check",
           );
           proceedWithRegistration();
         } else {
@@ -238,9 +238,9 @@ const register = (req, res) => {
                         user: userResults[0],
                         note: "Name and email were not saved (columns not available)",
                       });
-                    }
+                    },
                   );
-                }
+                },
               );
             } else if (err.code === "ER_DUP_ENTRY") {
               return res
@@ -264,7 +264,7 @@ const register = (req, res) => {
               });
             });
           }
-        }
+        },
       );
     }
   });
@@ -512,12 +512,10 @@ const forgotPassword = (req, res) => {
 
     const resetToken = generate4CharToken();
     console.log(
-      `Generated token: "${resetToken}", Length: ${resetToken.length}`
-    ); // Should be exactly 4
+      `Generated token: "${resetToken}", Length: ${resetToken.length}`,
+    );
 
-    const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hour from now
-
-    // Store reset token in database
+    const resetTokenExpiry = new Date(Date.now() + 3600000);
     const updateTokenQuery =
       "UPDATE users SET reset_token = ?, reset_token_expiry = ? WHERE userid = ?";
 
@@ -555,10 +553,10 @@ const forgotPassword = (req, res) => {
         console.log(`Reset token: ${resetToken}`);
         if (isDevelopment) {
           console.log(
-            `Development reset link: http://localhost:3000/reset-password/${resetToken}`
+            `Development reset link: http://localhost:3000/reset-password/${resetToken}`,
           );
         }
-      }
+      },
     );
   });
 };
@@ -647,7 +645,7 @@ const resetPassword = (req, res) => {
         }
 
         res.json({ message: "Password reset successfully" });
-      }
+      },
     );
   });
 };
