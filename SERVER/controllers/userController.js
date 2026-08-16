@@ -1,459 +1,299 @@
-const db = require("../config/database");
+const { collection, getNextSequence } = require("../config/database");
 const crypto = require("crypto");
 
-// GET all users
-const getUsers = (req, res) => {
-  const query = "SELECT userid, username, name, email, account_type FROM users";
+const toId = (value) => {
+  const numberValue = Number(value);
+  return Number.isNaN(numberValue) ? value : numberValue;
+};
 
-  db.query(query, (err, results) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ error: "Internal Server Error" });
-    }
+const publicUserProjection = {
+  projection: {
+    _id: 0,
+    userid: 1,
+    username: 1,
+    name: 1,
+    email: 1,
+    account_type: 1,
+  },
+};
+
+const handleError = (res, err) => {
+  console.error(err);
+  return res.status(500).json({ error: "Internal Server Error" });
+};
+
+const findPublicUser = async (users, userid) =>
+  users.findOne({ userid }, publicUserProjection);
+
+// GET all users
+const getUsers = async (req, res) => {
+  try {
+    const users = await collection("users");
+    const results = await users.find({}, publicUserProjection).toArray();
     res.json(results);
-  });
+  } catch (err) {
+    handleError(res, err);
+  }
 };
 
 // GET user by ID
-const getUserById = (req, res) => {
-  const userId = req.params.id;
-  const query =
-    "SELECT userid, username, name, email, account_type FROM users WHERE userid = ?";
+const getUserById = async (req, res) => {
+  try {
+    const users = await collection("users");
+    const user = await findPublicUser(users, toId(req.params.id));
 
-  db.query(query, [userId], (err, results) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ error: "Internal Server Error" });
-    }
-
-    if (results.length === 0) {
+    if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    res.json(results[0]);
-  });
+    res.json(user);
+  } catch (err) {
+    handleError(res, err);
+  }
 };
 
 // CREATE user (for admin)
-const createUser = (req, res) => {
-  const { username, password, name, email, account_type } = req.body;
+const createUser = async (req, res) => {
+  try {
+    const { username, password, name, email, account_type } = req.body;
 
-  if (!username || !password) {
-    return res
-      .status(400)
-      .json({ error: "Username and password are required" });
-  }
-
-  // First check if username already exists
-  const checkUsernameQuery = "SELECT userid FROM users WHERE username = ?";
-
-  db.query(checkUsernameQuery, [username], (err, usernameResults) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ error: "Internal Server Error" });
+    if (!username || !password) {
+      return res
+        .status(400)
+        .json({ error: "Username and password are required" });
     }
 
-    if (usernameResults.length > 0) {
+    const users = await collection("users");
+    const duplicate = await users.findOne({
+      $or: [{ username }, ...(email ? [{ email }] : [])],
+    });
+
+    if (duplicate?.username === username) {
       return res.status(400).json({ error: "Username already exists" });
     }
 
-    // If email is provided, check if email already exists
-    if (email) {
-      const checkEmailQuery = "SELECT userid FROM users WHERE email = ?";
-
-      db.query(checkEmailQuery, [email], (err, emailResults) => {
-        if (err) {
-          console.error(err);
-          return res.status(500).json({ error: "Internal Server Error" });
-        }
-
-        if (emailResults.length > 0) {
-          return res.status(400).json({ error: "Email already exists" });
-        }
-
-        proceedWithCreation();
-      });
-    } else {
-      // If no email provided, proceed with creation
-      proceedWithCreation();
+    if (email && duplicate?.email === email) {
+      return res.status(400).json({ error: "Email already exists" });
     }
-  });
 
-  function proceedWithCreation() {
-    const query =
-      "INSERT INTO users (username, password, name, email, account_type) VALUES (?, ?, ?, ?, ?)";
+    const userid = await getNextSequence("users");
+    await users.insertOne({
+      userid,
+      username,
+      password,
+      name: name || null,
+      email: email || null,
+      account_type: account_type || "librarian",
+      created_at: new Date(),
+    });
 
-    db.query(
-      query,
-      [
-        username,
-        password,
-        name || null,
-        email || null,
-        account_type || "librarian",
-      ],
-      (err, results) => {
-        if (err) {
-          console.error(err);
-          // Additional safety check in case of race conditions
-          if (err.code === "ER_DUP_ENTRY") {
-            return res
-              .status(400)
-              .json({ error: "Username or email already exists" });
-          }
-          return res.status(500).json({ error: "Internal Server Error" });
-        }
-
-        // Return user without password
-        const getQuery =
-          "SELECT userid, username, name, email, account_type FROM users WHERE userid = ?";
-        db.query(getQuery, [results.insertId], (err, userResults) => {
-          if (err) {
-            console.error(err);
-            return res.status(500).json({ error: "Internal Server Error" });
-          }
-          res.status(201).json(userResults[0]);
-        });
-      },
-    );
+    res.status(201).json(await findPublicUser(users, userid));
+  } catch (err) {
+    handleError(res, err);
   }
 };
 
 // REGISTER user (for public signup)
-const register = (req, res) => {
-  const { name, email, username, password } = req.body;
+const register = async (req, res) => {
+  try {
+    const { name, email, username, password } = req.body;
 
-  console.log("Registration attempt:", { name, email, username });
+    console.log("Registration attempt:", { name, email, username });
 
-  // Validation
-  if (!name || !email || !username || !password) {
-    return res.status(400).json({ error: "All fields are required" });
-  }
-
-  if (name.length > 50) {
-    return res.status(400).json({ error: "Name must be up to 50 characters" });
-  }
-
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    return res.status(400).json({ error: "Invalid email format" });
-  }
-
-  if (username.length < 8) {
-    return res
-      .status(400)
-      .json({ error: "Username must be at least 8 characters" });
-  }
-
-  if (password.length < 8) {
-    return res
-      .status(400)
-      .json({ error: "Password must be at least 8 characters" });
-  }
-
-  // Check if username already exists
-  const checkUsernameQuery = "SELECT userid FROM users WHERE username = ?";
-  db.query(checkUsernameQuery, [username], (err, usernameResults) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ error: "Internal Server Error" });
+    if (!name || !email || !username || !password) {
+      return res.status(400).json({ error: "All fields are required" });
     }
 
-    if (usernameResults.length > 0) {
+    if (name.length > 50) {
+      return res.status(400).json({ error: "Name must be up to 50 characters" });
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ error: "Invalid email format" });
+    }
+
+    if (username.length < 8) {
+      return res
+        .status(400)
+        .json({ error: "Username must be at least 8 characters" });
+    }
+
+    if (password.length < 8) {
+      return res
+        .status(400)
+        .json({ error: "Password must be at least 8 characters" });
+    }
+
+    const users = await collection("users");
+    const duplicate = await users.findOne({ $or: [{ username }, { email }] });
+
+    if (duplicate?.username === username) {
       return res.status(400).json({ error: "Username already exists" });
     }
 
-    // Check if email already exists
-    const checkEmailQuery = "SELECT userid FROM users WHERE email = ?";
-    db.query(checkEmailQuery, [email], (err, emailResults) => {
-      if (err) {
-        console.error(err);
-        // If error is because email column doesn't exist, continue with registration
-        if (err.code === "ER_BAD_FIELD_ERROR") {
-          console.log(
-            "Email column does not exist, continuing without email check",
-          );
-          proceedWithRegistration();
-        } else {
-          return res.status(500).json({ error: "Internal Server Error" });
-        }
-      } else {
-        if (emailResults.length > 0) {
-          return res.status(400).json({ error: "Email already exists" });
-        }
-        proceedWithRegistration();
-      }
+    if (duplicate?.email === email) {
+      return res.status(400).json({ error: "Email already exists" });
+    }
+
+    const userid = await getNextSequence("users");
+    await users.insertOne({
+      userid,
+      name,
+      email,
+      username,
+      password,
+      account_type: "librarian",
+      created_at: new Date(),
     });
 
-    function proceedWithRegistration() {
-      // Insert user with all fields - new registrations are always 'librarian' by default
-      const insertQuery =
-        "INSERT INTO users (name, email, username, password, account_type) VALUES (?, ?, ?, ?, ?)";
-
-      db.query(
-        insertQuery,
-        [name, email, username, password, "librarian"],
-        (err, results) => {
-          if (err) {
-            console.error("Insert error:", err);
-
-            // Handle specific MySQL errors
-            if (err.code === "ER_BAD_FIELD_ERROR") {
-              // If columns don't exist, fall back to basic registration
-              console.log("Some columns not found, using basic registration");
-              const basicQuery =
-                "INSERT INTO users (username, password, account_type) VALUES (?, ?, ?)";
-
-              db.query(
-                basicQuery,
-                [username, password, "librarian"],
-                (err, basicResults) => {
-                  if (err) {
-                    console.error("Basic insert error:", err);
-                    if (err.code === "ER_DUP_ENTRY") {
-                      return res
-                        .status(400)
-                        .json({ error: "Username already exists" });
-                    }
-                    return res
-                      .status(500)
-                      .json({ error: "Internal Server Error" });
-                  }
-
-                  // Return basic user info
-                  const getQuery =
-                    "SELECT userid, username, account_type FROM users WHERE userid = ?";
-                  db.query(
-                    getQuery,
-                    [basicResults.insertId],
-                    (err, userResults) => {
-                      if (err) {
-                        console.error(err);
-                        return res
-                          .status(500)
-                          .json({ error: "Internal Server Error" });
-                      }
-                      res.status(201).json({
-                        message:
-                          "Registration successful (basic account created)",
-                        user: userResults[0],
-                        note: "Name and email were not saved (columns not available)",
-                      });
-                    },
-                  );
-                },
-              );
-            } else if (err.code === "ER_DUP_ENTRY") {
-              return res
-                .status(400)
-                .json({ error: "Username or email already exists" });
-            } else {
-              return res.status(500).json({ error: "Internal Server Error" });
-            }
-          } else {
-            // Success - return full user info
-            const getQuery =
-              "SELECT userid, username, name, email, account_type FROM users WHERE userid = ?";
-            db.query(getQuery, [results.insertId], (err, userResults) => {
-              if (err) {
-                console.error(err);
-                return res.status(500).json({ error: "Internal Server Error" });
-              }
-              res.status(201).json({
-                message: "Registration successful",
-                user: userResults[0],
-              });
-            });
-          }
-        },
-      );
-    }
-  });
+    res.status(201).json({
+      message: "Registration successful",
+      user: await findPublicUser(users, userid),
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
 };
 
 // UPDATE user (including account_type)
-const updateUser = (req, res) => {
-  const userId = req.params.id;
-  const { username, password, name, email, account_type } = req.body;
+const updateUser = async (req, res) => {
+  try {
+    const userId = toId(req.params.id);
+    const { username, password, name, email, account_type } = req.body;
+    const update = {};
 
-  // Build dynamic query based on provided fields
-  let query = "UPDATE users SET ";
-  const values = [];
-  const updates = [];
+    if (username) update.username = username;
+    if (password) update.password = password;
+    if (name !== undefined) update.name = name;
+    if (email !== undefined) update.email = email;
+    if (account_type) update.account_type = account_type;
 
-  if (username) {
-    updates.push("username = ?");
-    values.push(username);
-  }
-  if (password) {
-    updates.push("password = ?");
-    values.push(password);
-  }
-  if (name !== undefined) {
-    updates.push("name = ?");
-    values.push(name);
-  }
-  if (email !== undefined) {
-    updates.push("email = ?");
-    values.push(email);
-  }
-  if (account_type) {
-    updates.push("account_type = ?");
-    values.push(account_type);
-  }
+    if (Object.keys(update).length === 0) {
+      return res.status(400).json({ error: "No fields to update" });
+    }
 
-  if (updates.length === 0) {
-    return res.status(400).json({ error: "No fields to update" });
-  }
+    const users = await collection("users");
+    const duplicateConditions = [];
+    if (username) duplicateConditions.push({ username });
+    if (email) duplicateConditions.push({ email });
 
-  query += updates.join(", ") + " WHERE userid = ?";
-  values.push(userId);
+    if (duplicateConditions.length > 0) {
+      const duplicate = await users.findOne({
+        userid: { $ne: userId },
+        $or: duplicateConditions,
+      });
 
-  db.query(query, values, (err, results) => {
-    if (err) {
-      console.error(err);
-      if (err.code === "ER_DUP_ENTRY") {
+      if (duplicate) {
         return res
           .status(400)
           .json({ error: "Username or email already exists" });
       }
-      return res.status(500).json({ error: "Internal Server Error" });
     }
 
-    if (results.affectedRows === 0) {
+    const result = await users.findOneAndUpdate(
+      { userid: userId },
+      { $set: update },
+      { returnDocument: "after", ...publicUserProjection }
+    );
+    const updatedUser = result.value || result;
+
+    if (!updatedUser) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    // Get updated user
-    const getQuery =
-      "SELECT userid, username, name, email, account_type FROM users WHERE userid = ?";
-    db.query(getQuery, [userId], (err, userResults) => {
-      if (err) {
-        console.error(err);
-        return res.status(500).json({ error: "Internal Server Error" });
-      }
-      res.json(userResults[0]);
-    });
-  });
+    res.json(updatedUser);
+  } catch (err) {
+    handleError(res, err);
+  }
 };
 
-const changePassword = (req, res) => {
-  const userId = req.params.id;
-  const { currPassword, newPassword } = req.body;
+const changePassword = async (req, res) => {
+  try {
+    const userId = toId(req.params.id);
+    const { currPassword, newPassword } = req.body;
 
-  if (!currPassword || !newPassword) {
-    return res
-      .status(400)
-      .json({ error: "Both current and new passwords are required" });
-  }
-
-  const selectQuery = "SELECT password FROM users WHERE userid = ?";
-  db.query(selectQuery, [userId], (err, results) => {
-    if (err) {
-      console.error("DB select error:", err);
+    if (!currPassword || !newPassword) {
       return res
-        .status(500)
-        .json({ error: "Database error while fetching user" });
+        .status(400)
+        .json({ error: "Both current and new passwords are required" });
     }
 
-    if (results.length === 0) {
+    const users = await collection("users");
+    const user = await users.findOne({ userid: userId });
+
+    if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    if (results[0].password !== currPassword) {
+    if (user.password !== currPassword) {
       return res.status(400).json({ error: "Current password is incorrect" });
     }
 
-    const updateQuery = "UPDATE users SET password = ? WHERE userid = ?";
-    db.query(updateQuery, [newPassword, userId], (err2) => {
-      if (err2) {
-        console.error("DB update error:", err2);
-        return res.status(500).json({ error: "Failed to update password" });
-      }
-
-      res.json({ message: "Password updated successfully" });
-    });
-  });
+    await users.updateOne({ userid: userId }, { $set: { password: newPassword } });
+    res.json({ message: "Password updated successfully" });
+  } catch (err) {
+    handleError(res, err);
+  }
 };
 
-const updateUserPassword = (req, res) => {
-  const { password } = req.body;
-  const { id } = req.params; // this is actually userid
+const updateUserPassword = async (req, res) => {
+  try {
+    const { password } = req.body;
+    const userId = toId(req.params.id);
+    const users = await collection("users");
+    const user = await users.findOne({ userid: userId });
 
-  // Get current user password first
-  const getQuery = "SELECT password FROM users WHERE userid = ?"; // <-- fix column name
-  db.query(getQuery, [id], (err, results) => {
-    if (err) return res.status(500).json({ error: "Server error" });
-    if (!results.length)
+    if (!user) {
       return res.status(404).json({ error: "User not found" });
+    }
 
-    const oldPassword = results[0].password;
-
-    if (password === oldPassword) {
+    if (password === user.password) {
       return res
         .status(400)
         .json({ error: "New password cannot be the same as the current one." });
     }
 
-    // Continue with update
-    const updateQuery = "UPDATE users SET password = ? WHERE userid = ?"; // <-- fix column name
-    db.query(updateQuery, [password, id], (err2) => {
-      if (err2)
-        return res.status(500).json({ error: "Failed to update password" });
-      res.json({ message: "Password updated successfully" });
-    });
-  });
+    await users.updateOne({ userid: userId }, { $set: { password } });
+    res.json({ message: "Password updated successfully" });
+  } catch (err) {
+    handleError(res, err);
+  }
 };
 
 // DELETE user
-const deleteUser = (req, res) => {
-  const userId = req.params.id;
-  const query = "DELETE FROM users WHERE userid = ?";
+const deleteUser = async (req, res) => {
+  try {
+    const users = await collection("users");
+    const result = await users.deleteOne({ userid: toId(req.params.id) });
 
-  db.query(query, [userId], (err, results) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ error: "Internal Server Error" });
-    }
-
-    if (results.affectedRows === 0) {
+    if (result.deletedCount === 0) {
       return res.status(404).json({ error: "User not found" });
     }
 
     res.json({ message: "User deleted successfully" });
-  });
+  } catch (err) {
+    handleError(res, err);
+  }
 };
 
 // LOGIN user
-const login = (req, res) => {
-  const { username, password } = req.body;
+const login = async (req, res) => {
+  try {
+    const { username, password } = req.body;
 
-  if (!username || !password) {
-    return res
-      .status(400)
-      .json({ error: "Username and password are required" });
-  }
-
-  const query =
-    "SELECT userid, username, password, name, email, account_type FROM users WHERE username = ?";
-
-  db.query(query, [username], (err, results) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ error: "Internal Server Error" });
+    if (!username || !password) {
+      return res
+        .status(400)
+        .json({ error: "Username and password are required" });
     }
 
-    if (results.length === 0) {
+    const users = await collection("users");
+    const user = await users.findOne({ username });
+
+    if (!user || user.password !== password) {
       return res.status(401).json({ error: "Invalid username or password" });
     }
 
-    const user = results[0];
-
-    // Check if password matches (plain text comparison)
-    if (user.password !== password) {
-      return res.status(401).json({ error: "Invalid username or password" });
-    }
-
-    // Login successful - return user info without password
     res.json({
       message: "Login successful",
       user: {
@@ -464,221 +304,188 @@ const login = (req, res) => {
         account_type: user.account_type,
       },
     });
-  });
+  } catch (err) {
+    handleError(res, err);
+  }
 };
 
 // FORGOT PASSWORD - Generate reset token (Development version with test link)
-const forgotPassword = (req, res) => {
-  const { email } = req.body;
+const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
 
-  if (!email) {
-    return res.status(400).json({ error: "Email is required" });
-  }
-
-  // Generate exactly 4-character hex token (guaranteed)
-  function generate4CharToken() {
-    let token = crypto.randomBytes(2).toString("hex");
-    // Ensure it's exactly 4 characters (should always be, but just in case)
-    if (token.length > 4) {
-      token = token.slice(0, 4);
-    } else if (token.length < 4) {
-      // Pad with zeros if somehow shorter (shouldn't happen)
-      token = token.padEnd(4, "0");
-    }
-    return token;
-  }
-
-  // Check if user exists with this email
-  const findUserQuery =
-    "SELECT userid, username, email FROM users WHERE email = ?";
-
-  db.query(findUserQuery, [email], (err, results) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ error: "Internal Server Error" });
+    if (!email) {
+      return res.status(400).json({ error: "Email is required" });
     }
 
-    // Always return the same generic message for security
     const genericMessage =
       "If an account with that email exists, a reset link has been sent.";
+    const users = await collection("users");
+    const user = await users.findOne({ email });
 
-    if (results.length === 0) {
-      return res.json({
-        message: genericMessage,
-      });
+    if (!user) {
+      return res.json({ message: genericMessage });
     }
 
-    const user = results[0];
-
-    const resetToken = generate4CharToken();
-    console.log(
-      `Generated token: "${resetToken}", Length: ${resetToken.length}`,
-    );
-
+    const resetToken = crypto.randomBytes(2).toString("hex").slice(0, 4);
     const resetTokenExpiry = new Date(Date.now() + 3600000);
-    const updateTokenQuery =
-      "UPDATE users SET reset_token = ?, reset_token_expiry = ? WHERE userid = ?";
 
-    db.query(
-      updateTokenQuery,
-      [resetToken, resetTokenExpiry, user.userid],
-      (err, updateResults) => {
-        if (err) {
-          console.error(err);
-          return res.status(500).json({ error: "Internal Server Error" });
-        }
-
-        // For development only - include test link
-        // Check if we're in development mode
-        const isDevelopment = process.env.NODE_ENV !== "production";
-
-        if (isDevelopment) {
-          // In development, return the test link
-          res.json({
-            message: genericMessage,
-            resetLink: `http://localhost:3000/reset-password/${resetToken}`, // Development only
-          });
-        } else {
-          // In production, return only the generic message
-          res.json({
-            message: genericMessage,
-          });
-
-          // TODO: In production, implement actual email sending here
-          // sendPasswordResetEmail(email, resetToken);
-        }
-
-        // Always log to console for development/debugging
-        console.log(`Password reset requested for: ${email}`);
-        console.log(`Reset token: ${resetToken}`);
-        if (isDevelopment) {
-          console.log(
-            `Development reset link: http://localhost:3000/reset-password/${resetToken}`,
-          );
-        }
-      },
+    await users.updateOne(
+      { userid: user.userid },
+      { $set: { reset_token: resetToken, reset_token_expiry: resetTokenExpiry } }
     );
-  });
+
+    const isDevelopment = process.env.NODE_ENV !== "production";
+
+    res.json({
+      message: genericMessage,
+      ...(isDevelopment
+        ? { resetLink: `http://localhost:3000/reset-password/${resetToken}` }
+        : {}),
+    });
+
+    console.log(`Password reset requested for: ${email}`);
+    console.log(`Reset token: ${resetToken}`);
+  } catch (err) {
+    handleError(res, err);
+  }
 };
 
 // VERIFY RESET TOKEN - Check if token is valid
-const verifyResetToken = (req, res) => {
-  const { token } = req.body;
+const verifyResetToken = async (req, res) => {
+  try {
+    const { token } = req.body;
 
-  if (!token) {
-    return res.status(400).json({ error: "Reset token is required" });
-  }
-
-  const query =
-    "SELECT userid, username, reset_token_expiry FROM users WHERE reset_token = ? AND reset_token_expiry > NOW()";
-
-  db.query(query, [token], (err, results) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ error: "Internal Server Error" });
+    if (!token) {
+      return res.status(400).json({ error: "Reset token is required" });
     }
 
-    if (results.length === 0) {
+    const users = await collection("users");
+    const user = await users.findOne({
+      reset_token: token,
+      reset_token_expiry: { $gt: new Date() },
+    });
+
+    if (!user) {
       return res.status(400).json({ error: "Invalid or expired reset token" });
     }
 
     res.json({
       message: "Token is valid",
       user: {
-        userid: results[0].userid,
-        username: results[0].username,
+        userid: user.userid,
+        username: user.username,
       },
     });
-  });
+  } catch (err) {
+    handleError(res, err);
+  }
 };
 
 // RESET PASSWORD - Update password using reset token
-const resetPassword = (req, res) => {
-  const { token, newPassword } = req.body;
+const resetPassword = async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
 
-  if (!token || !newPassword) {
-    return res
-      .status(400)
-      .json({ error: "Token and new password are required" });
-  }
-
-  if (newPassword.length < 8) {
-    return res
-      .status(400)
-      .json({ error: "Password must be at least 8 characters" });
-  }
-
-  // First verify the token is valid and get current password
-  const verifyQuery =
-    "SELECT userid, password FROM users WHERE reset_token = ? AND reset_token_expiry > NOW()";
-
-  db.query(verifyQuery, [token], (err, results) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ error: "Internal Server Error" });
+    if (!token || !newPassword) {
+      return res
+        .status(400)
+        .json({ error: "Token and new password are required" });
     }
 
-    if (results.length === 0) {
+    if (newPassword.length < 8) {
+      return res
+        .status(400)
+        .json({ error: "Password must be at least 8 characters" });
+    }
+
+    const users = await collection("users");
+    const user = await users.findOne({
+      reset_token: token,
+      reset_token_expiry: { $gt: new Date() },
+    });
+
+    if (!user) {
       return res.status(400).json({ error: "Invalid or expired reset token" });
     }
 
-    const user = results[0];
-
-    // Check if new password is the same as current password
     if (user.password === newPassword) {
       return res.status(400).json({
         error: "New password cannot be the same as your current password.",
       });
     }
 
-    // Update password and clear reset token
-    const updatePasswordQuery =
-      "UPDATE users SET password = ?, reset_token = NULL, reset_token_expiry = NULL WHERE userid = ?";
-
-    db.query(
-      updatePasswordQuery,
-      [newPassword, user.userid],
-      (err, updateResults) => {
-        if (err) {
-          console.error(err);
-          return res.status(500).json({ error: "Internal Server Error" });
-        }
-
-        res.json({ message: "Password reset successfully" });
-      },
+    await users.updateOne(
+      { userid: user.userid },
+      {
+        $set: { password: newPassword },
+        $unset: { reset_token: "", reset_token_expiry: "" },
+      }
     );
-  });
+
+    res.json({ message: "Password reset successfully" });
+  } catch (err) {
+    handleError(res, err);
+  }
 };
 
 // GET all borrowing records with related data
-const getBorrowingRecords = (req, res) => {
-  const query = `
-    SELECT 
-      bb.borrow_id,
-      br.name AS borrower_name,
-      br.year_level,
-      br.course,
-      b.title AS book_title,
-      bb.date_borrowed,
-      bb.due_date,
-      rb.returned_date,
-      COALESCE(rb.violation, 'None') AS violation,
-      COALESCE(rb.penalty, 0.00) AS penalty,
-      bb.status
-    FROM borrowed_books bb
-    LEFT JOIN borrowers br ON bb.borrower_id = br.borrower_id
-    LEFT JOIN books b ON bb.book_id = b.book_id
-    LEFT JOIN returned_books rb ON bb.borrow_id = rb.borrow_id
-    ORDER BY bb.date_borrowed DESC
-  `;
+const getBorrowingRecords = async (req, res) => {
+  try {
+    const borrowedBooks = await collection("borrowed_books");
+    const results = await borrowedBooks
+      .aggregate([
+        {
+          $lookup: {
+            from: "borrowers",
+            localField: "borrower_id",
+            foreignField: "borrower_id",
+            as: "borrower",
+          },
+        },
+        {
+          $lookup: {
+            from: "books",
+            localField: "book_id",
+            foreignField: "book_id",
+            as: "book",
+          },
+        },
+        {
+          $lookup: {
+            from: "returned_books",
+            localField: "borrow_id",
+            foreignField: "borrow_id",
+            as: "returnRecord",
+          },
+        },
+        { $unwind: { path: "$borrower", preserveNullAndEmptyArrays: true } },
+        { $unwind: { path: "$book", preserveNullAndEmptyArrays: true } },
+        { $unwind: { path: "$returnRecord", preserveNullAndEmptyArrays: true } },
+        { $sort: { date_borrowed: -1 } },
+        {
+          $project: {
+            _id: 0,
+            borrow_id: 1,
+            borrower_name: "$borrower.name",
+            year_level: "$borrower.year_level",
+            course: "$borrower.course",
+            book_title: "$book.title",
+            date_borrowed: 1,
+            due_date: 1,
+            returned_date: "$returnRecord.returned_date",
+            violation: { $ifNull: ["$returnRecord.violation", "None"] },
+            penalty: { $ifNull: ["$returnRecord.penalty", 0] },
+            status: 1,
+          },
+        },
+      ])
+      .toArray();
 
-  db.query(query, (err, results) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ error: "Internal Server Error" });
-    }
     res.json(results);
-  });
+  } catch (err) {
+    handleError(res, err);
+  }
 };
 
 module.exports = {

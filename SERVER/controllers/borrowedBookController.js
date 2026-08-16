@@ -1,330 +1,232 @@
-const db = require("../config/database");
+const { collection, getNextSequence } = require("../config/database");
+
+const toId = (value) => {
+  const numberValue = Number(value);
+  return Number.isNaN(numberValue) ? value : numberValue;
+};
+
+const handleError = (res, err) => {
+  console.error(err);
+  return res.status(500).json({ error: "Internal Server Error" });
+};
+
+const borrowDetailsPipeline = (match = {}) => [
+  { $match: match },
+  {
+    $lookup: {
+      from: "books",
+      localField: "book_id",
+      foreignField: "book_id",
+      as: "book",
+    },
+  },
+  {
+    $lookup: {
+      from: "borrowers",
+      localField: "borrower_id",
+      foreignField: "borrower_id",
+      as: "borrower",
+    },
+  },
+  { $unwind: { path: "$book", preserveNullAndEmptyArrays: true } },
+  { $unwind: { path: "$borrower", preserveNullAndEmptyArrays: true } },
+  { $sort: { date_borrowed: -1 } },
+  {
+    $project: {
+      _id: 0,
+      borrow_id: 1,
+      borrower_id: 1,
+      book_id: 1,
+      date_borrowed: 1,
+      due_date: 1,
+      status: 1,
+      created_at: 1,
+      title: "$book.title",
+      author_name: "$book.author_name",
+      borrower_name: "$borrower.name",
+      year_level: "$borrower.year_level",
+      course: "$borrower.course",
+    },
+  },
+];
 
 // GET all borrowed books with details
-const getBorrowedBooks = (req, res) => {
-  const query = `
-    SELECT 
-      bb.borrow_id,
-      bb.borrower_id,
-      bb.book_id,
-      bb.date_borrowed,
-      bb.due_date,
-      bb.status,
-      bb.created_at,
-      b.title,
-      b.author_name,
-      bor.name as borrower_name,
-      bor.year_level,
-      bor.course
-    FROM borrowed_books bb
-    JOIN books b ON bb.book_id = b.book_id
-    JOIN borrowers bor ON bb.borrower_id = bor.borrower_id
-    ORDER BY bb.date_borrowed DESC
-  `;
-
-  db.query(query, (err, results) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ error: "Internal Server Error" });
-    }
+const getBorrowedBooks = async (req, res) => {
+  try {
+    const borrowedBooks = await collection("borrowed_books");
+    const results = await borrowedBooks.aggregate(borrowDetailsPipeline()).toArray();
     res.json(results);
-  });
+  } catch (err) {
+    handleError(res, err);
+  }
 };
 
 // GET borrowed book by ID
-const getBorrowedBookById = (req, res) => {
-  const borrowId = req.params.id;
-  const query = `
-    SELECT 
-      bb.*, 
-      b.title, 
-      b.author_name, 
-      bor.name as borrower_name,
-      bor.year_level,
-      bor.course
-    FROM borrowed_books bb
-    JOIN books b ON bb.book_id = b.book_id
-    JOIN borrowers bor ON bb.borrower_id = bor.borrower_id
-    WHERE bb.borrow_id = ?
-  `;
-
-  db.query(query, [borrowId], (err, results) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ error: "Internal Server Error" });
-    }
+const getBorrowedBookById = async (req, res) => {
+  try {
+    const borrowedBooks = await collection("borrowed_books");
+    const results = await borrowedBooks
+      .aggregate(borrowDetailsPipeline({ borrow_id: toId(req.params.id) }))
+      .toArray();
 
     if (results.length === 0) {
       return res.status(404).json({ error: "Borrow record not found" });
     }
 
     res.json(results[0]);
-  });
+  } catch (err) {
+    handleError(res, err);
+  }
 };
 
 // BORROW a book with all validations
-const borrowBook = (req, res) => {
-  const { book_id, borrower_id, due_date } = req.body;
+const borrowBook = async (req, res) => {
+  try {
+    const bookId = toId(req.body.book_id);
+    const borrowerId = toId(req.body.borrower_id);
+    const { due_date } = req.body;
 
-  if (!book_id || !borrower_id || !due_date) {
-    return res.status(400).json({
-      error: "Book ID, borrower ID, and due date are required",
-    });
-  }
-
-  // Start transaction
-  db.beginTransaction((err) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ error: "Internal Server Error" });
+    if (!bookId || !borrowerId || !due_date) {
+      return res.status(400).json({
+        error: "Book ID, borrower ID, and due date are required",
+      });
     }
 
-    // Check 1: Book availability
-    const checkBookQuery = `
-      SELECT available_copies, total_copies, title 
-      FROM books 
-      WHERE book_id = ? AND available_copies > 0
-    `;
-
-    db.query(checkBookQuery, [book_id], (err, bookResults) => {
-      if (err) {
-        return db.rollback(() => {
-          console.error(err);
-          res.status(500).json({ error: "Internal Server Error" });
-        });
-      }
-
-      if (bookResults.length === 0) {
-        return db.rollback(() => {
-          res.status(400).json({ error: "Book not available for borrowing" });
-        });
-      }
-
-      // Check 2: If user already borrowed this book (active borrow)
-      const checkDuplicateQuery = `
-        SELECT borrow_id 
-        FROM borrowed_books 
-        WHERE book_id = ? AND borrower_id = ? AND status = 'Borrowed'
-      `;
-
-      db.query(
-        checkDuplicateQuery,
-        [book_id, borrower_id],
-        (err, duplicateResults) => {
-          if (err) {
-            return db.rollback(() => {
-              console.error(err);
-              res.status(500).json({ error: "Internal Server Error" });
-            });
-          }
-
-          if (duplicateResults.length > 0) {
-            return db.rollback(() => {
-              res
-                .status(400)
-                .json({ error: "You have already borrowed this book" });
-            });
-          }
-
-          // Check 3: User borrow limit (3 books)
-          const checkLimitQuery = `
-          SELECT COUNT(*) as active_borrows 
-          FROM borrowed_books 
-          WHERE borrower_id = ? AND status = 'Borrowed'
-        `;
-
-          db.query(checkLimitQuery, [borrower_id], (err, limitResults) => {
-            if (err) {
-              return db.rollback(() => {
-                console.error(err);
-                res.status(500).json({ error: "Internal Server Error" });
-              });
-            }
-
-            if (limitResults[0].active_borrows >= 3) {
-              return db.rollback(() => {
-                res.status(400).json({
-                  error:
-                    "Borrow limit reached. You can only borrow up to 3 books at a time.",
-                });
-              });
-            }
-
-            // All checks passed - proceed with borrowing
-            const borrowQuery = `
-            INSERT INTO borrowed_books (book_id, borrower_id, date_borrowed, due_date, status) 
-            VALUES (?, ?, CURDATE(), ?, 'Borrowed')
-          `;
-
-            db.query(
-              borrowQuery,
-              [book_id, borrower_id, due_date],
-              (err, borrowResults) => {
-                if (err) {
-                  return db.rollback(() => {
-                    console.error(err);
-                    res.status(500).json({ error: "Internal Server Error" });
-                  });
-                }
-
-                // Update book available copies
-                const updateBookQuery = `
-              UPDATE books 
-              SET available_copies = available_copies - 1 
-              WHERE book_id = ?
-            `;
-
-                db.query(updateBookQuery, [book_id], (err, updateResults) => {
-                  if (err) {
-                    return db.rollback(() => {
-                      console.error(err);
-                      res.status(500).json({ error: "Internal Server Error" });
-                    });
-                  }
-
-                  // Commit transaction
-                  db.commit((err) => {
-                    if (err) {
-                      return db.rollback(() => {
-                        console.error(err);
-                        res
-                          .status(500)
-                          .json({ error: "Internal Server Error" });
-                      });
-                    }
-
-                    // Return success with borrow details
-                    const getBorrowQuery = `
-                  SELECT 
-                    bb.*, 
-                    b.title, 
-                    b.author_name, 
-                    bor.name as borrower_name,
-                    bor.year_level,
-                    bor.course
-                  FROM borrowed_books bb
-                  JOIN books b ON bb.book_id = b.book_id
-                  JOIN borrowers bor ON bb.borrower_id = bor.borrower_id
-                  WHERE bb.borrow_id = ?
-                `;
-
-                    db.query(
-                      getBorrowQuery,
-                      [borrowResults.insertId],
-                      (err, finalResults) => {
-                        if (err) {
-                          console.error(err);
-                          return res
-                            .status(500)
-                            .json({ error: "Internal Server Error" });
-                        }
-
-                        res.status(201).json({
-                          message: "Book borrowed successfully",
-                          borrowRecord: finalResults[0],
-                        });
-                      }
-                    );
-                  });
-                });
-              }
-            );
-          });
-        }
-      );
+    const books = await collection("books");
+    const borrowedBooks = await collection("borrowed_books");
+    const book = await books.findOne({
+      book_id: bookId,
+      available_copies: { $gt: 0 },
     });
-  });
+
+    if (!book) {
+      return res.status(400).json({ error: "Book not available for borrowing" });
+    }
+
+    const duplicate = await borrowedBooks.findOne({
+      book_id: bookId,
+      borrower_id: borrowerId,
+      status: { $regex: /^borrowed$/i },
+    });
+
+    if (duplicate) {
+      return res.status(400).json({ error: "You have already borrowed this book" });
+    }
+
+    const activeBorrows = await borrowedBooks.countDocuments({
+      borrower_id: borrowerId,
+      status: { $regex: /^borrowed$/i },
+    });
+
+    if (activeBorrows >= 3) {
+      return res.status(400).json({
+        error: "Borrow limit reached. You can only borrow up to 3 books at a time.",
+      });
+    }
+
+    const bookUpdate = await books.updateOne(
+      { book_id: bookId, available_copies: { $gt: 0 } },
+      { $inc: { available_copies: -1 } }
+    );
+
+    if (bookUpdate.modifiedCount === 0) {
+      return res.status(400).json({ error: "Book not available for borrowing" });
+    }
+
+    const borrowId = await getNextSequence("borrowed_books");
+    const borrowRecord = {
+      borrow_id: borrowId,
+      book_id: bookId,
+      borrower_id: borrowerId,
+      date_borrowed: new Date(),
+      due_date,
+      status: "Borrowed",
+      created_at: new Date(),
+    };
+
+    try {
+      await borrowedBooks.insertOne(borrowRecord);
+    } catch (err) {
+      await books.updateOne({ book_id: bookId }, { $inc: { available_copies: 1 } });
+      throw err;
+    }
+
+    const finalResults = await borrowedBooks
+      .aggregate(borrowDetailsPipeline({ borrow_id: borrowId }))
+      .toArray();
+
+    res.status(201).json({
+      message: "Book borrowed successfully",
+      borrowRecord: finalResults[0],
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
 };
 
 // UPDATE borrowed book (extend due date, update status, etc.)
-const updateBorrowedBook = (req, res) => {
-  const borrowId = req.params.id;
-  const { status } = req.body;
+const updateBorrowedBook = async (req, res) => {
+  try {
+    const borrowId = toId(req.params.id);
+    const { status } = req.body;
+    const borrowedBooks = await collection("borrowed_books");
 
-  const query = `
-    UPDATE borrowed_books 
-    SET status = ?
-    WHERE borrow_id = ?
-  `;
+    const result = await borrowedBooks.updateOne(
+      { borrow_id: borrowId },
+      { $set: { status } }
+    );
 
-  db.query(query, [status, borrowId], (err, results) => {
-    if (err) {
-      console.error("Error updating borrowed_books:", err);
-      return res.status(500).json({ error: "Internal Server Error" });
-    }
-
-    if (results.affectedRows === 0) {
+    if (result.matchedCount === 0) {
       return res.status(404).json({ error: "Borrow record not found" });
     }
 
-    // Fetch updated record for response
-    const getQuery = `
-      SELECT 
-        bb.*, 
-        b.title, 
-        b.author_name, 
-        bor.name as borrower_name
-      FROM borrowed_books bb
-      JOIN books b ON bb.book_id = b.book_id
-      JOIN borrowers bor ON bb.borrower_id = bor.borrower_id
-      WHERE bb.borrow_id = ?
-    `;
+    const borrowResults = await borrowedBooks
+      .aggregate(borrowDetailsPipeline({ borrow_id: borrowId }))
+      .toArray();
 
-    db.query(getQuery, [borrowId], (err, borrowResults) => {
-      if (err) {
-        console.error("Error fetching updated borrow record:", err);
-        return res.status(500).json({ error: "Internal Server Error" });
-      }
-
-      res.json({
-        message: "Borrowed book status updated successfully",
-        updatedRecord: borrowResults[0],
-      });
+    res.json({
+      message: "Borrowed book status updated successfully",
+      updatedRecord: borrowResults[0],
     });
-  });
+  } catch (err) {
+    console.error("Error updating borrowed_books:", err);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
 };
 
 // GET currently borrowed books by borrower
-const getBorrowedBooksByBorrower = (req, res) => {
-  const borrowerId = req.params.borrowerId;
+const getBorrowedBooksByBorrower = async (req, res) => {
+  try {
+    const borrowedBooks = await collection("borrowed_books");
+    const borrowerId = toId(req.params.borrowerId);
+    const results = await borrowedBooks
+      .aggregate(
+        borrowDetailsPipeline({
+          borrower_id: borrowerId,
+          status: { $regex: /^borrowed$/i },
+        })
+      )
+      .toArray();
 
-  const query = `
-    SELECT 
-      bb.*, 
-      b.title, 
-      b.author_name
-    FROM borrowed_books bb
-    JOIN books b ON bb.book_id = b.book_id
-    WHERE bb.borrower_id = ? AND bb.status = 'Borrowed'
-    ORDER BY bb.due_date ASC
-  `;
-
-  db.query(query, [borrowerId], (err, results) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ error: "Internal Server Error" });
-    }
-    res.json(results);
-  });
+    res.json(results.sort((a, b) => String(a.due_date).localeCompare(String(b.due_date))));
+  } catch (err) {
+    handleError(res, err);
+  }
 };
 
 // GET active borrowed books count for a borrower
-const getActiveBorrowsCount = (req, res) => {
-  const borrowerId = req.params.borrowerId;
+const getActiveBorrowsCount = async (req, res) => {
+  try {
+    const borrowedBooks = await collection("borrowed_books");
+    const activeBorrows = await borrowedBooks.countDocuments({
+      borrower_id: toId(req.params.borrowerId),
+      status: { $regex: /^borrowed$/i },
+    });
 
-  const query = `
-    SELECT COUNT(*) as active_borrows 
-    FROM borrowed_books 
-    WHERE borrower_id = ? AND status = ''
-  `;
-
-  db.query(query, [borrowerId], (err, results) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ error: "Internal Server Error" });
-    }
-    res.json(results[0]);
-  });
+    res.json({ active_borrows: activeBorrows });
+  } catch (err) {
+    handleError(res, err);
+  }
 };
 
 module.exports = {

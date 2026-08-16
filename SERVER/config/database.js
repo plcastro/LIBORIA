@@ -1,21 +1,45 @@
-const mysql = require("mysql2");
+const { MongoClient } = require("mongodb");
 
-// Create database connection
-const db = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "123456",
-  database: "liboria",
-});
+const uri = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017";
+const dbName = process.env.MONGODB_DB || "liboria";
 
-// Connect to database
-db.connect((err) => {
-  if (err) {
-    console.error("Database connection failed: " + err.stack);
-    process.exit(1); // Exit the process if connection fails
+let dbPromise;
+
+const connectToDatabase = async () => {
+  if (!dbPromise) {
+    dbPromise = MongoClient.connect(uri)
+      .then((client) => {
+        console.log(`Connected to MongoDB database: ${dbName}`);
+        return client.db(dbName);
+      })
+      .catch((err) => {
+        dbPromise = null;
+        console.error("MongoDB connection failed:", err);
+        throw err;
+      });
   }
-  console.log("Connected to MySQL database");
-});
 
-// Export the connection
-module.exports = db;
+  return dbPromise;
+};
+
+const collection = async (name) => {
+  const db = await connectToDatabase();
+  return db.collection(name);
+};
+
+const getNextSequence = async (name) => {
+  const counters = await collection("counters");
+  const counter = await counters.findOneAndUpdate(
+    { _id: name },
+    { $inc: { seq: 1 } },
+    { upsert: true, returnDocument: "after" }
+  );
+
+  return counter.seq || counter.value.seq;
+};
+
+module.exports = {
+  connectToDatabase,
+  collection,
+  getNextSequence,
+};
