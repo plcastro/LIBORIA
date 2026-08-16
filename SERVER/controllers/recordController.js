@@ -1,39 +1,69 @@
-const db = require("../config/database");
+const { collection } = require("../config/database");
 
 // GET all borrowing and return records (combined view)
-const getAllRecords = (req, res) => {
-  const query = `
-    SELECT 
-      bb.borrow_id,
-      bb.borrower_id,
-      bb.book_id,
-      bb.date_borrowed,
-      bb.due_date,
-      bb.status,
-      bb.created_at,
-      b.title AS book_title,
-      b.author_name,
-      bor.name AS borrower_name,
-      bor.year_level,
-      bor.course,
-      rb.returned_date,
-      rb.violation,
-      rb.penalty,
-      rb.amount_paid
-    FROM borrowed_books bb
-    JOIN books b ON bb.book_id = b.book_id
-    JOIN borrowers bor ON bb.borrower_id = bor.borrower_id
-    LEFT JOIN returned_books rb ON bb.borrow_id = rb.borrow_id
-    ORDER BY bb.date_borrowed DESC, rb.returned_date DESC
-  `;
+const getAllRecords = async (req, res) => {
+  try {
+    const borrowedBooks = await collection("borrowed_books");
+    const results = await borrowedBooks
+      .aggregate([
+        {
+          $lookup: {
+            from: "books",
+            localField: "book_id",
+            foreignField: "book_id",
+            as: "book",
+          },
+        },
+        {
+          $lookup: {
+            from: "borrowers",
+            localField: "borrower_id",
+            foreignField: "borrower_id",
+            as: "borrower",
+          },
+        },
+        {
+          $lookup: {
+            from: "returned_books",
+            localField: "borrow_id",
+            foreignField: "borrow_id",
+            as: "returnRecord",
+          },
+        },
+        { $unwind: { path: "$book", preserveNullAndEmptyArrays: true } },
+        { $unwind: { path: "$borrower", preserveNullAndEmptyArrays: true } },
+        { $unwind: { path: "$returnRecord", preserveNullAndEmptyArrays: true } },
+        { $sort: { date_borrowed: -1, "returnRecord.returned_date": -1 } },
+        {
+          $project: {
+            _id: 0,
+            borrow_id: 1,
+            borrower_id: 1,
+            book_id: 1,
+            date_borrowed: 1,
+            due_date: 1,
+            status: 1,
+            created_at: 1,
+            book_title: "$book.title",
+            title: "$book.title",
+            author_name: "$book.author_name",
+            borrower_name: "$borrower.name",
+            year_level: "$borrower.year_level",
+            course: "$borrower.course",
+            returned_date: "$returnRecord.returned_date",
+            violation: { $ifNull: ["$returnRecord.violation", "None"] },
+            penalty: { $ifNull: ["$returnRecord.penalty", 0] },
+            amount_paid: { $ifNull: ["$returnRecord.amount_paid", 0] },
+          },
+        },
+      ])
+      .toArray();
 
-  db.query(query, (err, results) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ error: "Internal Server Error" });
-    }
     res.json(results);
-  });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
 };
 
 module.exports = {

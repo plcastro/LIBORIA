@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const db = require("./config/database"); // Import from config
+const { connectToDatabase } = require("./config/database");
 
 const app = express();
 app.use(cors());
@@ -21,6 +21,12 @@ app.use("/api/borrowed-books", borrowedBookRoutes);
 app.use("/api/returned-books", returnedBookRoutes);
 app.use("/api/records", require("./routes/recordRoutes"));
 
-app.listen(8000, () => {
-  console.log(`Server is running at http://localhost:8000`);
-});
+connectToDatabase()
+  .then(() => {
+    app.listen(8000, () => {
+      console.log(`Server is running at http://localhost:8000`);
+    });
+  })
+  .catch(() => {
+    process.exit(1);
+  });

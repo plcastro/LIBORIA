@@ -1,140 +1,126 @@
-const db = require("../config/database"); // Import from config
+const { collection, getNextSequence } = require("../config/database");
+
+const toId = (value) => {
+  const numberValue = Number(value);
+  return Number.isNaN(numberValue) ? value : numberValue;
+};
+
+const handleError = (res, err) => {
+  console.error(err);
+  return res.status(500).json({ error: "Internal Server Error" });
+};
 
 // GET all borrowers
-const getBorrowers = (req, res) => {
-  const query = "SELECT * FROM borrowers";
-
-  db.query(query, (err, results) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ error: "Internal Server Error" });
-    }
+const getBorrowers = async (req, res) => {
+  try {
+    const borrowers = await collection("borrowers");
+    const results = await borrowers.find({}).toArray();
     res.json(results);
-  });
+  } catch (err) {
+    handleError(res, err);
+  }
 };
 
 // GET borrower by ID
-const getBorrowerById = (req, res) => {
-  const borrowerId = req.params.id;
-  const query = "SELECT * FROM borrowers WHERE borrower_id = ?";
+const getBorrowerById = async (req, res) => {
+  try {
+    const borrowers = await collection("borrowers");
+    const borrower = await borrowers.findOne({
+      borrower_id: toId(req.params.id),
+    });
 
-  db.query(query, [borrowerId], (err, results) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ error: "Internal Server Error" });
-    }
-
-    if (results.length === 0) {
+    if (!borrower) {
       return res.status(404).json({ error: "Borrower not found" });
     }
 
-    res.json(results[0]);
-  });
+    res.json(borrower);
+  } catch (err) {
+    handleError(res, err);
+  }
 };
 
 // CREATE borrower
-const createBorrower = (req, res) => {
-  const { name, year_level, course, created_at } = req.body;
+const createBorrower = async (req, res) => {
+  try {
+    const { name, year_level, course, created_at } = req.body;
 
-  if (!name || !year_level || !course) {
-    return res
-      .status(400)
-      .json({ error: "Name, Year Level, and Course are all required" });
-  }
-
-  // Check if borrower already exists
-  const checkQuery = "SELECT * FROM borrowers WHERE LOWER(name) = LOWER(?)";
-  db.query(checkQuery, [name], (err, results) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ error: "Internal Server Error" });
+    if (!name || !year_level || !course) {
+      return res
+        .status(400)
+        .json({ error: "Name, Year Level, and Course are all required" });
     }
 
-    if (results.length > 0) {
+    const borrowers = await collection("borrowers");
+    const existingBorrower = await borrowers.findOne({
+      name: { $regex: `^${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, $options: "i" },
+    });
+
+    if (existingBorrower) {
       return res.status(400).json({ error: "Borrower already exists" });
     }
 
-    // Insert new borrower
-    const insertQuery = `
-      INSERT INTO borrowers (name, year_level, course, created_at)
-      VALUES (?, ?, ?, ?)
-    `;
-    db.query(
-      insertQuery,
-      [name, year_level, course, created_at],
-      (err, insertResult) => {
-        if (err) {
-          console.error(err);
-          return res.status(500).json({ error: "Internal Server Error" });
-        }
+    const borrower = {
+      borrower_id: await getNextSequence("borrowers"),
+      name,
+      year_level,
+      course,
+      created_at: created_at || new Date(),
+    };
 
-        // Retrieve and return the newly created borrower
-        const getQuery = "SELECT * FROM borrowers WHERE borrower_id = ?";
-        db.query(getQuery, [insertResult.insertId], (err, borrowerResults) => {
-          if (err) {
-            console.error(err);
-            return res.status(500).json({ error: "Internal Server Error" });
-          }
-          res.status(201).json(borrowerResults[0]);
-        });
-      }
-    );
-  });
+    await borrowers.insertOne(borrower);
+    res.status(201).json(borrower);
+  } catch (err) {
+    handleError(res, err);
+  }
 };
 
 // UPDATE borrower
-const updateBorrower = (req, res) => {
-  const borrowerId = req.params.id;
-  const { name, year_level, course, created_at } = req.body;
+const updateBorrower = async (req, res) => {
+  try {
+    const borrowerId = toId(req.params.id);
+    const { name, year_level, course } = req.body;
+    const borrowers = await collection("borrowers");
 
-  const query = `
-    UPDATE borrowers 
-    SET name = ?, year_level = ?, course = ?
-    WHERE borrower_id = ?
-  `;
+    const duplicate = await borrowers.findOne({
+      borrower_id: { $ne: borrowerId },
+      name,
+    });
 
-  db.query(query, [name, year_level, course], (err, results) => {
-    if (err) {
-      console.error(err);
-      if (err.code === "ER_DUP_ENTRY") {
-        return res.status(400).json({ error: "Borrower already exists" });
-      }
-      return res.status(500).json({ error: "Internal Server Error" });
+    if (duplicate) {
+      return res.status(400).json({ error: "Borrower already exists" });
     }
 
-    if (results.affectedRows === 0) {
+    const result = await borrowers.findOneAndUpdate(
+      { borrower_id: borrowerId },
+      { $set: { name, year_level, course } },
+      { returnDocument: "after" }
+    );
+    const updatedBorrower = result.value || result;
+
+    if (!updatedBorrower) {
       return res.status(404).json({ error: "Borrower not found" });
     }
 
-    // Get updated borrower
-    const getQuery = "SELECT * FROM borrowers WHERE borrower_id = ?";
-    db.query(getQuery, [borrowerId], (err, borrowerResults) => {
-      if (err) {
-        console.error(err);
-        return res.status(500).json({ error: "Internal Server Error" });
-      }
-      res.json(borrowerResults[0]);
-    });
-  });
+    res.json(updatedBorrower);
+  } catch (err) {
+    handleError(res, err);
+  }
 };
 
 // DELETE borrower
-const deleteBorrower = (req, res) => {
-  const borrowerId = req.params.id;
-  const query = "DELETE FROM borrowers WHERE borrower_id = ?";
+const deleteBorrower = async (req, res) => {
+  try {
+    const borrowers = await collection("borrowers");
+    const result = await borrowers.deleteOne({ borrower_id: toId(req.params.id) });
 
-  db.query(query, [borrowerId], (err, results) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ error: "Internal Server Error" });
-    }
-
-    if (results.affectedRows === 0) {
+    if (result.deletedCount === 0) {
       return res.status(404).json({ error: "Borrower not found" });
     }
 
     res.json({ message: "Borrower deleted successfully" });
-  });
+  } catch (err) {
+    handleError(res, err);
+  }
 };
 
 module.exports = {
