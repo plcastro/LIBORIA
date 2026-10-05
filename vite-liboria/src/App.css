@@ -1,0 +1,98 @@
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap");
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Montserrat", Arial, sans-serif;
+}
+
+body {
+  min-height: 100vh;
+  width: 100%;
+  background-color: #f2f2f2;
+}
+
+h2 {
+  font-size: 42px;
+  font-weight: 700;
+}
+
+p {
+  font-size: 18px;
+  line-height: 1.6;
+}
+button {
+  padding: 10px 20px;
+  font-size: 20px;
+  background-color: #000000;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-bottom: 10px;
+}
+a {
+  color: rgb(117, 116, 116);
+}
+a.active {
+  color: rgb(0, 0, 0);
+}
+.home-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  text-align: center;
+}
+.hero-section {
+  height: 100vh;
+  width: 100%;
+  background: url("../src/assets/book-background.png") no-repeat center center;
+  background-size: cover;
+  display: flex;
+  align-items: center;
+  padding: 0 10%;
+  color: white;
+}
+.hero-text {
+  width: 60%;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+#hero-title {
+  flex: 100%;
+  font-size: 90px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+}
+
+#hero-desc {
+  flex: 100%;
+  font-size: 18px;
+  line-height: 1.6;
+}
+input {
+  height: 30px;
+}
+.ant-pagination {
+  margin-top: 8px !important;
+}
+
+@media (max-width: 768px) {
+  .dashboard-content {
+    margin-left: 0;
+    padding: 64px 12px 24px;
+  }
+
+  .menu-toggle-btn {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    z-index: 1000;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+}
