@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Button, Row, Col, Divider } from "antd";
+import { Button, Row, Col, Divider } from "../../components/muiAntdCompat";
 import BookBackground from "../../assets/book-background.png";
 import bookshelf from "../../assets/bookshelf-black.png";
 import "../../App.css";
@@ -22,6 +22,7 @@ const Home = () => {
           overflowX: "hidden",
           display: "flex",
           alignItems: "center",
+          padding: "10%",
         }}
       >
         <Col

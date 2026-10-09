@@ -1,6 +1,6 @@
 import React from "react";
 import Navbar from "../components/NavBar/Navbar";
-import { Flex, Layout } from "antd";
+import { Flex, Layout } from "../components/muiAntdCompat";
 import { Outlet } from "react-router-dom";
 import FooterComp from "../components/FooterComp/FooterComp";
 const { Header, Footer, Content } = Layout;

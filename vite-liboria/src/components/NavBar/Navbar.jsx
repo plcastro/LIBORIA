@@ -1,19 +1,34 @@
 import React, { useState } from "react";
 import "./Navbar.css";
 import { NavLink } from "react-router-dom";
-import { Drawer, Button, Grid, Menu } from "antd";
-import { MenuOutlined } from "@ant-design/icons";
+import logo_dark from "../../assets/liboria black.png";
+
+import {
+  Drawer,
+  IconButton,
+  Menu,
+  MenuItem,
+  useMediaQuery,
+  useTheme,
+} from "@mui/material";
+import { MenuOutlined } from "../MuiAntIcons";
 
 const Navbar = () => {
   const [open, setOpen] = useState(false);
-  const { useBreakpoint } = Grid;
-  const screens = useBreakpoint();
+
+  const theme = useTheme();
+  const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
+
+  const handleClose = () => {
+    setOpen(false);
+  };
 
   const menuItems = (
     <ul className="nav-links">
       <NavLink to="/home">
         <li>Home</li>
       </NavLink>
+
       <NavLink to="/login">
         <li>Login</li>
       </NavLink>
@@ -24,31 +39,52 @@ const Navbar = () => {
     <nav className="navbar">
       <img src={logo_dark} alt="Logo" className="logo" />
 
-      {screens.md ? (
+      {isDesktop ? (
         menuItems
       ) : (
         <>
-          <Button
-            type="text"
-            icon={<MenuOutlined style={{ fontSize: "24px", color: "black" }} />}
+          <IconButton
+            aria-label="Open navigation menu"
             onClick={() => setOpen(true)}
-          />
-          <Drawer
-            title={
-              <img src={logo_dark} alt="Logo" style={{ width: "200px" }} />
-            }
-            placement="right"
-            onClose={() => setOpen(false)}
-            open={open}
+            sx={{ color: "black" }}
           >
-            <Menu mode="vertical" onClick={() => setOpen(false)}>
-              <Menu.Item key="1">
-                <NavLink to="/home">Home</NavLink>
-              </Menu.Item>
-              <Menu.Item key="2">
-                <NavLink to="/login">Login</NavLink>
-              </Menu.Item>
-            </Menu>
+            <MenuOutlined sx={{ fontSize: 24 }} />
+          </IconButton>
+
+          <Drawer anchor="right" open={open} onClose={handleClose}>
+            <div style={{ width: 250, padding: "16px" }}>
+              <img
+                src={logo_dark}
+                alt="Logo"
+                style={{
+                  width: "200px",
+                  maxWidth: "100%",
+                  marginBottom: "20px",
+                }}
+              />
+
+              <Menu
+                open={true}
+                onClose={handleClose}
+                anchorEl={null}
+                variant="selectedMenu"
+                sx={{
+                  position: "static",
+                  "& .MuiPaper-root": {
+                    position: "static",
+                    boxShadow: "none",
+                  },
+                }}
+              >
+                <MenuItem component={NavLink} to="/home" onClick={handleClose}>
+                  Home
+                </MenuItem>
+
+                <MenuItem component={NavLink} to="/login" onClick={handleClose}>
+                  Login
+                </MenuItem>
+              </Menu>
+            </div>
           </Drawer>
         </>
       )}
