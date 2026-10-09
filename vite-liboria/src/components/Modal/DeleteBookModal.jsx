@@ -1,35 +1,42 @@
 import React, { useState } from "react";
-import { Modal, message } from "antd";
+import axios from "axios";
+import {
+  Alert,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Snackbar,
+} from "@mui/material";
 
 const DeleteBookModal = ({ open, setOpen, book, onDelete }) => {
-  const [messageApi, contextHolder] = message.useMessage();
   const [loading, setLoading] = useState(false);
+  const [notification, setNotification] = useState({
+    open: false,
+    severity: "info",
+    message: "",
+  });
+
+  const notify = (severity, message) =>
+    setNotification({ open: true, severity, message });
 
   const handleOk = async () => {
     if (!book) return;
     setLoading(true);
     try {
-      const res = await fetch(
-        `http://localhost:8000/api/books/${book.book_id}`,
-        { method: "DELETE" }
-      );
-      const data = await res.json();
-
-      if (!res.ok) {
-        alert(data.error); // show backend error like "book is borrowed"
-        return;
-      }
+      await axios.delete(`http://localhost:8000/api/books/${book.book_id}`);
 
       setOpen(false);
 
-      if (onDelete) onDelete(book); // update parent state
-      messageApi.success("Book deleted successfully");
+      if (onDelete) onDelete(book);
+      notify("success", "Book deleted successfully");
       setTimeout(() => {
         window.location.reload();
       }, 500);
     } catch (err) {
       console.error(err);
-      messageApi.error("Failed to delete book");
+      notify("error", err.response?.data?.error || "Failed to delete book");
     } finally {
       setLoading(false);
     }
@@ -37,25 +44,38 @@ const DeleteBookModal = ({ open, setOpen, book, onDelete }) => {
 
   return (
     <>
-      {contextHolder}
-      <Modal
-        title="Confirm Delete"
-        open={open}
-        onCancel={() => setOpen(false)}
-        onOk={handleOk}
-        okText="Yes, Delete"
-        okType="danger"
-        cancelText="Cancel"
-        confirmLoading={loading} // disables OK while loading
-        centered
+      <Snackbar
+        open={notification.open}
+        autoHideDuration={3000}
+        onClose={() => setNotification((prev) => ({ ...prev, open: false }))}
       >
-        {book && (
-          <p>
-            Are you sure you want to delete <strong>{book.title}</strong>? This
-            action cannot be undone.
-          </p>
-        )}
-      </Modal>
+        <Alert severity={notification.severity} variant="filled">
+          {notification.message}
+        </Alert>
+      </Snackbar>
+
+      <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Confirm Delete</DialogTitle>
+        <DialogContent dividers>
+          {book && (
+            <p>
+              Are you sure you want to delete <strong>{book.title}</strong>?
+              This action cannot be undone.
+            </p>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpen(false)}>Cancel</Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleOk}
+            disabled={loading}
+          >
+            Yes, Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 };

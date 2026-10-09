@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { Table, Tag, Input, Card, message, Button } from "antd";
-import { ReloadOutlined, SearchOutlined } from "@ant-design/icons";
+import axios from "axios";
+import { Table, Tag, Input, Card, message, Button } from "../../components/muiAntdCompat";
+import { SearchOutlined } from "../../components/MuiAntIcons";
 import ReturnBookModal from "../../components/Modal/ReturnBookModal";
 
 const REASONS = [
@@ -33,10 +34,9 @@ const ReturnBooks = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch("http://localhost:8000/api/borrowed-books");
-      if (!response.ok) throw new Error("Failed to fetch borrowed books");
-
-      const data = await response.json();
+      const { data } = await axios.get(
+        "http://localhost:8000/api/borrowed-books"
+      );
       const activeBorrows = data.filter((book) => book.status === "Borrowed");
       setBorrowedBooks(activeBorrows);
     } catch (err) {

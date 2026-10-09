@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { Card, Divider, Button, Row, Col, Avatar, Spin, message } from "antd";
-import { EditOutlined, UserOutlined } from "@ant-design/icons";
+import axios from "axios";
+import { Card, Divider, Button, Row, Col, Avatar, Spin, message } from "../../components/muiAntdCompat";
+import { EditOutlined, UserOutlined } from "../../components/MuiAntIcons";
 import EditProfile from "./EditProfile";
 
 const ProfilePage = () => {
@@ -13,9 +14,9 @@ const ProfilePage = () => {
   const fetchUserInfo = async (userid) => {
     if (!userid) return;
     try {
-      const res = await fetch(`http://localhost:8000/api/users/${userid}`);
-      if (!res.ok) throw new Error("Failed to fetch user info");
-      const data = await res.json();
+      const { data } = await axios.get(
+        `http://localhost:8000/api/users/${userid}`
+      );
       setUser(data);
     } catch (err) {
       console.error(err);

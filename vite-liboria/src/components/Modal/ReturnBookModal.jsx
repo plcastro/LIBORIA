@@ -1,295 +1,308 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 import {
-  Modal,
-  Form,
-  Input,
-  InputNumber,
-  DatePicker,
-  Select,
-  Row,
-  Col,
+  Alert,
   Button,
-  message,
-} from "antd";
-import dayjs from "dayjs";
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  FormControl,
+  Grid,
+  InputLabel,
+  MenuItem,
+  OutlinedInput,
+  Select,
+  Snackbar,
+  TextField,
+} from "@mui/material";
+import dateValue from "../../utils/dateValue";
 
 const ReturnBookModal = ({ open, onClose, initialValues, REASONS }) => {
-  const [form] = Form.useForm();
-  const [messageApi, contextHolder] = message.useMessage();
-  const colProps = { xs: 24, md: 12 };
+  const [formData, setFormData] = useState({
+    name: "",
+    bookTitle: "",
+    penalty: 0,
+    inCash: 0,
+    returnedDate: "",
+    violation: [],
+  });
+  const [errors, setErrors] = useState({});
+  const [notification, setNotification] = useState({
+    open: false,
+    severity: "info",
+    message: "",
+  });
 
-  // Calculate penalty based on returned date and violations
-  const recalculatePenalty = () => {
-    const returnedDate = form.getFieldValue("returnedDate") || dayjs();
-    const dueDate = dayjs(initialValues?.due_date);
-    let violations = form.getFieldValue("violation") || [];
+  const notify = (severity, message) =>
+    setNotification({ open: true, severity, message });
 
-    // Automatically add/remove "Late Return"
-    if (returnedDate.isAfter(dueDate)) {
-      if (!violations.includes("Late Return")) violations.push("Late Return");
-    } else {
-      violations = violations.filter((v) => v !== "Late Return");
-    }
+  const calculatePenalty = (returnedDate, violations) => {
+    if (!initialValues?.due_date || !returnedDate) return 0;
 
-    form.setFieldsValue({ violation: violations });
-
-    // Calculate penalty
-    const daysLate = returnedDate.isAfter(dueDate)
-      ? returnedDate.diff(dueDate, "day")
+    const returned = dateValue(returnedDate);
+    const dueDate = dateValue(initialValues.due_date);
+    const daysLate = returned.isAfter(dueDate)
+      ? returned.diff(dueDate, "day")
       : 0;
+
     let penalty = daysLate * 10;
     if (violations.includes("Damaged")) penalty += 50;
     if (violations.includes("Lost")) penalty += 200;
+    return penalty;
+  };
 
-    form.setFieldsValue({ penalty });
+  const normalizeViolations = (returnedDate, selectedViolations) => {
+    let violations = [...selectedViolations];
+    const returned = dateValue(returnedDate);
+    const dueDate = dateValue(initialValues?.due_date);
+
+    if (returned.isAfter(dueDate)) {
+      if (!violations.includes("Late Return")) violations.push("Late Return");
+    } else {
+      violations = violations.filter((violation) => violation !== "Late Return");
+    }
+
+    return violations;
   };
 
   useEffect(() => {
     if (initialValues) {
-      const today = dayjs();
-      const dueDate = dayjs(initialValues.due_date);
+      const today = dateValue();
+      const dueDate = dateValue(initialValues.due_date);
       const daysLate = today.isAfter(dueDate) ? today.diff(dueDate, "day") : 0;
-
       const initialViolations = daysLate > 0 ? ["Late Return"] : [];
 
-      form.setFieldsValue({
+      setFormData({
         name: initialValues.borrower_name,
         bookTitle: initialValues.title,
         penalty: daysLate * 10,
         inCash: 0,
-        returnedDate: today,
+        returnedDate: today.format("YYYY-MM-DD"),
         violation: initialViolations,
       });
+      setErrors({});
     } else {
-      form.resetFields();
+      setFormData({
+        name: "",
+        bookTitle: "",
+        penalty: 0,
+        inCash: 0,
+        returnedDate: "",
+        violation: [],
+      });
+      setErrors({});
     }
-  }, [initialValues, form, open]);
+  }, [initialValues, open]);
+
+  const handleReturnedDateChange = (value) => {
+    const violations = normalizeViolations(value, formData.violation);
+    setFormData((prev) => ({
+      ...prev,
+      returnedDate: value,
+      violation: violations,
+      penalty: calculatePenalty(value, violations),
+    }));
+    setErrors((prev) => ({ ...prev, returnedDate: "" }));
+  };
 
   const handleViolationChange = (selectedViolations) => {
-    form.setFieldsValue({ violation: selectedViolations });
-    recalculatePenalty();
+    const violations = normalizeViolations(
+      formData.returnedDate,
+      selectedViolations
+    );
+    setFormData((prev) => ({
+      ...prev,
+      violation: violations,
+      penalty: calculatePenalty(prev.returnedDate, violations),
+    }));
   };
 
-  const handleReturnedDateChange = (date) => {
-    form.setFieldsValue({ returnedDate: date });
-    recalculatePenalty();
-  };
+  const handleFinish = async () => {
+    const nextErrors = {};
+    if (!formData.returnedDate) {
+      nextErrors.returnedDate = "Returned date is required";
+    }
 
-  const handleFinish = async (values) => {
+    const hasViolation = formData.violation.length > 0;
+    if (hasViolation && Number(formData.inCash) < Number(formData.penalty)) {
+      nextErrors.inCash = "Amount paid must cover the penalty.";
+    }
+    if (Number(formData.inCash) < 0) {
+      nextErrors.inCash = "Amount paid cannot be negative.";
+    }
+
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length) {
+      notify("error", Object.values(nextErrors)[0]);
+      return;
+    }
+
     try {
-      // Determine final violation to send as array
-      let violations = Array.isArray(values.violation) ? values.violation : [];
+      let violations = Array.isArray(formData.violation)
+        ? formData.violation
+        : [];
       if (!violations.length) violations = ["None"];
-
-      const returnedDate = dayjs(values.returnedDate).format("YYYY-MM-DD");
-
-      // Check amount paid vs penalty if needed
-      if (values.penalty > 0) {
-        if (!values.inCash || values.inCash < values.penalty) {
-          messageApi.error("Amount paid must cover the penalty.");
-          return;
-        }
-      }
 
       const payload = {
         borrow_id: initialValues.borrow_id,
-        returned_date: returnedDate,
-        violation: violations, // array for backend since VARCHAR
-        penalty: values.penalty || 0,
-        amount_paid: values.inCash || 0,
+        returned_date: dateValue(formData.returnedDate).format("YYYY-MM-DD"),
+        violation: violations,
+        penalty: formData.penalty || 0,
+        amount_paid: formData.inCash || 0,
       };
 
-      // Determine status
       const status = violations.includes("Lost") ? "Lost" : "Returned";
 
-      // 1. Update borrowed_books status
-      const updateRes = await fetch(
+      await axios.put(
         `http://localhost:8000/api/borrowed-books/${initialValues.borrow_id}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ status }),
-        }
+        { status },
+        { headers: { "Content-Type": "application/json" } }
       );
 
-      if (!updateRes.ok) {
-        messageApi.error("Failed to update borrowed book status.");
-        return;
-      }
+      await axios.post("http://localhost:8000/api/returned-books", payload, {
+        headers: { "Content-Type": "application/json" },
+      });
 
-      // 2. Insert into returned_books
-      const insertRes = await fetch(
-        "http://localhost:8000/api/returned-books",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        }
-      );
-
-      if (!insertRes.ok) {
-        messageApi.error("Failed to insert return record.");
-        return;
-      }
-
-      // 3. Increment available copies if not lost
       if (!violations.includes("Lost")) {
-        await fetch(
+        await axios.put(
           `http://localhost:8000/api/books/${initialValues.book_id}`,
-          {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ incrementAvailable: 1 }),
-          }
+          { incrementAvailable: 1 },
+          { headers: { "Content-Type": "application/json" } }
         );
       }
 
-      messageApi.success(
+      notify(
+        "success",
         violations.includes("Lost")
           ? "Book marked as lost!"
           : "Book returned successfully!"
       );
-      form.resetFields();
       onClose();
       window.location.reload();
     } catch (err) {
       console.error("Error while returning book:", err);
-      messageApi.error(
-        "An unexpected error occurred while returning the book."
-      );
+      notify("error", "An unexpected error occurred while returning the book.");
     }
   };
 
+  const minReturnedDate = initialValues?.date_borrowed
+    ? dateValue(initialValues.date_borrowed).format("YYYY-MM-DD")
+    : undefined;
+  const hasViolation = formData.violation.length > 0;
+
   return (
     <>
-      {contextHolder}
-      <Modal
-        title="Return Book"
-        open={open}
-        onCancel={onClose}
-        footer={null}
-        destroyOnClose
+      <Snackbar
+        open={notification.open}
+        autoHideDuration={3000}
+        onClose={() => setNotification((prev) => ({ ...prev, open: false }))}
       >
-        <Form form={form} layout="vertical" onFinish={handleFinish}>
-          <Row gutter={[24, 8]}>
-            <Col {...colProps}>
-              <Form.Item name="name" label="Name">
-                <Input readOnly />
-              </Form.Item>
-            </Col>
+        <Alert severity={notification.severity} variant="filled">
+          {notification.message}
+        </Alert>
+      </Snackbar>
 
-            <Col {...colProps}>
-              <Form.Item name="bookTitle" label="Book Title">
-                <Input readOnly />
-              </Form.Item>
-            </Col>
+      <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+        <DialogTitle>Return Book</DialogTitle>
+        <DialogContent dividers>
+          <Grid container spacing={3}>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Name"
+                value={formData.name}
+                InputProps={{ readOnly: true }}
+                fullWidth
+                size="small"
+              />
+            </Grid>
 
-            <Col {...colProps}>
-              <Form.Item name="penalty" label="Penalty (PHP)">
-                <InputNumber
-                  style={{ width: "100%" }}
-                  readOnly
-                  formatter={(v) =>
-                    `₱ ${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-                  }
-                  parser={(v) => v.replace(/₱\s?|(,*)/g, "")}
-                />
-              </Form.Item>
-            </Col>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Book Title"
+                value={formData.bookTitle}
+                InputProps={{ readOnly: true }}
+                fullWidth
+                size="small"
+              />
+            </Grid>
 
-            <Col {...colProps}>
-              <Form.Item
-                name="returnedDate"
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Penalty (PHP)"
+                value={`PHP ${Number(formData.penalty || 0).toLocaleString()}`}
+                InputProps={{ readOnly: true }}
+                fullWidth
+                size="small"
+              />
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <TextField
                 label="Returned Date"
-                rules={[
-                  { required: true, message: "Returned date is required" },
-                ]}
-              >
-                <DatePicker
-                  style={{ width: "100%" }}
-                  onChange={handleReturnedDateChange}
-                  disabledDate={(current) => {
-                    const borrowDate = dayjs(initialValues.date_borrowed);
-                    return current && current.isBefore(borrowDate, "day");
-                  }}
-                />
-              </Form.Item>
-            </Col>
+                type="date"
+                value={formData.returnedDate}
+                onChange={(e) => handleReturnedDateChange(e.target.value)}
+                error={Boolean(errors.returnedDate)}
+                helperText={errors.returnedDate}
+                inputProps={{ min: minReturnedDate }}
+                InputLabelProps={{ shrink: true }}
+                fullWidth
+                size="small"
+              />
+            </Grid>
 
-            <Col {...colProps}>
-              <Form.Item name="violation" label="Violation">
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Violation</InputLabel>
                 <Select
-                  mode="tags"
-                  placeholder="Select Reason"
-                  options={REASONS}
-                  onChange={handleViolationChange}
-                />
-              </Form.Item>
-            </Col>
+                  multiple
+                  value={formData.violation}
+                  onChange={(e) => handleViolationChange(e.target.value)}
+                  input={<OutlinedInput label="Violation" />}
+                  renderValue={(selected) => selected.join(", ")}
+                >
+                  {REASONS.map((reason) => (
+                    <MenuItem key={reason.value} value={reason.value}>
+                      {reason.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
 
-            <Col {...colProps}>
-              <Form.Item
-                shouldUpdate={(prev, curr) => prev.violation !== curr.violation}
-              >
-                {({ getFieldValue }) => {
-                  const violation = getFieldValue("violation") || [];
-                  const hasViolation = violation.length > 0;
-
-                  return (
-                    <Form.Item
-                      name="inCash"
-                      label="Amount Paid"
-                      rules={[
-                        {
-                          required: hasViolation,
-                          message:
-                            "Please enter the amount paid before returning.",
-                        },
-                        {
-                          validator: (_, value) =>
-                            value >= 0
-                              ? Promise.resolve()
-                              : Promise.reject(
-                                  new Error("Amount paid cannot be negative.")
-                                ),
-                        },
-                      ]}
-                    >
-                      <InputNumber
-                        style={{ width: "100%" }}
-                        min={0}
-                        disabled={!hasViolation}
-                        formatter={(v) =>
-                          `₱ ${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-                        }
-                        parser={(v) => v.replace(/₱\s?|(,*)/g, "")}
-                      />
-                    </Form.Item>
-                  );
-                }}
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              gap: "10px",
-              marginTop: 20,
-            }}
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Amount Paid"
+                type="number"
+                value={formData.inCash}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    inCash: Number(e.target.value),
+                  }))
+                }
+                error={Boolean(errors.inCash)}
+                helperText={errors.inCash}
+                disabled={!hasViolation}
+                inputProps={{ min: 0 }}
+                fullWidth
+                size="small"
+              />
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions sx={{ justifyContent: "center", gap: 1 }}>
+          <Button onClick={onClose}>Cancel</Button>
+          <Button
+            variant="contained"
+            onClick={handleFinish}
+            sx={{ backgroundColor: "#000", color: "white" }}
           >
-            <Button onClick={onClose}>Cancel</Button>
-            <Button
-              type="primary"
-              htmlType="submit"
-              style={{ backgroundColor: "#000", color: "white" }}
-            >
-              Return
-            </Button>
-          </div>
-        </Form>
-      </Modal>
+            Return
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 };

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import axios from "axios";
 import "./login.css";
 import { useParams, useNavigate, Link } from "react-router-dom";
 
@@ -24,30 +25,26 @@ const Reset = () => {
 
   const verifyToken = async (token) => {
     try {
-      const response = await fetch(
+      const response = await axios.post(
         "http://localhost:8000/api/users/verify-reset-token",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token }),
-        }
+        { token },
+        { headers: { "Content-Type": "application/json" } }
       );
 
-      const data = await response.json();
+      const data = response.data;
 
-      if (response.ok) {
+      if (response.status >= 200 && response.status < 300) {
         setTokenValid(true);
         // Note: Your backend needs to return currentPassword for this to work
         // If it doesn't, we'll rely on server-side validation
         if (data.currentPassword) {
           setCurrentPassword(data.currentPassword);
         }
-      } else {
-        setError(data.error || "Invalid or expired reset token");
-        setTokenValid(false);
       }
-    } catch {
-      setError("Network error. Please try again.");
+    } catch (err) {
+      setError(
+        err.response?.data?.error || "Network error. Please try again."
+      );
       setTokenValid(false);
     }
   };
@@ -83,37 +80,32 @@ const Reset = () => {
 
     setLoading(true);
     try {
-      const response = await fetch(
+      const response = await axios.post(
         "http://localhost:8000/api/users/reset-password",
         {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            token: token,
-            newPassword: formData.newPassword,
-          }),
-        }
+          token: token,
+          newPassword: formData.newPassword,
+        },
+        { headers: { "Content-Type": "application/json" } }
       );
 
-      const data = await response.json();
+      const data = response.data;
 
-      if (response.ok) {
+      if (response.status >= 200 && response.status < 300) {
         setMessage("Password reset successfully! Redirecting to login...");
         setTimeout(() => navigate("/login"), 2000);
-      } else {
-        // Handle server-side validation for same password
-        if (
-          data.error &&
-          (data.error.includes("same as current") ||
-            data.error.includes("cannot be the same"))
-        ) {
-          setError("New password cannot be the same as your current password.");
-        } else {
-          setError(data.error || "Failed to reset password.");
-        }
       }
-    } catch {
-      setError("Network error. Please try again.");
+    } catch (err) {
+      const errorMessage = err.response?.data?.error;
+      if (
+        errorMessage &&
+        (errorMessage.includes("same as current") ||
+          errorMessage.includes("cannot be the same"))
+      ) {
+        setError("New password cannot be the same as your current password.");
+      } else {
+        setError(errorMessage || "Network error. Please try again.");
+      }
     } finally {
       setLoading(false);
     }

@@ -1,4 +1,5 @@
 import React from "react";
+import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import "./login.css";
@@ -62,26 +63,22 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:8000/api/users/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+      const response = await axios.post(
+        "http://localhost:8000/api/users/login",
+        {
           username: formData.username.trim(),
           password: formData.password.trim(),
-        }),
-      });
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
-      let data;
-      try {
-        data = await response.json(); // parse JSON safely
-      } catch {
-        setError("Invalid response from server");
-        return;
-      }
+      const data = response.data;
 
-      if (response.ok) {
+      if (response.status >= 200 && response.status < 300) {
         // Store user data
         localStorage.setItem("currentUser", JSON.stringify(data.user));
 
@@ -98,12 +95,10 @@ const Login = () => {
         }
 
         navigate("/dashboard/view/borrow");
-      } else {
-        setError(data.error || "Login failed");
       }
     } catch (err) {
       console.error("Login error:", err);
-      setError("Network error. Please try again.");
+      setError(err.response?.data?.error || "Network error. Please try again.");
     } finally {
       setLoading(false);
     }
