@@ -1,5 +1,7 @@
 const { collection, getNextSequence } = require("../config/database");
 const crypto = require("crypto");
+const bcrypt = require("bcrypt");
+const User = require("../models/User");
 
 const toId = (value) => {
   const numberValue = Number(value);
@@ -28,8 +30,7 @@ const findPublicUser = async (users, userid) =>
 // GET all users
 const getUsers = async (req, res) => {
   try {
-    const users = await collection("users");
-    const results = await users.find({}, publicUserProjection).toArray();
+    const results = await User.find({}, publicUserProjection).toArray();
     res.json(results);
   } catch (err) {
     handleError(res, err);
@@ -39,8 +40,7 @@ const getUsers = async (req, res) => {
 // GET user by ID
 const getUserById = async (req, res) => {
   try {
-    const users = await collection("users");
-    const user = await findPublicUser(users, toId(req.params.id));
+    const user = await findPublicUser(User, toId(req.params.id));
 
     if (!user) {
       return res.status(404).json({ error: "User not found" });
@@ -55,41 +55,73 @@ const getUserById = async (req, res) => {
 // CREATE user (for admin)
 const createUser = async (req, res) => {
   try {
-    const { username, password, name, email, account_type } = req.body;
+    const { username, password, name, email } = req.body;
 
     if (!username || !password) {
-      return res
-        .status(400)
-        .json({ error: "Username and password are required" });
+      return res.status(400).json({
+        error: "Username and password are required",
+      });
     }
 
-    const users = await collection("users");
-    const duplicate = await users.findOne({
-      $or: [{ username }, ...(email ? [{ email }] : [])],
-    });
+    // Check for duplicate username
+    const existingUsername = await User.findOne({ username });
 
-    if (duplicate?.username === username) {
-      return res.status(400).json({ error: "Username already exists" });
+    if (existingUsername) {
+      return res.status(409).json({
+        error: "Username already exists",
+      });
     }
 
-    if (email && duplicate?.email === email) {
-      return res.status(400).json({ error: "Email already exists" });
+    // Check for duplicate email, if provided
+    if (email) {
+      const existingEmail = await User.findOne({ email });
+
+      if (existingEmail) {
+        return res.status(409).json({
+          error: "Email already exists",
+        });
+      }
     }
 
-    const userid = await getNextSequence("users");
-    await users.insertOne({
-      userid,
+    // Hash password before saving
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const user = await User.create({
       username,
-      password,
+      password: hashedPassword,
       name: name || null,
       email: email || null,
-      account_type: account_type || "librarian",
-      created_at: new Date(),
+      account_type: "librarian",
     });
 
-    res.status(201).json(await findPublicUser(users, userid));
+    return res.status(201).json({
+      message: "Registration successful",
+      user: {
+        _id: user._id,
+        username: user.username,
+        name: user.name,
+        email: user.email,
+        account_type: user.account_type,
+      },
+    });
   } catch (err) {
-    handleError(res, err);
+    console.error("Create user error:", err);
+
+    if (err.code === 11000) {
+      return res.status(409).json({
+        error: "Username or email already exists",
+      });
+    }
+
+    if (err.name === "ValidationError") {
+      return res.status(400).json({
+        error: err.message,
+      });
+    }
+
+    return res.status(500).json({
+      error: "Failed to create user",
+    });
   }
 };
 
@@ -105,7 +137,9 @@ const register = async (req, res) => {
     }
 
     if (name.length > 50) {
-      return res.status(400).json({ error: "Name must be up to 50 characters" });
+      return res
+        .status(400)
+        .json({ error: "Name must be up to 50 characters" });
     }
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -124,8 +158,7 @@ const register = async (req, res) => {
         .json({ error: "Password must be at least 8 characters" });
     }
 
-    const users = await collection("users");
-    const duplicate = await users.findOne({ $or: [{ username }, { email }] });
+    const duplicate = await User.findOne({ $or: [{ username }, { email }] });
 
     if (duplicate?.username === username) {
       return res.status(400).json({ error: "Username already exists" });
@@ -172,13 +205,12 @@ const updateUser = async (req, res) => {
       return res.status(400).json({ error: "No fields to update" });
     }
 
-    const users = await collection("users");
     const duplicateConditions = [];
     if (username) duplicateConditions.push({ username });
     if (email) duplicateConditions.push({ email });
 
     if (duplicateConditions.length > 0) {
-      const duplicate = await users.findOne({
+      const duplicate = await User.findOne({
         userid: { $ne: userId },
         $or: duplicateConditions,
       });
@@ -193,7 +225,7 @@ const updateUser = async (req, res) => {
     const result = await users.findOneAndUpdate(
       { userid: userId },
       { $set: update },
-      { returnDocument: "after", ...publicUserProjection }
+      { returnDocument: "after", ...publicUserProjection },
     );
     const updatedUser = result.value || result;
 
@@ -218,8 +250,7 @@ const changePassword = async (req, res) => {
         .json({ error: "Both current and new passwords are required" });
     }
 
-    const users = await collection("users");
-    const user = await users.findOne({ userid: userId });
+    const user = await User.findOne({ userid: userId });
 
     if (!user) {
       return res.status(404).json({ error: "User not found" });
@@ -229,7 +260,10 @@ const changePassword = async (req, res) => {
       return res.status(400).json({ error: "Current password is incorrect" });
     }
 
-    await users.updateOne({ userid: userId }, { $set: { password: newPassword } });
+    await users.updateOne(
+      { userid: userId },
+      { $set: { password: newPassword } },
+    );
     res.json({ message: "Password updated successfully" });
   } catch (err) {
     handleError(res, err);
@@ -240,8 +274,7 @@ const updateUserPassword = async (req, res) => {
   try {
     const { password } = req.body;
     const userId = toId(req.params.id);
-    const users = await collection("users");
-    const user = await users.findOne({ userid: userId });
+    const user = await User.findOne({ userid: userId });
 
     if (!user) {
       return res.status(404).json({ error: "User not found" });
@@ -263,8 +296,7 @@ const updateUserPassword = async (req, res) => {
 // DELETE user
 const deleteUser = async (req, res) => {
   try {
-    const users = await collection("users");
-    const result = await users.deleteOne({ userid: toId(req.params.id) });
+    const result = await User.deleteOne({ userid: toId(req.params.id) });
 
     if (result.deletedCount === 0) {
       return res.status(404).json({ error: "User not found" });
@@ -280,15 +312,14 @@ const deleteUser = async (req, res) => {
 const login = async (req, res) => {
   try {
     const { username, password } = req.body;
-
+    console.log(username, password);
     if (!username || !password) {
       return res
         .status(400)
         .json({ error: "Username and password are required" });
     }
 
-    const users = await collection("users");
-    const user = await users.findOne({ username });
+    const user = await User.findOne({ username: username });
 
     if (!user || user.password !== password) {
       return res.status(401).json({ error: "Invalid username or password" });
@@ -320,8 +351,7 @@ const forgotPassword = async (req, res) => {
 
     const genericMessage =
       "If an account with that email exists, a reset link has been sent.";
-    const users = await collection("users");
-    const user = await users.findOne({ email });
+    const user = await User.findOne({ email });
 
     if (!user) {
       return res.json({ message: genericMessage });
@@ -332,7 +362,9 @@ const forgotPassword = async (req, res) => {
 
     await users.updateOne(
       { userid: user.userid },
-      { $set: { reset_token: resetToken, reset_token_expiry: resetTokenExpiry } }
+      {
+        $set: { reset_token: resetToken, reset_token_expiry: resetTokenExpiry },
+      },
     );
 
     const isDevelopment = process.env.NODE_ENV !== "production";
@@ -360,8 +392,7 @@ const verifyResetToken = async (req, res) => {
       return res.status(400).json({ error: "Reset token is required" });
     }
 
-    const users = await collection("users");
-    const user = await users.findOne({
+    const user = await User.findOne({
       reset_token: token,
       reset_token_expiry: { $gt: new Date() },
     });
@@ -399,8 +430,7 @@ const resetPassword = async (req, res) => {
         .json({ error: "Password must be at least 8 characters" });
     }
 
-    const users = await collection("users");
-    const user = await users.findOne({
+    const user = await User.findOne({
       reset_token: token,
       reset_token_expiry: { $gt: new Date() },
     });
@@ -420,7 +450,7 @@ const resetPassword = async (req, res) => {
       {
         $set: { password: newPassword },
         $unset: { reset_token: "", reset_token_expiry: "" },
-      }
+      },
     );
 
     res.json({ message: "Password reset successfully" });
@@ -461,7 +491,9 @@ const getBorrowingRecords = async (req, res) => {
         },
         { $unwind: { path: "$borrower", preserveNullAndEmptyArrays: true } },
         { $unwind: { path: "$book", preserveNullAndEmptyArrays: true } },
-        { $unwind: { path: "$returnRecord", preserveNullAndEmptyArrays: true } },
+        {
+          $unwind: { path: "$returnRecord", preserveNullAndEmptyArrays: true },
+        },
         { $sort: { date_borrowed: -1 } },
         {
           $project: {
