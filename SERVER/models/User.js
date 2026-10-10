@@ -31,7 +31,7 @@ const userSchema = new mongoose.Schema({
 
   account_type: {
     type: String,
-    enum: ["admin", "librarian"],
+    enum: ["non-librarian", "librarian"],
     default: "librarian",
   },
 
