@@ -70,7 +70,14 @@ const Home = () => {
         </Col>
       </Row>
 
-      <Row>
+      <Row
+        justify="center"
+        align="middle"
+        style={{
+          flexDirection: "row",
+          alignContent: "center",
+        }}
+      >
         <Col lg={12} md={12} sm={24} xs={24}>
           <h2
             style={{

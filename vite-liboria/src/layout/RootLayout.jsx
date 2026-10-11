@@ -1,7 +1,7 @@
 import React from "react";
 import Navbar from "../components/NavBar/Navbar";
 import { Flex, Layout } from "../components/muiAntdCompat";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import FooterComp from "../components/FooterComp/FooterComp";
 const { Header, Footer, Content } = Layout;
 
@@ -31,6 +31,8 @@ const contentStyle = {
 };
 
 const RootLayout = () => {
+  const location = useLocation();
+  const showFooter = location.pathname === "/home";
   return (
     <Flex gap="middle" wrap>
       <Layout style={layoutStyle}>
@@ -40,9 +42,12 @@ const RootLayout = () => {
         <Content style={contentStyle}>
           <Outlet />
         </Content>
-        <Footer style={footerStyle}>
-          <FooterComp />
-        </Footer>
+
+        {showFooter && (
+          <Footer style={footerStyle}>
+            <FooterComp />
+          </Footer>
+        )}
       </Layout>
     </Flex>
   );
