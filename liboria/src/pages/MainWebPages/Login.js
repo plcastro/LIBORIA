@@ -84,7 +84,6 @@ const Login = () => {
       if (response.ok) {
         // Store user data
         localStorage.setItem("currentUser", JSON.stringify(data.user));
-
         // Handle Remember Me functionality
         if (rememberMe) {
           localStorage.setItem("rememberedUsername", formData.username.trim());

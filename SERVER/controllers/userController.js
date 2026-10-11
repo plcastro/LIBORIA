@@ -8,29 +8,38 @@ const toId = (value) => {
   return Number.isNaN(numberValue) ? value : numberValue;
 };
 
-const publicUserProjection = {
-  projection: {
-    _id: 0,
-    userid: 1,
-    username: 1,
-    name: 1,
-    email: 1,
-    account_type: 1,
-  },
-};
-
 const handleError = (res, err) => {
   console.error(err);
   return res.status(500).json({ error: "Internal Server Error" });
 };
 
-const findPublicUser = async (users, userid) =>
-  users.findOne({ userid }, publicUserProjection);
+const findPublicUser = async (users, _id) =>
+  User.findOne(
+    { _id: _id },
+    {
+      _id: 1,
+
+      username: 1,
+      name: 1,
+      email: 1,
+      account_type: 1,
+    },
+  );
 
 // GET all users
 const getUsers = async (req, res) => {
   try {
-    const results = await User.find({}, publicUserProjection).toArray();
+    const results = await User.find(
+      {},
+      {
+        _id: 1,
+        username: 1,
+        name: 1,
+        email: 1,
+        account_type: 1,
+      },
+    ).lean();
+
     res.json(results);
   } catch (err) {
     handleError(res, err);
@@ -130,8 +139,6 @@ const register = async (req, res) => {
   try {
     const { name, email, username, password } = req.body;
 
-    console.log("Registration attempt:", { name, email, username });
-
     if (!name || !email || !username || !password) {
       return res.status(400).json({ error: "All fields are required" });
     }
@@ -158,36 +165,54 @@ const register = async (req, res) => {
         .json({ error: "Password must be at least 8 characters" });
     }
 
-    const duplicate = await User.findOne({ $or: [{ username }, { email }] });
+    const normalizedUsername = username.trim();
+    const normalizedEmail = email.trim().toLowerCase();
 
-    if (duplicate?.username === username) {
-      return res.status(400).json({ error: "Username already exists" });
+    const duplicate = await User.findOne({
+      $or: [{ username: normalizedUsername }, { email: normalizedEmail }],
+    });
+
+    if (duplicate?.username === normalizedUsername) {
+      return res.status(409).json({ error: "Username already exists" });
     }
 
-    if (duplicate?.email === email) {
-      return res.status(400).json({ error: "Email already exists" });
+    if (duplicate?.email === normalizedEmail) {
+      return res.status(409).json({ error: "Email already exists" });
     }
-
-    const userid = await getNextSequence("users");
 
     const hashedPassword = await bcrypt.hash(password, 10);
+    const userid = await getNextSequence("users");
 
-    await users.insertOne({
+    const user = await User.create({
       userid,
-      name,
-      email,
-      username,
+      name: name.trim(),
+      email: normalizedEmail,
+      username: normalizedUsername,
       password: hashedPassword,
       account_type: "librarian",
-      created_at: new Date(),
     });
 
-    res.status(201).json({
+    return res.status(201).json({
       message: "Registration successful",
-      user: await findPublicUser(users, userid),
+      user: {
+        _id: user._id.toString(),
+        userid: user.userid,
+        username: user.username,
+        name: user.name,
+        email: user.email,
+        account_type: user.account_type,
+      },
     });
   } catch (err) {
-    handleError(res, err);
+    console.error("Registration error:", err);
+
+    if (err.code === 11000) {
+      return res
+        .status(409)
+        .json({ error: "Username, email, or user ID already exists" });
+    }
+
+    return handleError(res, err);
   }
 };
 
@@ -214,7 +239,7 @@ const updateUser = async (req, res) => {
 
     if (duplicateConditions.length > 0) {
       const duplicate = await User.findOne({
-        userid: { $ne: userId },
+        _id: { $ne: userId },
         $or: duplicateConditions,
       });
 
@@ -225,10 +250,20 @@ const updateUser = async (req, res) => {
       }
     }
 
-    const result = await users.findOneAndUpdate(
-      { userid: userId },
+    const result = await User.findOneAndUpdate(
+      { _id: userId },
       { $set: update },
-      { returnDocument: "after", ...publicUserProjection },
+      {
+        returnDocument: "after",
+        ...{
+          _id: 0,
+          _id: 1,
+          username: 1,
+          name: 1,
+          email: 1,
+          account_type: 1,
+        },
+      },
     );
     const updatedUser = result.value || result;
 
@@ -244,62 +279,93 @@ const updateUser = async (req, res) => {
 
 const changePassword = async (req, res) => {
   try {
-    const userId = toId(req.params.id);
+    const userId = req.params.id;
     const { currPassword, newPassword } = req.body;
 
     if (!currPassword || !newPassword) {
-      return res
-        .status(400)
-        .json({ error: "Both current and new passwords are required" });
+      return res.status(400).json({
+        error: "Both current and new passwords are required",
+      });
     }
 
-    const user = await User.findOne({ userid: userId });
+    if (newPassword.length < 8) {
+      return res.status(400).json({
+        error: "Password must be at least 8 characters",
+      });
+    }
+
+    const user = await User.findById(userId).select("+password");
 
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    if (user.password !== currPassword) {
-      return res.status(400).json({ error: "Current password is incorrect" });
+    const isCurrentPasswordValid = await bcrypt.compare(
+      currPassword,
+      user.password,
+    );
+
+    if (!isCurrentPasswordValid) {
+      return res.status(400).json({
+        error: "Current password is incorrect",
+      });
     }
 
-    await users.updateOne(
-      { userid: userId },
-      { $set: { password: newPassword } },
-    );
-    res.json({ message: "Password updated successfully" });
+    const isSamePassword = await bcrypt.compare(newPassword, user.password);
+
+    if (isSamePassword) {
+      return res.status(400).json({
+        error: "New password cannot be the same as the current password",
+      });
+    }
+
+    user.password = await bcrypt.hash(newPassword, 10);
+    await user.save();
+
+    return res.json({ message: "Password updated successfully" });
   } catch (err) {
-    handleError(res, err);
+    return handleError(res, err);
   }
 };
 
 const updateUserPassword = async (req, res) => {
   try {
+    const userId = req.params.id;
     const { password } = req.body;
-    const userId = toId(req.params.id);
-    const user = await User.findOne({ userid: userId });
+
+    if (!password || password.length < 8) {
+      return res.status(400).json({
+        error: "Password must be at least 8 characters",
+      });
+    }
+
+    const user = await User.findById(userId).select("+password");
 
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    if (password === user.password) {
-      return res
-        .status(400)
-        .json({ error: "New password cannot be the same as the current one." });
+    const isSamePassword = await bcrypt.compare(password, user.password);
+
+    if (isSamePassword) {
+      return res.status(400).json({
+        error: "New password cannot be the same as the current one",
+      });
     }
 
-    await users.updateOne({ userid: userId }, { $set: { password } });
-    res.json({ message: "Password updated successfully" });
+    user.password = await bcrypt.hash(password, 10);
+    await user.save();
+
+    return res.json({ message: "Password updated successfully" });
   } catch (err) {
-    handleError(res, err);
+    return handleError(res, err);
   }
 };
 
 // DELETE user
 const deleteUser = async (req, res) => {
   try {
-    const result = await User.deleteOne({ userid: toId(req.params.id) });
+    const result = await User.deleteOne({ _id: toId(req.params.id) });
 
     if (result.deletedCount === 0) {
       return res.status(404).json({ error: "User not found" });
@@ -312,7 +378,6 @@ const deleteUser = async (req, res) => {
 };
 
 // LOGIN user
-
 const login = async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -350,7 +415,7 @@ const login = async (req, res) => {
     return res.json({
       message: "Login successful",
       user: {
-        userid: user.userid,
+        _id: user._id,
         username: user.username,
         name: user.name,
         email: user.email,
@@ -384,7 +449,7 @@ const forgotPassword = async (req, res) => {
     const resetTokenExpiry = new Date(Date.now() + 3600000);
 
     await user.updateOne(
-      { userid: user.userid },
+      { _id: user._id },
       {
         $set: { reset_token: resetToken, reset_token_expiry: resetTokenExpiry },
       },
@@ -427,7 +492,7 @@ const verifyResetToken = async (req, res) => {
     res.json({
       message: "Token is valid",
       user: {
-        userid: user.userid,
+        _id: user._id,
         username: user.username,
       },
     });
@@ -468,8 +533,8 @@ const resetPassword = async (req, res) => {
       });
     }
 
-    await users.updateOne(
-      { userid: user.userid },
+    await User.updateOne(
+      { _id: user._id },
       {
         $set: { password: newPassword },
         $unset: { reset_token: "", reset_token_expiry: "" },
