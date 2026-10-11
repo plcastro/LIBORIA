@@ -1,23 +1,22 @@
 import React from "react";
 
 import logo_light from "../../assets/liboria white.png";
-import { Col, Row } from "../muiAntdCompat";
 
 const FooterComp = () => {
   return (
     <footer className="footer">
-      <Row>
+      <div>
         <img src={logo_light} alt="Liboria Logo" style={{ width: "200px" }} />
-      </Row>
-      <Row align="middle" justify="space-between">
-        <Col style={{ margin: "20px 0" }}>
+      </div>
+      <div style={{}}>
+        <div style={{ margin: "20px 0" }}>
           <p style={{ fontSize: "14px" }}>
             Discover, read, and enjoy books <br />
             anywhere life takes you.
           </p>
-        </Col>
+        </div>
 
-        <Col lg={{ span: 6, offset: 2 }} style={{ margin: "20px 0" }}>
+        <div style={{ margin: "20px 0" }}>
           <p style={{ fontSize: "14px" }}>
             <strong>PHONE:</strong> +63 09564569912
           </p>
@@ -30,16 +29,16 @@ const FooterComp = () => {
           <p style={{ fontSize: "14px" }}>
             <strong>ADDRESS:</strong> Coral Way, Pasay City
           </p>
-        </Col>
-      </Row>
+        </div>
+      </div>
 
       <hr />
 
-      <Row justify="center">
-        <Col span={24} style={{ textAlign: "left" }}>
+      <div>
+        <div style={{ textAlign: "left", fontSize: "14px" }}>
           <p>©2026 Liboria. All rights reserved.</p>
-        </Col>
-      </Row>
+        </div>
+      </div>
     </footer>
   );
 };

@@ -51,39 +51,34 @@ const Navbar = () => {
             <MenuOutlined sx={{ fontSize: 24 }} />
           </IconButton>
 
-          <Drawer anchor="right" open={open} onClose={handleClose}>
-            <div style={{ width: 250, padding: "16px" }}>
-              <img
-                src={logo_dark}
-                alt="Logo"
-                style={{
-                  width: "200px",
-                  maxWidth: "100%",
-                  marginBottom: "20px",
-                }}
-              />
+          <Drawer
+            anchor="right"
+            open={open}
+            onClose={handleClose}
+            PaperProps={{
+              sx: {
+                width: 250,
+                maxWidth: "85vw",
+                boxSizing: "border-box",
+                padding: "16px",
+                backgroundColor: "#fff",
+              },
+            }}
+          >
+            <div>
+              <ul className="nav-links mobile-nav-links">
+                <li>
+                  <NavLink to="/home" onClick={handleClose}>
+                    Home
+                  </NavLink>
+                </li>
 
-              <Menu
-                open={true}
-                onClose={handleClose}
-                anchorEl={null}
-                variant="selectedMenu"
-                sx={{
-                  position: "static",
-                  "& .MuiPaper-root": {
-                    position: "static",
-                    boxShadow: "none",
-                  },
-                }}
-              >
-                <MenuItem component={NavLink} to="/home" onClick={handleClose}>
-                  Home
-                </MenuItem>
-
-                <MenuItem component={NavLink} to="/login" onClick={handleClose}>
-                  Login
-                </MenuItem>
-              </Menu>
+                <li>
+                  <NavLink to="/login" onClick={handleClose}>
+                    Login
+                  </NavLink>
+                </li>
+              </ul>
             </div>
           </Drawer>
         </>
