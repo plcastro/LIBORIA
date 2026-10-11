@@ -16,9 +16,9 @@ const Login = () => {
 
   // Load saved credentials on component mount
   useEffect(() => {
-    const savedUsername = localStorage.getItem("rememberedUsername");
-    const savedPassword = localStorage.getItem("rememberedPassword");
-    const savedRememberMe = localStorage.getItem("rememberMe") === "true";
+    const savedUsername = sessionStorage.getItem("rememberedUsername");
+    const savedPassword = sessionStorage.getItem("rememberedPassword");
+    const savedRememberMe = sessionStorage.getItem("rememberMe") === "true";
 
     if (savedRememberMe && savedUsername) {
       setFormData({
@@ -42,11 +42,11 @@ const Login = () => {
     setRememberMe(isChecked);
 
     if (!isChecked) {
-      localStorage.setItem("rememberMe", "false"); // triggers other tabs
-      localStorage.removeItem("rememberedUsername");
-      localStorage.removeItem("rememberedPassword");
+      sessionStorage.setItem("rememberMe", "false"); // triggers other tabs
+      sessionStorage.removeItem("rememberedUsername");
+      sessionStorage.removeItem("rememberedPassword");
     } else {
-      localStorage.setItem("rememberMe", "true");
+      sessionStorage.setItem("rememberMe", "true");
     }
   };
 
@@ -73,32 +73,46 @@ const Login = () => {
           headers: {
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       const data = response.data;
 
       if (response.status >= 200 && response.status < 300) {
         // Store user data
-        localStorage.setItem("currentUser", JSON.stringify(data.user));
+        sessionStorage.setItem("currentUser", JSON.stringify(data.user));
 
         // Handle Remember Me functionality
         if (rememberMe) {
-          localStorage.setItem("rememberedUsername", formData.username.trim());
-          localStorage.setItem("rememberedPassword", formData.password.trim());
-          localStorage.setItem("rememberMe", "true");
+          sessionStorage.setItem(
+            "rememberedUsername",
+            formData.username.trim(),
+          );
+          sessionStorage.setItem(
+            "rememberedPassword",
+            formData.password.trim(),
+          );
+          sessionStorage.setItem("rememberMe", "true");
         } else {
           // Clear saved credentials if Remember Me is not checked
-          localStorage.removeItem("rememberedUsername");
-          localStorage.removeItem("rememberedPassword");
-          localStorage.removeItem("rememberMe");
+          sessionStorage.removeItem("rememberedUsername");
+          sessionStorage.removeItem("rememberedPassword");
+          sessionStorage.removeItem("rememberMe");
         }
 
         navigate("/dashboard/view/borrow");
       }
     } catch (err) {
       console.error("Login error:", err);
-      setError(err.response?.data?.error || "Network error. Please try again.");
+
+      console.log("Status:", err.response?.status);
+      console.log("Backend response:", err.response?.data);
+
+      setError(
+        err.response?.data?.error ||
+          err.response?.data?.message ||
+          "Login failed. Please check your credentials.",
+      );
     } finally {
       setLoading(false);
     }

@@ -169,12 +169,15 @@ const register = async (req, res) => {
     }
 
     const userid = await getNextSequence("users");
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
     await users.insertOne({
       userid,
       name,
       email,
       username,
-      password,
+      password: hashedPassword,
       account_type: "librarian",
       created_at: new Date(),
     });
@@ -309,23 +312,42 @@ const deleteUser = async (req, res) => {
 };
 
 // LOGIN user
+
 const login = async (req, res) => {
   try {
     const { username, password } = req.body;
-    console.log(username, password);
+
     if (!username || !password) {
-      return res
-        .status(400)
-        .json({ error: "Username and password are required" });
+      return res.status(400).json({
+        error: "Username and password are required",
+      });
     }
 
-    const user = await User.findOne({ username: username });
+    const normalizedUsername = username.trim();
 
-    if (!user || user.password !== password) {
-      return res.status(401).json({ error: "Invalid username or password" });
+    const user = await User.findOne({
+      username: normalizedUsername,
+    }).select("+password");
+
+    console.log("Username received:", normalizedUsername);
+    console.log("User found:", !!user);
+    console.log("Password field exists:", Boolean(user?.password));
+
+    if (!user || !user.password) {
+      return res.status(401).json({
+        error: "Invalid username or password",
+      });
     }
 
-    res.json({
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        error: "Invalid username or password",
+      });
+    }
+
+    return res.json({
       message: "Login successful",
       user: {
         userid: user.userid,
@@ -336,6 +358,7 @@ const login = async (req, res) => {
       },
     });
   } catch (err) {
+    console.error("Login error:", err.message);
     handleError(res, err);
   }
 };
@@ -360,7 +383,7 @@ const forgotPassword = async (req, res) => {
     const resetToken = crypto.randomBytes(2).toString("hex").slice(0, 4);
     const resetTokenExpiry = new Date(Date.now() + 3600000);
 
-    await users.updateOne(
+    await user.updateOne(
       { userid: user.userid },
       {
         $set: { reset_token: resetToken, reset_token_expiry: resetTokenExpiry },

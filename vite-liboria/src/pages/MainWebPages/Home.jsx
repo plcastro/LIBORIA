@@ -70,38 +70,21 @@ const Home = () => {
         </Col>
       </Row>
 
-      <Row
-        justify="center"
-        align="middle"
-        style={{
-          margin: "80px auto",
-          padding: "0 10%",
-          display: "flex",
-          alignContent: "center",
-          justifyContent: "space-between",
-        }}
-      >
-        <Divider>
-          <h2 style={{ fontSize: "clamp(24px, 4vw, 40px)" }}>ABOUT US</h2>
-        </Divider>
-
-        <Col lg={11} md={24} sm={24} xs={24}>
-          <img
-            src={bookshelf}
-            alt="bookshelf black"
+      <Row>
+        <Col lg={12} md={12} sm={24} xs={24}>
+          <h2
             style={{
-              width: "100%",
-              height: "auto",
-              borderRadius: "12px",
-              objectFit: "cover",
-              boxShadow: "0 4px 10px rgba(0,0,0,0.2)",
+              fontSize: "clamp(24px, 4vw, 40px)",
+              textAlign: "center",
             }}
-          />
-        </Col>
-
-        <Col lg={12} md={24} sm={24} xs={24}>
+          >
+            ABOUT US
+          </h2>
           <p
-            style={{ textAlign: "justify", fontSize: "clamp(14px, 2vw, 18px)" }}
+            style={{
+              textAlign: "justify",
+              fontSize: "clamp(14px, 2vw, 18px)",
+            }}
           >
             Welcome to <strong>Liboria</strong>, your digital library designed
             for readers of all ages and interests. From trending titles to
@@ -112,6 +95,19 @@ const Home = () => {
             a borrowing-based eLibrary, giving you the freedom to explore more
             books without limits—anytime, anywhere.
           </p>
+        </Col>
+
+        <Col lg={12} md={12} sm={24} xs={24}>
+          <img
+            src={bookshelf}
+            alt="bookshelf black"
+            style={{
+              width: "100%",
+              height: "50vh",
+              objectFit: "cover",
+              boxShadow: "0 4px 10px rgba(0,0,0,0.2)",
+            }}
+          />
         </Col>
       </Row>
 
