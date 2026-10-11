@@ -53,7 +53,7 @@ const EditProfile = ({ initialData, isVisible, onClose, onSave }) => {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ currPassword, newPassword: password }),
-        }
+        },
       );
 
       const data = await response.json();
@@ -76,7 +76,7 @@ const EditProfile = ({ initialData, isVisible, onClose, onSave }) => {
     <>
       {contextHolder}
       <Modal
-        title="Edit Profile Information"
+        title="Change Password"
         open={isVisible}
         onCancel={onClose}
         footer={null}
@@ -90,16 +90,6 @@ const EditProfile = ({ initialData, isVisible, onClose, onSave }) => {
           initialValues={initialData}
           autoComplete="off"
         >
-          <Form.Item name="username" label="Username">
-            <Input readOnly />
-          </Form.Item>
-          <Form.Item name="name" label="Name">
-            <Input readOnly />
-          </Form.Item>
-          <Form.Item name="email" label="Email">
-            <Input readOnly />
-          </Form.Item>
-
           <Form.Item
             name="currPassword"
             label="Current Password"

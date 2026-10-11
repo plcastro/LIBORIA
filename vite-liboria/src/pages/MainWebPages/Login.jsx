@@ -79,10 +79,8 @@ const Login = () => {
       const data = response.data;
 
       if (response.status >= 200 && response.status < 300) {
-        // Store user data
         sessionStorage.setItem("currentUser", JSON.stringify(data.user));
 
-        // Handle Remember Me functionality
         if (rememberMe) {
           sessionStorage.setItem(
             "rememberedUsername",
@@ -94,7 +92,6 @@ const Login = () => {
           );
           sessionStorage.setItem("rememberMe", "true");
         } else {
-          // Clear saved credentials if Remember Me is not checked
           sessionStorage.removeItem("rememberedUsername");
           sessionStorage.removeItem("rememberedPassword");
           sessionStorage.removeItem("rememberMe");

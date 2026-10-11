@@ -1,25 +1,47 @@
 import React, { useState, useEffect } from "react";
-import { Card, Divider, Button, Row, Col, Avatar, Spin, message } from "antd";
+import { Card, Divider, Button, Row, Col, Avatar, message } from "antd";
 import { EditOutlined, UserOutlined } from "@ant-design/icons";
 import EditProfile from "./EditProfile";
 
 const ProfilePage = () => {
   const [user, setUser] = useState({});
 
-  const currentUserId = JSON.parse(localStorage.getItem("currentUser"))?.userid;
+  const currentUserId = JSON.parse(localStorage.getItem("currentUser"))?._id;
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const fetchUserInfo = async (userid) => {
-    if (!userid) return;
+  const fetchUserInfo = async (_id) => {
+    if (!_id) {
+      console.error(
+        "No _id found in localStorage:",
+        localStorage.getItem("currentUser"),
+      );
+      message.error("User ID not found. Please log in again.");
+      setLoading(false);
+      return;
+    }
+
     try {
-      const res = await fetch(`http://localhost:8000/api/users/${userid}`);
-      if (!res.ok) throw new Error("Failed to fetch user info");
+      setLoading(true);
+
+      const res = await fetch(`http://localhost:8000/api/users/${_id}`);
+
+      console.log("Requested user ID:", _id);
+      console.log("Response status:", res.status);
+
       const data = await res.json();
+      console.log("User data:", data);
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to fetch user info");
+      }
+      console.log("Fetched user data:", data);
       setUser(data);
     } catch (err) {
-      console.error(err);
+      console.error("Fetch user error:", err);
       message.error("Failed to load user info");
+    } finally {
+      setLoading(false);
     }
   };
 

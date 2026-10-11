@@ -25,13 +25,12 @@ const Navbar = () => {
 
   const menuItems = (
     <ul className="nav-links">
-      <NavLink to="/home">
-        <li>Home</li>
-      </NavLink>
-
-      <NavLink to="/login">
-        <li>Login</li>
-      </NavLink>
+      <li>
+        <NavLink to="/home">Home</NavLink>
+      </li>
+      <li>
+        <NavLink to="/login">Login</NavLink>
+      </li>
     </ul>
   );
 
@@ -57,29 +56,46 @@ const Navbar = () => {
             onClose={handleClose}
             PaperProps={{
               sx: {
-                width: 250,
+                width: 260,
                 maxWidth: "85vw",
                 boxSizing: "border-box",
-                padding: "16px",
+                padding: "24px 20px",
                 backgroundColor: "#fff",
+                boxShadow: "-4px 0 20px rgba(0, 0, 0, 0.12)",
               },
             }}
           >
-            <div>
-              <ul className="nav-links mobile-nav-links">
-                <li>
-                  <NavLink to="/home" onClick={handleClose}>
-                    Home
-                  </NavLink>
-                </li>
+            <div className="mobile-drawer-header">
+              <img
+                src={logo_dark}
+                alt="Liboria Logo"
+                className="mobile-drawer-logo"
+              />
 
-                <li>
-                  <NavLink to="/login" onClick={handleClose}>
-                    Login
-                  </NavLink>
-                </li>
-              </ul>
+              <IconButton
+                aria-label="Close navigation menu"
+                onClick={handleClose}
+                sx={{ color: "black" }}
+              >
+                <span style={{ fontSize: "24px", lineHeight: 1 }}>&times;</span>
+              </IconButton>
             </div>
+
+            <div className="mobile-drawer-divider" />
+
+            <ul className="nav-links mobile-nav-links">
+              <li>
+                <NavLink to="/home" onClick={handleClose}>
+                  Home
+                </NavLink>
+              </li>
+
+              <li>
+                <NavLink to="/login" onClick={handleClose}>
+                  Login
+                </NavLink>
+              </li>
+            </ul>
           </Drawer>
         </>
       )}

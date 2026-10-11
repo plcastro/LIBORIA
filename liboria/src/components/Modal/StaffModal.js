@@ -22,7 +22,7 @@ const StaffModal = ({
   const [previewData, setPreviewData] = useState(null);
   const [submittable, setSubmittable] = useState(false);
   const loggedInUserId = JSON.parse(
-    localStorage.getItem("currentUser")
+    localStorage.getItem("currentUser"),
   )?.userid;
   const values = Form.useWatch([], form);
 
@@ -77,7 +77,7 @@ const StaffModal = ({
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(dataToSave),
-          }
+          },
         );
       }
 
@@ -96,7 +96,7 @@ const StaffModal = ({
       setPreviewData(null);
       setIsPreviewConfirmOpen(false);
       messageApi.success(
-        isAddMode ? "Staff added successfully!" : "Staff updated successfully!"
+        isAddMode ? "Staff added successfully!" : "Staff updated successfully!",
       );
     } catch (err) {
       console.error(err);
@@ -145,7 +145,7 @@ const StaffModal = ({
 
       const res = await fetch(
         `http://localhost:8000/api/users/${selectedStaff.userid}`,
-        { method: "DELETE" }
+        { method: "DELETE" },
       );
 
       // Try parsing JSON safely
@@ -190,8 +190,8 @@ const StaffModal = ({
           isAddMode
             ? "Add New Staff"
             : isEditMode
-            ? "Edit Staff"
-            : "Delete Staff"
+              ? "Edit Staff"
+              : "Delete Staff"
         }
         open={isVisible}
         onCancel={handleXClose}
@@ -216,7 +216,7 @@ const StaffModal = ({
                 onChange={(e) => {
                   const onlyLetters = e.target.value.replace(
                     /[^A-Za-z\s]/g,
-                    ""
+                    "",
                   );
                   form.setFieldsValue({ name: onlyLetters });
                 }}

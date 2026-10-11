@@ -54,7 +54,7 @@ const StaffList = () => {
   const handleEdit = async (record) => {
     try {
       const res = await fetch(
-        `http://localhost:8000/api/users/${record.userid}`
+        `http://localhost:8000/api/users/${record.userid}`,
       );
       const userData = await res.json();
       if (res.ok) {
@@ -93,7 +93,6 @@ const StaffList = () => {
   });
 
   const columns = [
-    { title: "User ID", dataIndex: "userid", key: "userid" },
     { title: "Name", dataIndex: "name", key: "name" },
     { title: "Email", dataIndex: "email", key: "email" },
     { title: "Role", dataIndex: "account_type", key: "account_type" },
