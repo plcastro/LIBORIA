@@ -92,15 +92,17 @@ const createUser = async (req, res) => {
       }
     }
 
-    // Hash password before saving
     const hashedPassword = await bcrypt.hash(password, 10);
+    // Generate a sequential user ID
+    const userid = await getNextSequence("users");
 
     const user = await User.create({
-      username,
+      userid,
+      username: username.trim(),
       password: hashedPassword,
-      name: name || null,
-      email: email || null,
-      account_type: "librarian",
+      name: name?.trim() || null,
+      email: email?.trim().toLowerCase() || null,
+      account_type: "student",
     });
 
     return res.status(201).json({
@@ -113,12 +115,18 @@ const createUser = async (req, res) => {
         account_type: user.account_type,
       },
     });
+  
   } catch (err) {
     console.error("Create user error:", err);
+    console.error("MongoDB code:", err.code);
+    console.error("Duplicate key pattern:", err.keyPattern);
+    console.error("Duplicate key value:", err.keyValue);
 
     if (err.code === 11000) {
+      const field = Object.keys(err.keyPattern || {})[0];
+
       return res.status(409).json({
-        error: "Username or email already exists",
+        error: `Duplicate key conflict on field: ${field || "unknown"}`,
       });
     }
 
@@ -135,68 +143,87 @@ const createUser = async (req, res) => {
 };
 
 // REGISTER user (for public signup)
+
+
 const register = async (req, res) => {
   try {
     const { name, email, username, password } = req.body;
 
-    if (!name || !email || !username || !password) {
-      return res.status(400).json({ error: "All fields are required" });
+    if (
+      !name?.trim() ||
+      !email?.trim() ||
+      !username?.trim() ||
+      !password
+    ) {
+      return res.status(400).json({
+        error: "All fields are required",
+      });
     }
 
-    if (name.length > 50) {
-      return res
-        .status(400)
-        .json({ error: "Name must be up to 50 characters" });
-    }
-
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return res.status(400).json({ error: "Invalid email format" });
-    }
-
-    if (username.length < 8) {
-      return res
-        .status(400)
-        .json({ error: "Username must be at least 8 characters" });
-    }
-
-    if (password.length < 8) {
-      return res
-        .status(400)
-        .json({ error: "Password must be at least 8 characters" });
-    }
-
+    const normalizedName = name.trim();
     const normalizedUsername = username.trim();
     const normalizedEmail = email.trim().toLowerCase();
 
+    if (normalizedName.length > 50) {
+      return res.status(400).json({
+        error: "Name must be up to 50 characters",
+      });
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      return res.status(400).json({
+        error: "Invalid email format",
+      });
+    }
+
+    if (normalizedUsername.length < 8) {
+      return res.status(400).json({
+        error: "Username must be at least 8 characters",
+      });
+    }
+
+    if (password.length < 8) {
+      return res.status(400).json({
+        error: "Password must be at least 8 characters",
+      });
+    }
+
     const duplicate = await User.findOne({
-      $or: [{ username: normalizedUsername }, { email: normalizedEmail }],
+      $or: [
+        { username: normalizedUsername },
+        { email: normalizedEmail },
+      ],
     });
 
     if (duplicate?.username === normalizedUsername) {
-      return res.status(409).json({ error: "Username already exists" });
+      return res.status(409).json({
+        error: "Username already exists",
+      });
     }
 
     if (duplicate?.email === normalizedEmail) {
-      return res.status(409).json({ error: "Email already exists" });
+      return res.status(409).json({
+        error: "Email already exists",
+      });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const _id = await getNextSequence("users");
+    const userid = await getNextSequence("users");
 
     const user = await User.create({
-      _id,
-      name: name.trim(),
+      userid,
+      name: normalizedName,
       email: normalizedEmail,
       username: normalizedUsername,
       password: hashedPassword,
-      account_type: "librarian",
+      account_type: "student",
     });
 
     return res.status(201).json({
-      message: "Registration successful",
+      message: "Student registration successful",
       user: {
-        _id: user._id.toString(),
         _id: user._id,
+        userid: user.userid,
         username: user.username,
         name: user.name,
         email: user.email,
@@ -204,12 +231,18 @@ const register = async (req, res) => {
       },
     });
   } catch (err) {
-    console.error("Registration error:", err);
+    console.error("Student registration error:", err);
 
     if (err.code === 11000) {
-      return res
-        .status(409)
-        .json({ error: "Username, email, or user ID already exists" });
+      return res.status(409).json({
+        error: "Username, email, or user ID already exists",
+      });
+    }
+
+    if (err.name === "ValidationError") {
+      return res.status(400).json({
+        error: err.message,
+      });
     }
 
     return handleError(res, err);
