@@ -95,7 +95,7 @@ const Forgot = () => {
         },
       );
 
-      setTokenStatus("Token confirmed! Redirecting to password reset...");
+      setTokenStatus("OTP Verified! Redirecting to password reset...");
 
       setTimeout(() => {
         navigate(`/reset/${encodeURIComponent(resetToken.trim())}`);

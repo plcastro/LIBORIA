@@ -157,7 +157,6 @@ const Login = () => {
               id="password"
               label="Password"
               variant="outlined"
-              placeholder="Enter your password"
               value={formData.password}
               onChange={handleInputChange}
               autoComplete="current-password"
