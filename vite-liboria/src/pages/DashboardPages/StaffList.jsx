@@ -16,7 +16,7 @@ const StaffList = () => {
   const [error, setError] = useState("");
   const [searchText, setSearchText] = useState("");
 
-  const currentUserId = JSON.parse(localStorage.getItem("currentUser"))?.userid;
+  const currentUserId = JSON.parse(localStorage.getItem("currentUser"))?._id;
 
   const loadAllStaff = async () => {
     setLoading(true);
@@ -31,7 +31,7 @@ const StaffList = () => {
         setData(
           result.map((item) => ({
             ...item,
-            key: item.userid,
+            key: item._id,
           })),
         );
       } else {
@@ -62,7 +62,7 @@ const StaffList = () => {
   const handleEdit = async (record) => {
     try {
       const { data: userData } = await axios.get(
-        `http://localhost:8000/api/users/${record.userid}`,
+        `http://localhost:8000/api/users/${record._id}`,
       );
 
       setSelectedStaff(userData);
@@ -106,7 +106,7 @@ const StaffList = () => {
       key: "action",
       width: 150,
       render: (_, record) => {
-        const isCurrentUser = record.userid === currentUserId;
+        const isCurrentUser = record._id === currentUserId;
         return (
           <Space size="small">
             <Button

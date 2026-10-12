@@ -49,7 +49,7 @@ const getUsers = async (req, res) => {
 // GET user by ID
 const getUserById = async (req, res) => {
   try {
-    const user = await findPublicUser(User, toId(req.params.id));
+    const user = await findPublicUser(User, toId(req.params._id));
 
     if (!user) {
       return res.status(404).json({ error: "User not found" });
@@ -181,10 +181,10 @@ const register = async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const userid = await getNextSequence("users");
+    const _id = await getNextSequence("users");
 
     const user = await User.create({
-      userid,
+      _id,
       name: name.trim(),
       email: normalizedEmail,
       username: normalizedUsername,
@@ -196,7 +196,7 @@ const register = async (req, res) => {
       message: "Registration successful",
       user: {
         _id: user._id.toString(),
-        userid: user.userid,
+        _id: user._id,
         username: user.username,
         name: user.name,
         email: user.email,

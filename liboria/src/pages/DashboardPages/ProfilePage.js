@@ -11,11 +11,11 @@ const ProfilePage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const fetchUserInfo = async (userid) => {
-    if (!userid) return;
+  const fetchUserInfo = async (_id) => {
+    if (!_id) return;
     try {
       const { data } = await axios.get(
-        `http://localhost:8000/api/users/${userid}`,
+        `http://localhost:8000/api/users/${_id}`,
       );
       setUser(data);
     } catch (err) {

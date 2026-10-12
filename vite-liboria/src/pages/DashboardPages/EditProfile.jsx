@@ -42,7 +42,7 @@ const EditProfile = ({ initialData, isVisible, onClose, onSave }) => {
     }
 
     const user = JSON.parse(localStorage.getItem("currentUser")) || {};
-    const userId = user.userid || user._id || user.id;
+    const userId = user._id || user._id || user.id;
 
     if (password === currPassword) {
       showMessage(
