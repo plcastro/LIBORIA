@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Table, Tag, Input, Card, message, Button } from "antd";
 import { ReloadOutlined, SearchOutlined } from "@ant-design/icons";
 import ReturnBookModal from "../../components/Modal/ReturnBookModal";
-
+import axios from "axios";
 const REASONS = [
   { label: "Late Return", value: "Late Return" },
   { label: "Damaged", value: "Damaged" },
@@ -33,10 +33,9 @@ const ReturnBooks = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch("http://localhost:8000/api/borrowed-books");
-      if (!response.ok) throw new Error("Failed to fetch borrowed books");
-
-      const data = await response.json();
+      const { data } = await axios.get(
+        "http://localhost:8000/api/borrowed-books",
+      );
       const activeBorrows = data.filter((book) => book.status === "Borrowed");
       setBorrowedBooks(activeBorrows);
     } catch (err) {
@@ -57,8 +56,8 @@ const ReturnBooks = () => {
     Object.values(record).some(
       (value) =>
         typeof value === "string" &&
-        value.toLowerCase().includes(searchText.toLowerCase())
-    )
+        value.toLowerCase().includes(searchText.toLowerCase()),
+    ),
   );
 
   const getStatusColor = (status) => {

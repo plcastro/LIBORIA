@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Card, Divider, Button, Row, Col, Avatar, message } from "antd";
 import { EditOutlined, UserOutlined } from "@ant-design/icons";
 import EditProfile from "./EditProfile";
+import axios from "axios";
 
 const ProfilePage = () => {
   const [user, setUser] = useState({});
@@ -10,38 +11,16 @@ const ProfilePage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const fetchUserInfo = async (_id) => {
-    if (!_id) {
-      console.error(
-        "No _id found in localStorage:",
-        localStorage.getItem("currentUser"),
-      );
-      message.error("User ID not found. Please log in again.");
-      setLoading(false);
-      return;
-    }
-
+  const fetchUserInfo = async (userid) => {
+    if (!userid) return;
     try {
-      setLoading(true);
-
-      const res = await fetch(`http://localhost:8000/api/users/${_id}`);
-
-      console.log("Requested user ID:", _id);
-      console.log("Response status:", res.status);
-
-      const data = await res.json();
-      console.log("User data:", data);
-
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to fetch user info");
-      }
-      console.log("Fetched user data:", data);
+      const { data } = await axios.get(
+        `http://localhost:8000/api/users/${userid}`,
+      );
       setUser(data);
     } catch (err) {
-      console.error("Fetch user error:", err);
+      console.error(err);
       message.error("Failed to load user info");
-    } finally {
-      setLoading(false);
     }
   };
 

@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
-import { Card, Divider, Button, Row, Col, Avatar, Spin, message } from "../../components/muiAntdCompat";
-import { EditOutlined, UserOutlined } from "../../components/MuiAntIcons";
+import { Card, Divider, Button, Row, Col, Avatar, message } from "antd";
+import { EditOutlined, UserOutlined } from "@ant-design/icons";
 import EditProfile from "./EditProfile";
+import axios from "axios";
 
 const ProfilePage = () => {
   const [user, setUser] = useState({});
 
-  const currentUserId = JSON.parse(localStorage.getItem("currentUser"))?.userid;
+  const currentUserId = JSON.parse(localStorage.getItem("currentUser"))?._id;
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -15,7 +15,7 @@ const ProfilePage = () => {
     if (!userid) return;
     try {
       const { data } = await axios.get(
-        `http://localhost:8000/api/users/${userid}`
+        `http://localhost:8000/api/users/${userid}`,
       );
       setUser(data);
     } catch (err) {

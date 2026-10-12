@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
-import { Table, Tag, Input, Card, message, Button } from "../../components/muiAntdCompat";
-import { SearchOutlined } from "../../components/MuiAntIcons";
+import { Table, Tag, Input, Card, message, Button } from "antd";
+import { ReloadOutlined, SearchOutlined } from "@ant-design/icons";
 import ReturnBookModal from "../../components/Modal/ReturnBookModal";
-
+import axios from "axios";
 const REASONS = [
   { label: "Late Return", value: "Late Return" },
   { label: "Damaged", value: "Damaged" },
@@ -35,7 +34,7 @@ const ReturnBooks = () => {
     setError(null);
     try {
       const { data } = await axios.get(
-        "http://localhost:8000/api/borrowed-books"
+        "http://localhost:8000/api/borrowed-books",
       );
       const activeBorrows = data.filter((book) => book.status === "Borrowed");
       setBorrowedBooks(activeBorrows);
@@ -57,8 +56,8 @@ const ReturnBooks = () => {
     Object.values(record).some(
       (value) =>
         typeof value === "string" &&
-        value.toLowerCase().includes(searchText.toLowerCase())
-    )
+        value.toLowerCase().includes(searchText.toLowerCase()),
+    ),
   );
 
   const getStatusColor = (status) => {
