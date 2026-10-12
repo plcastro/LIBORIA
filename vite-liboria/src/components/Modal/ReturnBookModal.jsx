@@ -1,121 +1,78 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
+import React, { useEffect } from "react";
 import {
-  Alert,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  FormControl,
-  Grid,
-  InputLabel,
-  MenuItem,
-  OutlinedInput,
+  Modal,
+  Form,
+  Input,
+  InputNumber,
+  DatePicker,
   Select,
-  Snackbar,
-  TextField,
-} from "@mui/material";
-import dateValue from "../../utils/dateValue";
-
+  Row,
+  Col,
+  Button,
+  message,
+} from "antd";
+import dayjs from "dayjs";
+import axios from "axios";
 const ReturnBookModal = ({ open, onClose, initialValues, REASONS }) => {
-  const [formData, setFormData] = useState({
-    name: "",
-    bookTitle: "",
-    penalty: 0,
-    inCash: 0,
-    returnedDate: "",
-    violation: [],
-  });
-  const [errors, setErrors] = useState({});
-  const [notification, setNotification] = useState({
-    open: false,
-    severity: "info",
-    message: "",
-  });
+  const [form] = Form.useForm();
+  const [messageApi, contextHolder] = message.useMessage();
+  const colProps = { xs: 24, md: 12 };
 
-  const notify = (severity, message) =>
-    setNotification({ open: true, severity, message });
+  // Calculate penalty based on returned date and violations
+  const recalculatePenalty = () => {
+    const returnedDate = form.getFieldValue("returnedDate") || dayjs();
+    const dueDate = dayjs(initialValues?.due_date);
+    let violations = form.getFieldValue("violation") || [];
 
-  const calculatePenalty = (returnedDate, violations) => {
-    if (!initialValues?.due_date || !returnedDate) return 0;
+    // Automatically add/remove "Late Return"
+    if (returnedDate.isAfter(dueDate)) {
+      if (!violations.includes("Late Return")) violations.push("Late Return");
+    } else {
+      violations = violations.filter((v) => v !== "Late Return");
+    }
 
-    const returned = dateValue(returnedDate);
-    const dueDate = dateValue(initialValues.due_date);
-    const daysLate = returned.isAfter(dueDate)
-      ? returned.diff(dueDate, "day")
+    form.setFieldsValue({ violation: violations });
+
+    // Calculate penalty
+    const daysLate = returnedDate.isAfter(dueDate)
+      ? returnedDate.diff(dueDate, "day")
       : 0;
-
     let penalty = daysLate * 10;
     if (violations.includes("Damaged")) penalty += 50;
     if (violations.includes("Lost")) penalty += 200;
-    return penalty;
-  };
 
-  const normalizeViolations = (returnedDate, selectedViolations) => {
-    let violations = [...selectedViolations];
-    const returned = dateValue(returnedDate);
-    const dueDate = dateValue(initialValues?.due_date);
-
-    if (returned.isAfter(dueDate)) {
-      if (!violations.includes("Late Return")) violations.push("Late Return");
-    } else {
-      violations = violations.filter((violation) => violation !== "Late Return");
-    }
-
-    return violations;
+    form.setFieldsValue({ penalty });
   };
 
   useEffect(() => {
     if (initialValues) {
-      const today = dateValue();
-      const dueDate = dateValue(initialValues.due_date);
+      const today = dayjs();
+      const dueDate = dayjs(initialValues.due_date);
       const daysLate = today.isAfter(dueDate) ? today.diff(dueDate, "day") : 0;
+
       const initialViolations = daysLate > 0 ? ["Late Return"] : [];
 
-      setFormData({
+      form.setFieldsValue({
         name: initialValues.borrower_name,
         bookTitle: initialValues.title,
         penalty: daysLate * 10,
         inCash: 0,
-        returnedDate: today.format("YYYY-MM-DD"),
+        returnedDate: today,
         violation: initialViolations,
       });
-      setErrors({});
     } else {
-      setFormData({
-        name: "",
-        bookTitle: "",
-        penalty: 0,
-        inCash: 0,
-        returnedDate: "",
-        violation: [],
-      });
-      setErrors({});
+      form.resetFields();
     }
-  }, [initialValues, open]);
-
-  const handleReturnedDateChange = (value) => {
-    const violations = normalizeViolations(value, formData.violation);
-    setFormData((prev) => ({
-      ...prev,
-      returnedDate: value,
-      violation: violations,
-      penalty: calculatePenalty(value, violations),
-    }));
-    setErrors((prev) => ({ ...prev, returnedDate: "" }));
-  };
+  }, [initialValues, form, open]);
 
   const handleViolationChange = (selectedViolations) => {
-    const violations = normalizeViolations(
-      formData.returnedDate,
-      selectedViolations
-    );
-    setFormData((prev) => ({
-      ...prev,
-      violation: violations,
-      penalty: calculatePenalty(prev.returnedDate, violations),
-    }));
+    form.setFieldsValue({ violation: selectedViolations });
+    recalculatePenalty();
+  };
+
+  const handleReturnedDateChange = (date) => {
+    form.setFieldsValue({ returnedDate: date });
+    recalculatePenalty();
   };
 
   const handleFinish = async () => {
@@ -157,7 +114,7 @@ const ReturnBookModal = ({ open, onClose, initialValues, REASONS }) => {
       await axios.put(
         `http://localhost:8000/api/borrowed-books/${initialValues.borrow_id}`,
         { status },
-        { headers: { "Content-Type": "application/json" } }
+        { headers: { "Content-Type": "application/json" } },
       );
 
       await axios.post("http://localhost:8000/api/returned-books", payload, {
@@ -168,7 +125,7 @@ const ReturnBookModal = ({ open, onClose, initialValues, REASONS }) => {
         await axios.put(
           `http://localhost:8000/api/books/${initialValues.book_id}`,
           { incrementAvailable: 1 },
-          { headers: { "Content-Type": "application/json" } }
+          { headers: { "Content-Type": "application/json" } },
         );
       }
 
@@ -176,7 +133,7 @@ const ReturnBookModal = ({ open, onClose, initialValues, REASONS }) => {
         "success",
         violations.includes("Lost")
           ? "Book marked as lost!"
-          : "Book returned successfully!"
+          : "Book returned successfully!",
       );
       onClose();
       window.location.reload();
@@ -186,123 +143,136 @@ const ReturnBookModal = ({ open, onClose, initialValues, REASONS }) => {
     }
   };
 
-  const minReturnedDate = initialValues?.date_borrowed
-    ? dateValue(initialValues.date_borrowed).format("YYYY-MM-DD")
-    : undefined;
-  const hasViolation = formData.violation.length > 0;
-
   return (
     <>
-      <Snackbar
-        open={notification.open}
-        autoHideDuration={3000}
-        onClose={() => setNotification((prev) => ({ ...prev, open: false }))}
+      {contextHolder}
+      <Modal
+        title="Return Book"
+        open={open}
+        onCancel={onClose}
+        footer={null}
+        destroyOnClose
       >
-        <Alert severity={notification.severity} variant="filled">
-          {notification.message}
-        </Alert>
-      </Snackbar>
+        <Form form={form} layout="vertical" onFinish={handleFinish}>
+          <Row gutter={[24, 8]}>
+            <Col {...colProps}>
+              <Form.Item name="name" label="Name">
+                <Input readOnly />
+              </Form.Item>
+            </Col>
 
-      <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-        <DialogTitle>Return Book</DialogTitle>
-        <DialogContent dividers>
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
-              <TextField
-                label="Name"
-                value={formData.name}
-                InputProps={{ readOnly: true }}
-                fullWidth
-                size="small"
-              />
-            </Grid>
+            <Col {...colProps}>
+              <Form.Item name="bookTitle" label="Book Title">
+                <Input readOnly />
+              </Form.Item>
+            </Col>
 
-            <Grid item xs={12} md={6}>
-              <TextField
-                label="Book Title"
-                value={formData.bookTitle}
-                InputProps={{ readOnly: true }}
-                fullWidth
-                size="small"
-              />
-            </Grid>
+            <Col {...colProps}>
+              <Form.Item name="penalty" label="Penalty (PHP)">
+                <InputNumber
+                  style={{ width: "100%" }}
+                  readOnly
+                  formatter={(v) =>
+                    `₱ ${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                  }
+                  parser={(v) => v.replace(/₱\s?|(,*)/g, "")}
+                />
+              </Form.Item>
+            </Col>
 
-            <Grid item xs={12} md={6}>
-              <TextField
-                label="Penalty (PHP)"
-                value={`PHP ${Number(formData.penalty || 0).toLocaleString()}`}
-                InputProps={{ readOnly: true }}
-                fullWidth
-                size="small"
-              />
-            </Grid>
-
-            <Grid item xs={12} md={6}>
-              <TextField
+            <Col {...colProps}>
+              <Form.Item
+                name="returnedDate"
                 label="Returned Date"
-                type="date"
-                value={formData.returnedDate}
-                onChange={(e) => handleReturnedDateChange(e.target.value)}
-                error={Boolean(errors.returnedDate)}
-                helperText={errors.returnedDate}
-                inputProps={{ min: minReturnedDate }}
-                InputLabelProps={{ shrink: true }}
-                fullWidth
-                size="small"
-              />
-            </Grid>
+                rules={[
+                  { required: true, message: "Returned date is required" },
+                ]}
+              >
+                <DatePicker
+                  style={{ width: "100%" }}
+                  onChange={handleReturnedDateChange}
+                  disabledDate={(current) => {
+                    const borrowDate = dayjs(initialValues.date_borrowed);
+                    return current && current.isBefore(borrowDate, "day");
+                  }}
+                />
+              </Form.Item>
+            </Col>
 
-            <Grid item xs={12} md={6}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Violation</InputLabel>
+            <Col {...colProps}>
+              <Form.Item name="violation" label="Violation">
                 <Select
-                  multiple
-                  value={formData.violation}
-                  onChange={(e) => handleViolationChange(e.target.value)}
-                  input={<OutlinedInput label="Violation" />}
-                  renderValue={(selected) => selected.join(", ")}
-                >
-                  {REASONS.map((reason) => (
-                    <MenuItem key={reason.value} value={reason.value}>
-                      {reason.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
+                  mode="tags"
+                  placeholder="Select Reason"
+                  options={REASONS}
+                  onChange={handleViolationChange}
+                />
+              </Form.Item>
+            </Col>
 
-            <Grid item xs={12} md={6}>
-              <TextField
-                label="Amount Paid"
-                type="number"
-                value={formData.inCash}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    inCash: Number(e.target.value),
-                  }))
-                }
-                error={Boolean(errors.inCash)}
-                helperText={errors.inCash}
-                disabled={!hasViolation}
-                inputProps={{ min: 0 }}
-                fullWidth
-                size="small"
-              />
-            </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions sx={{ justifyContent: "center", gap: 1 }}>
-          <Button onClick={onClose}>Cancel</Button>
-          <Button
-            variant="contained"
-            onClick={handleFinish}
-            sx={{ backgroundColor: "#000", color: "white" }}
+            <Col {...colProps}>
+              <Form.Item
+                shouldUpdate={(prev, curr) => prev.violation !== curr.violation}
+              >
+                {({ getFieldValue }) => {
+                  const violation = getFieldValue("violation") || [];
+                  const hasViolation = violation.length > 0;
+
+                  return (
+                    <Form.Item
+                      name="inCash"
+                      label="Amount Paid"
+                      rules={[
+                        {
+                          required: hasViolation,
+                          message:
+                            "Please enter the amount paid before returning.",
+                        },
+                        {
+                          validator: (_, value) =>
+                            value >= 0
+                              ? Promise.resolve()
+                              : Promise.reject(
+                                  new Error("Amount paid cannot be negative."),
+                                ),
+                        },
+                      ]}
+                    >
+                      <InputNumber
+                        style={{ width: "100%" }}
+                        min={0}
+                        disabled={!hasViolation}
+                        formatter={(v) =>
+                          `₱ ${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                        }
+                        parser={(v) => v.replace(/₱\s?|(,*)/g, "")}
+                      />
+                    </Form.Item>
+                  );
+                }}
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              gap: "10px",
+              marginTop: 20,
+            }}
           >
-            Return
-          </Button>
-        </DialogActions>
-      </Dialog>
+            <Button onClick={onClose}>Cancel</Button>
+            <Button
+              type="primary"
+              htmlType="submit"
+              style={{ backgroundColor: "#000", color: "white" }}
+            >
+              Return
+            </Button>
+          </div>
+        </Form>
+      </Modal>
     </>
   );
 };

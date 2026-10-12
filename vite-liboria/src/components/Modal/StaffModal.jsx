@@ -1,28 +1,6 @@
 import React, { useEffect, useState } from "react";
+import { Modal, Form, Input, Button, Space, message, Select } from "antd";
 import axios from "axios";
-import {
-  Alert,
-  Box,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  MenuItem,
-  Snackbar,
-  Stack,
-  TextField,
-} from "@mui/material";
-
-const initialForm = {
-  name: "",
-  email: "",
-  username: "",
-  password: "",
-  confirmpassword: "",
-  account_type: "",
-};
-
 const StaffModal = ({
   isVisible,
   mode,
@@ -31,111 +9,52 @@ const StaffModal = ({
   selectedStaff,
   currentUserId,
 }) => {
-  const [formData, setFormData] = useState(initialForm);
-  const [errors, setErrors] = useState({});
+  const [messageApi, contextHolder] = message.useMessage();
   const [isSaving, setIsSaving] = useState(false);
+  const [form] = Form.useForm();
+  const isEditMode = mode === "edit";
+  const isAddMode = mode === "add";
+  const isDeleteMode = mode === "delete";
+
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
   const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false);
   const [isPreviewConfirmOpen, setIsPreviewConfirmOpen] = useState(false);
   const [previewData, setPreviewData] = useState(null);
-  const [notification, setNotification] = useState({
-    open: false,
-    severity: "info",
-    message: "",
-  });
-
-  const isEditMode = mode === "edit";
-  const isAddMode = mode === "add";
-  const isDeleteMode = mode === "delete";
+  const [submittable, setSubmittable] = useState(false);
   const loggedInUserId = JSON.parse(
-    localStorage.getItem("currentUser")
+    localStorage.getItem("currentUser"),
   )?.userid;
-
-  const notify = (severity, message) =>
-    setNotification({ open: true, severity, message });
+  const values = Form.useWatch([], form);
 
   useEffect(() => {
     if (isEditMode && selectedStaff) {
-      setFormData({
+      form.setFieldsValue({
         userid: selectedStaff.userid,
-        name: selectedStaff.name || "",
-        email: selectedStaff.email || "",
-        username: selectedStaff.username || "",
-        password: "",
-        confirmpassword: "",
-        account_type: selectedStaff.account_type || "",
+        name: selectedStaff.name,
+        email: selectedStaff.email,
+        username: selectedStaff.username,
+        account_type: selectedStaff.account_type,
       });
-      setErrors({});
-    } else if (isAddMode) {
-      setFormData(initialForm);
-      setErrors({});
+    } else {
+      form.resetFields();
     }
-  }, [mode, selectedStaff, isEditMode, isAddMode]);
+  }, [mode, selectedStaff, form]);
 
-  const updateField = (field, value) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    setErrors((prev) => ({ ...prev, [field]: "" }));
-  };
+  useEffect(() => {
+    form
+      .validateFields({ validateOnly: true })
+      .then(() => setSubmittable(true))
+      .catch(() => setSubmittable(false));
+  }, [form, values]);
 
-  const validate = () => {
-    const nextErrors = {};
-
-    if (!formData.name.trim()) nextErrors.name = "Please input name!";
-    if (formData.name && !/^[A-Za-z\s]+$/.test(formData.name)) {
-      nextErrors.name = "Name should only contain letters and spaces.";
+  const handlePrimaryClick = async () => {
+    try {
+      const vals = await form.validateFields();
+      setPreviewData(vals);
+      setIsPreviewConfirmOpen(true);
+    } catch {
+      message.warning("Please fill out all required fields before proceeding.");
     }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      nextErrors.email = "Please input a valid email!";
-    }
-    if (!formData.username.trim()) {
-      nextErrors.username = "Please input a username!";
-    } else if (!/^[a-zA-Z0-9_]+$/.test(formData.username)) {
-      nextErrors.username =
-        "Username can only contain letters, numbers, and underscores.";
-    }
-    if (isAddMode && !formData.password) {
-      nextErrors.password = "Please input password!";
-    }
-    if (isAddMode && !formData.confirmpassword) {
-      nextErrors.confirmpassword = "Please re-enter password!";
-    }
-    if (
-      isAddMode &&
-      formData.password &&
-      formData.confirmpassword &&
-      formData.password !== formData.confirmpassword
-    ) {
-      nextErrors.confirmpassword = "Passwords do not match!";
-    }
-    if (!formData.account_type) {
-      nextErrors.account_type = "Please select user's role!";
-    }
-
-    setErrors(nextErrors);
-    return Object.keys(nextErrors).length === 0;
-  };
-
-  const resetTransientState = () => {
-    setPreviewData(null);
-    setIsConfirmDeleteOpen(false);
-    setIsCancelConfirmOpen(false);
-    setIsPreviewConfirmOpen(false);
-    setErrors({});
-  };
-
-  const handlePrimaryClick = () => {
-    if (!validate()) {
-      notify("warning", "Please fill out all required fields before proceeding.");
-      return;
-    }
-
-    const data = { ...formData };
-    if (isEditMode) {
-      delete data.password;
-      delete data.confirmpassword;
-    }
-    setPreviewData(data);
-    setIsPreviewConfirmOpen(true);
   };
 
   const finalizeSave = async (dataToSave) => {
@@ -149,13 +68,13 @@ const StaffModal = ({
         response = await axios.post(
           "http://localhost:8000/api/users",
           dataToSave,
-          { headers: { "Content-Type": "application/json" } }
+          { headers: { "Content-Type": "application/json" } },
         );
       } else if (isEditMode) {
         response = await axios.put(
           `http://localhost:8000/api/users/${selectedStaff.userid}`,
           dataToSave,
-          { headers: { "Content-Type": "application/json" } }
+          { headers: { "Content-Type": "application/json" } },
         );
       }
 
@@ -166,7 +85,7 @@ const StaffModal = ({
       resetTransientState();
       notify(
         "success",
-        isAddMode ? "Staff added successfully!" : "Staff updated successfully!"
+        isAddMode ? "Staff added successfully!" : "Staff updated successfully!",
       );
     } catch (err) {
       console.error(err);
@@ -175,7 +94,7 @@ const StaffModal = ({
         err.response?.data?.message ||
           err.response?.data?.error ||
           err.message ||
-          "Something went wrong."
+          "Something went wrong.",
       );
     } finally {
       setIsSaving(false);
@@ -183,12 +102,13 @@ const StaffModal = ({
   };
 
   const handleCancelClick = () => {
+    const current = form.getFieldsValue();
     const hasValues =
-      Object.values(formData).some((v) => v !== undefined && v !== "") ||
-      Boolean(isEditMode && selectedStaff);
+      Object.values(current).some((v) => v !== undefined && v !== "") ||
+      !!(isEditMode && selectedStaff);
 
     if (!hasValues) {
-      setFormData(initialForm);
+      form.resetFields();
       onClose();
       return;
     }
@@ -196,10 +116,13 @@ const StaffModal = ({
   };
 
   const handleConfirmCancel = () => {
-    setFormData(initialForm);
+    form.resetFields();
     setIsCancelConfirmOpen(false);
     onClose();
   };
+  const handleCancelCancel = () => setIsCancelConfirmOpen(false);
+
+  const handleOpenConfirmDelete = () => setIsConfirmDeleteOpen(true);
 
   const handleConfirmDelete = async () => {
     try {
@@ -216,7 +139,7 @@ const StaffModal = ({
       }
 
       await axios.delete(
-        `http://localhost:8000/api/users/${selectedStaff.userid}`
+        `http://localhost:8000/api/users/${selectedStaff.userid}`,
       );
 
       notify("success", "User deleted successfully!");
@@ -231,270 +154,305 @@ const StaffModal = ({
         err.response?.data?.message ||
           err.response?.data?.error ||
           err.message ||
-          "Something went wrong."
+          "Something went wrong.",
       );
     }
   };
 
+  const handleCancelDelete = () => setIsConfirmDeleteOpen(false);
+
   const handleXClose = () => {
-    setFormData(initialForm);
-    resetTransientState();
+    form.resetFields();
+    setPreviewData(null);
+    setIsConfirmDeleteOpen(false);
+    setIsCancelConfirmOpen(false);
+    setIsPreviewConfirmOpen(false);
     onClose();
   };
 
   return (
     <>
-      <Snackbar
-        open={notification.open}
-        autoHideDuration={3000}
-        onClose={() => setNotification((prev) => ({ ...prev, open: false }))}
+      {contextHolder}
+      <Modal
+        title={
+          isAddMode
+            ? "Add New Staff"
+            : isEditMode
+              ? "Edit Staff"
+              : "Delete Staff"
+        }
+        open={isVisible}
+        onCancel={handleXClose}
+        footer={null}
+        centered
       >
-        <Alert severity={notification.severity} variant="filled">
-          {notification.message}
-        </Alert>
-      </Snackbar>
-
-      <Dialog open={isVisible} onClose={handleXClose} maxWidth="sm" fullWidth>
-        <DialogTitle>
-          {isAddMode ? "Add New Staff" : isEditMode ? "Edit Staff" : "Delete Staff"}
-        </DialogTitle>
-        <DialogContent dividers>
-          {(isAddMode || isEditMode) && (
-            <Box component="form" autoComplete="off">
-              <TextField
-                label="Name"
+        {(isAddMode || isEditMode) && (
+          <Form form={form} layout="vertical" autoComplete="off">
+            <Form.Item
+              name="name"
+              label="Name"
+              rules={[
+                { required: true, message: "Please input name!" },
+                {
+                  pattern: /^[A-Za-z\s]+$/,
+                  message: "Name should only contain letters and spaces.",
+                },
+              ]}
+            >
+              <Input
                 placeholder="Enter name"
-                value={formData.name}
-                onChange={(e) =>
-                  updateField("name", e.target.value.replace(/[^A-Za-z\s]/g, ""))
-                }
-                error={Boolean(errors.name)}
-                helperText={errors.name}
-                fullWidth
-                size="small"
-                sx={{ mb: 2 }}
+                onChange={(e) => {
+                  const onlyLetters = e.target.value.replace(
+                    /[^A-Za-z\s]/g,
+                    "",
+                  );
+                  form.setFieldsValue({ name: onlyLetters });
+                }}
               />
-              <TextField
-                label="Email"
-                placeholder="Enter staff email"
-                value={formData.email}
-                onChange={(e) => updateField("email", e.target.value)}
-                error={Boolean(errors.email)}
-                helperText={errors.email}
-                fullWidth
-                size="small"
-                sx={{ mb: 2 }}
-              />
-              <TextField
-                label="Username"
-                placeholder="Enter username"
-                value={formData.username}
-                onChange={(e) => updateField("username", e.target.value)}
-                error={Boolean(errors.username)}
-                helperText={errors.username}
-                fullWidth
-                size="small"
-                sx={{ mb: 2 }}
-              />
+            </Form.Item>
+            <Form.Item
+              name="email"
+              label="Email"
+              rules={[
+                {
+                  required: true,
+                  type: "email",
+                  message: "Please input a valid email!",
+                },
+              ]}
+            >
+              <Input placeholder="Enter staff email" />
+            </Form.Item>
+            <Form.Item
+              name="username"
+              label="Username"
+              rules={[
+                { required: true, message: "Please input a username!" },
+                {
+                  pattern: /^[a-zA-Z0-9_]+$/,
+                  message:
+                    "Username can only contain letters, numbers, and underscores.",
+                },
+              ]}
+            >
+              <Input placeholder="Enter username" min={8} />
+            </Form.Item>
+            {isAddMode && (
+              <>
+                <Form.Item
+                  name="password"
+                  label="Password"
+                  rules={[
+                    { required: true, message: "Please input password!" },
+                  ]}
+                >
+                  <Input.Password placeholder="Enter password" />
+                </Form.Item>
 
-              {isAddMode && (
-                <>
-                  <TextField
-                    label="Password"
-                    type="password"
-                    placeholder="Enter password"
-                    value={formData.password}
-                    onChange={(e) => updateField("password", e.target.value)}
-                    error={Boolean(errors.password)}
-                    helperText={errors.password}
-                    fullWidth
-                    size="small"
-                    sx={{ mb: 2 }}
-                  />
-                  <TextField
-                    label="Confirm Password"
-                    type="password"
-                    placeholder="Re-enter password"
-                    value={formData.confirmpassword}
-                    onChange={(e) =>
-                      updateField("confirmpassword", e.target.value)
-                    }
-                    error={Boolean(errors.confirmpassword)}
-                    helperText={errors.confirmpassword}
-                    fullWidth
-                    size="small"
-                    sx={{ mb: 2 }}
-                  />
-                </>
-              )}
-
-              <TextField
-                select
-                label="Role"
-                value={formData.account_type}
-                onChange={(e) => updateField("account_type", e.target.value)}
-                error={Boolean(errors.account_type)}
-                helperText={errors.account_type}
-                fullWidth
-                size="small"
-                sx={{ mb: 2 }}
+                <Form.Item
+                  name="confirmpassword"
+                  label="Confirm Password"
+                  dependencies={["password"]}
+                  rules={[
+                    { required: true, message: "Please re-enter password!" },
+                    ({ getFieldValue }) => ({
+                      validator(_, value) {
+                        if (!value || getFieldValue("password") === value) {
+                          return Promise.resolve();
+                        }
+                        return Promise.reject("Passwords do not match!");
+                      },
+                    }),
+                  ]}
+                >
+                  <Input.Password placeholder="Re-enter password" />
+                </Form.Item>
+              </>
+            )}
+            <Form.Item
+              name="account_type"
+              label="Role"
+              rules={[
+                { required: true, message: "Please select user's role!" },
+              ]}
+            >
+              <Select
+                placeholder="Select user's role:"
+                defaultValue="librarian"
               >
-                <MenuItem value="Librarian">Librarian</MenuItem>
-                <MenuItem value="Admin">Admin</MenuItem>
-              </TextField>
-            </Box>
-          )}
+                <Option value="Librarian">Librarian</Option>
+                <Option value="Admin">Admin</Option>
+              </Select>
+            </Form.Item>
 
-          {isDeleteMode && (
-            <>
-              <p>
-                Are you sure you want to delete{" "}
-                <strong>{selectedStaff?.name}</strong>?
-              </p>
+            <Form.Item>
+              <Space>
+                <Button
+                  type="primary"
+                  onClick={handlePrimaryClick}
+                  style={{ backgroundColor: "#000", color: "#fff", width: 232 }}
+                >
+                  {isEditMode ? "Save Changes" : "Add Staff"}
+                </Button>
+                <Button onClick={handleCancelClick} style={{ width: 232 }}>
+                  Cancel
+                </Button>
+              </Space>
+            </Form.Item>
+          </Form>
+        )}
 
-              {selectedStaff?.userid === loggedInUserId && (
-                <p style={{ color: "red", marginTop: 10 }}>
-                  You cannot delete your own account while logged in.
-                </p>
-              )}
-            </>
-          )}
-        </DialogContent>
-        <DialogActions sx={{ justifyContent: "center", gap: 1 }}>
-          {(isAddMode || isEditMode) && (
-            <>
-              <Button
-                variant="contained"
-                onClick={handlePrimaryClick}
-                sx={{ backgroundColor: "#000", color: "#fff", width: 232 }}
-              >
-                {isEditMode ? "Save Changes" : "Add Staff"}
-              </Button>
-              <Button onClick={handleCancelClick} sx={{ width: 232 }}>
-                Cancel
-              </Button>
-            </>
-          )}
+        {isDeleteMode && (
+          <>
+            <p>
+              Are you sure you want to delete{" "}
+              <strong>{selectedStaff?.name}</strong>?
+            </p>
 
-          {isDeleteMode && (
-            <>
-              <Button onClick={onClose} sx={{ width: 232 }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                gap: 10,
+                marginTop: 20,
+              }}
+            >
+              <Button onClick={onClose} style={{ width: 232 }}>
                 No
               </Button>
               <Button
-                variant="contained"
-                onClick={() => setIsConfirmDeleteOpen(true)}
-                disabled={selectedStaff?.userid === loggedInUserId}
-                sx={{
+                type="primary"
+                onClick={handleOpenConfirmDelete}
+                style={{
                   backgroundColor: "#000",
                   color: "#fff",
                   border: "none",
                 }}
+                disabled={selectedStaff?.userid === loggedInUserId} // disable if same user
               >
                 Yes, Delete
               </Button>
-            </>
-          )}
-        </DialogActions>
-      </Dialog>
+            </div>
 
-      <Dialog
+            {selectedStaff?.userid === loggedInUserId && (
+              <p style={{ color: "red", marginTop: 10 }}>
+                You cannot delete your own account while logged in.
+              </p>
+            )}
+          </>
+        )}
+      </Modal>
+
+      <Modal
+        title={isEditMode ? "Confirm Changes" : "Confirm New Staff"}
         open={isPreviewConfirmOpen}
-        onClose={handleXClose}
-        maxWidth="sm"
-        fullWidth
+        onCancel={handleXClose}
+        footer={null}
+        centered
       >
-        <DialogTitle>
-          {isEditMode ? "Confirm Changes" : "Confirm New Staff"}
-        </DialogTitle>
-        <DialogContent dividers>
-          {previewData ? (
-            <>
-              <p>
-                <strong>Name:</strong> {previewData.name}
-              </p>
-              <p>
-                <strong>Email:</strong> {previewData.email}
-              </p>
-              <p>
-                <strong>Username:</strong> {previewData.username}
-              </p>
-              <p>
-                <strong>Role:</strong> {previewData.account_type}
-              </p>
-            </>
-          ) : (
-            <p>No data to confirm.</p>
-          )}
-        </DialogContent>
-        <DialogActions sx={{ justifyContent: "center", gap: 1 }}>
-          <Button
-            onClick={() => setIsPreviewConfirmOpen(false)}
-            sx={{ width: 232 }}
-          >
-            Back
-          </Button>
-          <Button
-            variant="contained"
-            onClick={() => finalizeSave(previewData)}
-            disabled={isSaving}
-            sx={{ backgroundColor: "#000", color: "#fff", width: 232 }}
-          >
-            Confirm
-          </Button>
-        </DialogActions>
-      </Dialog>
+        {previewData ? (
+          <>
+            <p>
+              <strong>Name:</strong> {previewData.name}
+            </p>
+            <p>
+              <strong>Email:</strong> {previewData.email}
+            </p>
+            <p>
+              <strong>Username:</strong> {previewData.username}
+            </p>
+            <p>
+              <strong>Role:</strong> {previewData.account_type}
+            </p>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                gap: 10,
+                marginTop: 20,
+              }}
+            >
+              <Button
+                onClick={() => setIsPreviewConfirmOpen(false)}
+                style={{ width: 232 }}
+              >
+                Back
+              </Button>
+              <Button
+                type="primary"
+                onClick={() => finalizeSave(previewData)}
+                disabled={isSaving}
+                style={{ backgroundColor: "#000", color: "#fff", width: 232 }}
+              >
+                Confirm
+              </Button>
+            </div>
+          </>
+        ) : (
+          <p>No data to confirm.</p>
+        )}
+      </Modal>
 
-      <Dialog
+      <Modal
+        title="Confirm Delete"
         open={isConfirmDeleteOpen}
-        onClose={handleXClose}
-        maxWidth="sm"
-        fullWidth
+        onCancel={handleXClose}
+        footer={null}
+        centered
       >
-        <DialogTitle>Confirm Delete</DialogTitle>
-        <DialogContent dividers>
-          <p>
-            This action will permanently delete{" "}
-            <strong>{selectedStaff?.name}</strong>. Continue?
-          </p>
-        </DialogContent>
-        <DialogActions sx={{ justifyContent: "center", gap: 1 }}>
-          <Button onClick={() => setIsConfirmDeleteOpen(false)} sx={{ width: 232 }}>
+        <p>
+          This action will permanently delete{" "}
+          <strong>{selectedStaff?.name}</strong>. Continue?
+        </p>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            gap: 10,
+            marginTop: 20,
+          }}
+        >
+          <Button onClick={handleCancelDelete} style={{ width: 232 }}>
             Back
           </Button>
           <Button
-            variant="contained"
+            type="primary"
             onClick={handleConfirmDelete}
-            sx={{ backgroundColor: "#000", color: "#fff", width: 232 }}
+            style={{ backgroundColor: "#000", color: "#fff", width: 232 }}
           >
             Confirm
           </Button>
-        </DialogActions>
-      </Dialog>
+        </div>
+      </Modal>
 
-      <Dialog
+      <Modal
+        title="Discard Changes?"
         open={isCancelConfirmOpen}
-        onClose={handleXClose}
-        maxWidth="sm"
-        fullWidth
+        onCancel={handleXClose}
+        footer={null}
+        centered
       >
-        <DialogTitle>Discard Changes?</DialogTitle>
-        <DialogContent dividers>
-          <p>Are you sure you want to cancel? Unsaved changes will be lost.</p>
-        </DialogContent>
-        <DialogActions sx={{ justifyContent: "center", gap: 1 }}>
-          <Button onClick={() => setIsCancelConfirmOpen(false)} sx={{ width: 232 }}>
+        <p>Are you sure you want to cancel? Unsaved changes will be lost.</p>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            gap: 10,
+            marginTop: 20,
+          }}
+        >
+          <Button onClick={handleCancelCancel} style={{ width: 232 }}>
             No
           </Button>
           <Button
-            variant="contained"
+            type="primary"
             onClick={handleConfirmCancel}
-            sx={{ backgroundColor: "#000", color: "#fff", width: 232 }}
+            style={{ backgroundColor: "#000", color: "#fff", width: 232 }}
           >
             Yes, Cancel
           </Button>
-        </DialogActions>
-      </Dialog>
+        </div>
+      </Modal>
     </>
   );
 };

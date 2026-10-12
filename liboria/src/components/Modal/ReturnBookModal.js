@@ -12,7 +12,7 @@ import {
   message,
 } from "antd";
 import dayjs from "dayjs";
-
+import axios from "axios";
 const ReturnBookModal = ({ open, onClose, initialValues, REASONS }) => {
   const [form] = Form.useForm();
   const [messageApi, contextHolder] = message.useMessage();
@@ -75,88 +75,71 @@ const ReturnBookModal = ({ open, onClose, initialValues, REASONS }) => {
     recalculatePenalty();
   };
 
-  const handleFinish = async (values) => {
+  const handleFinish = async () => {
+    const nextErrors = {};
+    if (!formData.returnedDate) {
+      nextErrors.returnedDate = "Returned date is required";
+    }
+
+    const hasViolation = formData.violation.length > 0;
+    if (hasViolation && Number(formData.inCash) < Number(formData.penalty)) {
+      nextErrors.inCash = "Amount paid must cover the penalty.";
+    }
+    if (Number(formData.inCash) < 0) {
+      nextErrors.inCash = "Amount paid cannot be negative.";
+    }
+
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length) {
+      notify("error", Object.values(nextErrors)[0]);
+      return;
+    }
+
     try {
-      // Determine final violation to send as array
-      let violations = Array.isArray(values.violation) ? values.violation : [];
+      let violations = Array.isArray(formData.violation)
+        ? formData.violation
+        : [];
       if (!violations.length) violations = ["None"];
-
-      const returnedDate = dayjs(values.returnedDate).format("YYYY-MM-DD");
-
-      // Check amount paid vs penalty if needed
-      if (values.penalty > 0) {
-        if (!values.inCash || values.inCash < values.penalty) {
-          messageApi.error("Amount paid must cover the penalty.");
-          return;
-        }
-      }
 
       const payload = {
         borrow_id: initialValues.borrow_id,
-        returned_date: returnedDate,
-        violation: violations, // array for backend since VARCHAR
-        penalty: values.penalty || 0,
-        amount_paid: values.inCash || 0,
+        returned_date: dateValue(formData.returnedDate).format("YYYY-MM-DD"),
+        violation: violations,
+        penalty: formData.penalty || 0,
+        amount_paid: formData.inCash || 0,
       };
 
-      // Determine status
       const status = violations.includes("Lost") ? "Lost" : "Returned";
 
-      // 1. Update borrowed_books status
-      const updateRes = await fetch(
+      await axios.put(
         `http://localhost:8000/api/borrowed-books/${initialValues.borrow_id}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ status }),
-        }
+        { status },
+        { headers: { "Content-Type": "application/json" } },
       );
 
-      if (!updateRes.ok) {
-        messageApi.error("Failed to update borrowed book status.");
-        return;
-      }
+      await axios.post("http://localhost:8000/api/returned-books", payload, {
+        headers: { "Content-Type": "application/json" },
+      });
 
-      // 2. Insert into returned_books
-      const insertRes = await fetch(
-        "http://localhost:8000/api/returned-books",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        }
-      );
-
-      if (!insertRes.ok) {
-        messageApi.error("Failed to insert return record.");
-        return;
-      }
-
-      // 3. Increment available copies if not lost
       if (!violations.includes("Lost")) {
-        await fetch(
+        await axios.put(
           `http://localhost:8000/api/books/${initialValues.book_id}`,
-          {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ incrementAvailable: 1 }),
-          }
+          { incrementAvailable: 1 },
+          { headers: { "Content-Type": "application/json" } },
         );
       }
 
-      messageApi.success(
+      notify(
+        "success",
         violations.includes("Lost")
           ? "Book marked as lost!"
-          : "Book returned successfully!"
+          : "Book returned successfully!",
       );
-      form.resetFields();
       onClose();
       window.location.reload();
     } catch (err) {
       console.error("Error while returning book:", err);
-      messageApi.error(
-        "An unexpected error occurred while returning the book."
-      );
+      notify("error", "An unexpected error occurred while returning the book.");
     }
   };
 
@@ -250,7 +233,7 @@ const ReturnBookModal = ({ open, onClose, initialValues, REASONS }) => {
                             value >= 0
                               ? Promise.resolve()
                               : Promise.reject(
-                                  new Error("Amount paid cannot be negative.")
+                                  new Error("Amount paid cannot be negative."),
                                 ),
                         },
                       ]}

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Modal, Form, Input, Button, Space, message, Select } from "antd";
-const { Option } = Select;
+import axios from "axios";
 const StaffModal = ({
   isVisible,
   mode,
@@ -58,49 +58,44 @@ const StaffModal = ({
   };
 
   const finalizeSave = async (dataToSave) => {
-    if (isSaving) return; // prevent double trigger
+    if (isSaving) return;
     setIsSaving(true);
 
     try {
-      let res, result;
+      let response;
 
       if (isAddMode) {
-        res = await fetch("http://localhost:8000/api/users", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(dataToSave),
-        });
+        response = await axios.post(
+          "http://localhost:8000/api/users",
+          dataToSave,
+          { headers: { "Content-Type": "application/json" } },
+        );
       } else if (isEditMode) {
-        res = await fetch(
+        response = await axios.put(
           `http://localhost:8000/api/users/${selectedStaff.userid}`,
-          {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(dataToSave),
-          },
+          dataToSave,
+          { headers: { "Content-Type": "application/json" } },
         );
       }
 
-      result = await res.json();
-
-      if (!res.ok) {
-        messageApi.error(result.message || "Email/Username already exists");
-        setIsSaving(false);
-        return;
-      }
-
-      onSave(result); // notify parent once
+      onSave(response?.data);
       onClose();
 
-      form.resetFields();
-      setPreviewData(null);
-      setIsPreviewConfirmOpen(false);
-      messageApi.success(
+      setFormData(initialForm);
+      resetTransientState();
+      notify(
+        "success",
         isAddMode ? "Staff added successfully!" : "Staff updated successfully!",
       );
     } catch (err) {
       console.error(err);
-      messageApi.error(err.message || "Something went wrong.");
+      notify(
+        "error",
+        err.response?.data?.message ||
+          err.response?.data?.error ||
+          err.message ||
+          "Something went wrong.",
+      );
     } finally {
       setIsSaving(false);
     }
@@ -132,42 +127,35 @@ const StaffModal = ({
   const handleConfirmDelete = async () => {
     try {
       if (!selectedStaff) {
-        messageApi.error("No staff selected.");
+        notify("error", "No staff selected.");
         setIsConfirmDeleteOpen(false);
         return;
       }
 
       if (selectedStaff.userid === currentUserId) {
-        messageApi.error("You cannot delete your own account.");
+        notify("error", "You cannot delete your own account.");
         setIsConfirmDeleteOpen(false);
         return;
       }
 
-      const res = await fetch(
+      await axios.delete(
         `http://localhost:8000/api/users/${selectedStaff.userid}`,
-        { method: "DELETE" },
       );
 
-      // Try parsing JSON safely
-      let data;
-      try {
-        data = await res.json();
-      } catch {
-        data = {};
-      }
-
-      if (!res.ok) {
-        throw new Error(data.message || "Failed to delete user.");
-      }
-
-      messageApi.success("User deleted successfully!");
-      onSave(); // notify parent
+      notify("success", "User deleted successfully!");
+      onSave();
       setIsConfirmDeleteOpen(false);
-      form.resetFields();
+      setFormData(initialForm);
       onClose();
     } catch (err) {
       console.error(err);
-      messageApi.error(err.message || "Something went wrong.");
+      notify(
+        "error",
+        err.response?.data?.message ||
+          err.response?.data?.error ||
+          err.message ||
+          "Something went wrong.",
+      );
     }
   };
 
@@ -288,7 +276,10 @@ const StaffModal = ({
                 { required: true, message: "Please select user's role!" },
               ]}
             >
-              <Select placeholder="Select user's role:">
+              <Select
+                placeholder="Select user's role:"
+                defaultValue="librarian"
+              >
                 <Option value="Librarian">Librarian</Option>
                 <Option value="Admin">Admin</Option>
               </Select>

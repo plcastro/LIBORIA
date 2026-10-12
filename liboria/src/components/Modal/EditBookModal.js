@@ -10,7 +10,7 @@ import {
   Col,
 } from "antd";
 import dayjs from "dayjs";
-
+import axios from "axios";
 const EditBookModal = ({ modalOpen, setModalOpen, book, onBookUpdated }) => {
   const [messageApi, contextHolder] = message.useMessage();
   const [form] = Form.useForm();
@@ -32,42 +32,33 @@ const EditBookModal = ({ modalOpen, setModalOpen, book, onBookUpdated }) => {
   }, [book, form]);
 
   const handleOk = async () => {
+    if (!validate()) return;
+
     try {
-      const values = await form.validateFields();
       setLoading(true);
 
       const payload = {
-        ...values,
-        published_date: values.published_date
-          ? values.published_date.format("YYYY-MM-DD")
-          : null,
+        ...formData,
+        total_copies: Number(formData.total_copies),
+        available_copies: Number(formData.available_copies),
+        published_date: formData.published_date || null,
       };
 
-      const res = await fetch(
+      await axios.put(
         `http://localhost:8000/api/books/${book.book_id}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        }
+        payload,
+        { headers: { "Content-Type": "application/json" } },
       );
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        messageApi.error(data.error);
-        return;
-      }
 
       if (onBookUpdated) onBookUpdated({ ...book, ...payload });
       setModalOpen(false);
-      messageApi.success("Book updated successfully");
+      notify("success", "Book updated successfully");
       setTimeout(() => {
         window.location.reload();
       }, 500);
     } catch (err) {
       console.error(err);
-      messageApi.error("Failed to update book");
+      notify("error", err.response?.data?.error || "Failed to update book");
     } finally {
       setLoading(false);
     }
@@ -82,7 +73,7 @@ const EditBookModal = ({ modalOpen, setModalOpen, book, onBookUpdated }) => {
     // If there are borrowed copies and user tries to reduce below current total
     if (borrowedCount > 0 && value < currentTotal) {
       messageApi.warning(
-        "You cannot decrease total copies while some books are still borrowed."
+        "You cannot decrease total copies while some books are still borrowed.",
       );
       form.setFieldsValue({ total_copies: currentTotal });
       return;
@@ -159,8 +150,8 @@ const EditBookModal = ({ modalOpen, setModalOpen, book, onBookUpdated }) => {
                       if (value >= available) return Promise.resolve();
                       return Promise.reject(
                         new Error(
-                          "Total copies cannot be less than available copies"
-                        )
+                          "Total copies cannot be less than available copies",
+                        ),
                       );
                     },
                   }),
@@ -184,7 +175,9 @@ const EditBookModal = ({ modalOpen, setModalOpen, book, onBookUpdated }) => {
                       const total = getFieldValue("total_copies") || 0;
                       if (value <= total) return Promise.resolve();
                       return Promise.reject(
-                        new Error("Available copies cannot exceed total copies")
+                        new Error(
+                          "Available copies cannot exceed total copies",
+                        ),
                       );
                     },
                   }),

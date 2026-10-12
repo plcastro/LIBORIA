@@ -1,73 +1,35 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
+import React, { useState, useEffect } from "react";
 import {
-  Alert,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Grid,
-  Snackbar,
-  TextField,
-} from "@mui/material";
-import dateValue from "../../utils/dateValue";
-
+  Modal,
+  Input,
+  InputNumber,
+  message,
+  Form,
+  DatePicker,
+  Row,
+  Col,
+} from "antd";
+import dayjs from "dayjs";
+import axios from "axios";
 const EditBookModal = ({ modalOpen, setModalOpen, book, onBookUpdated }) => {
-  const [formData, setFormData] = useState({});
-  const [errors, setErrors] = useState({});
+  const [messageApi, contextHolder] = message.useMessage();
+  const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
-  const [notification, setNotification] = useState({
-    open: false,
-    severity: "info",
-    message: "",
-  });
-
-  const notify = (severity, message) =>
-    setNotification({ open: true, severity, message });
 
   useEffect(() => {
     if (book) {
-      setFormData({
-        title: book.title || "",
-        author_name: book.author_name || "",
-        category: book.category || "",
-        published_date: book.published_date
-          ? dateValue(book.published_date).format("YYYY-MM-DD")
-          : "",
-        total_copies: book.total_copies || 1,
-        available_copies: book.available_copies || 0,
-        description: book.description || "",
-        image: book.image || "",
+      form.setFieldsValue({
+        title: book.title,
+        author_name: book.author_name,
+        category: book.category,
+        published_date: book.published_date ? dayjs(book.published_date) : null,
+        total_copies: book.total_copies,
+        available_copies: book.available_copies,
+        description: book.description,
+        image: book.image,
       });
-      setErrors({});
     }
-  }, [book]);
-
-  const updateField = (field, value) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    setErrors((prev) => ({ ...prev, [field]: "" }));
-  };
-
-  const validate = () => {
-    const nextErrors = {};
-    if (!formData.title?.trim()) nextErrors.title = "Title is required";
-    if (!formData.author_name?.trim()) {
-      nextErrors.author_name = "Author name is required";
-    }
-    if (!formData.category?.trim()) nextErrors.category = "Category is required";
-    if (Number(formData.total_copies) < Number(formData.available_copies)) {
-      nextErrors.total_copies =
-        "Total copies cannot be less than available copies";
-    }
-    if (Number(formData.available_copies) > Number(formData.total_copies)) {
-      nextErrors.available_copies =
-        "Available copies cannot exceed total copies";
-    }
-
-    setErrors(nextErrors);
-    return Object.keys(nextErrors).length === 0;
-  };
+  }, [book, form]);
 
   const handleOk = async () => {
     if (!validate()) return;
@@ -85,7 +47,7 @@ const EditBookModal = ({ modalOpen, setModalOpen, book, onBookUpdated }) => {
       await axios.put(
         `http://localhost:8000/api/books/${book.book_id}`,
         payload,
-        { headers: { "Content-Type": "application/json" } }
+        { headers: { "Content-Type": "application/json" } },
       );
 
       if (onBookUpdated) onBookUpdated({ ...book, ...payload });
@@ -102,151 +64,136 @@ const EditBookModal = ({ modalOpen, setModalOpen, book, onBookUpdated }) => {
     }
   };
 
+  // Update available copies if total copies is lowered below available
   const handleTotalCopiesChange = (value) => {
-    const nextTotal = Number(value);
-    const currentTotal = Number(book.total_copies);
-    const currentAvailable = Number(book.available_copies);
+    const currentTotal = book.total_copies;
+    const currentAvailable = book.available_copies;
     const borrowedCount = currentTotal - currentAvailable;
 
-    if (borrowedCount > 0 && nextTotal < currentTotal) {
-      notify(
-        "warning",
-        "You cannot decrease total copies while some books are still borrowed."
+    // If there are borrowed copies and user tries to reduce below current total
+    if (borrowedCount > 0 && value < currentTotal) {
+      messageApi.warning(
+        "You cannot decrease total copies while some books are still borrowed.",
       );
-      updateField("total_copies", currentTotal);
+      form.setFieldsValue({ total_copies: currentTotal });
       return;
     }
 
-    setFormData((prev) => ({
-      ...prev,
-      total_copies: value,
-      available_copies:
-        Number(prev.available_copies) > nextTotal
-          ? nextTotal
-          : prev.available_copies,
-    }));
+    // Keep available_copies valid
+    const available = form.getFieldValue("available_copies") || 0;
+    if (value < available) {
+      form.setFieldsValue({ available_copies: value });
+    }
   };
 
   return (
     <>
-      <Snackbar
-        open={notification.open}
-        autoHideDuration={3000}
-        onClose={() => setNotification((prev) => ({ ...prev, open: false }))}
-      >
-        <Alert severity={notification.severity} variant="filled">
-          {notification.message}
-        </Alert>
-      </Snackbar>
-
-      <Dialog
+      {contextHolder}
+      <Modal
+        title="Edit Book"
         open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        maxWidth="sm"
-        fullWidth
+        onCancel={() => setModalOpen(false)}
+        onOk={handleOk}
+        okText="Save"
+        confirmLoading={loading}
+        width={600}
+        centered
       >
-        <DialogTitle>Edit Book</DialogTitle>
-        <DialogContent dividers>
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Image URL"
-                value={formData.image || ""}
-                onChange={(e) => updateField("image", e.target.value)}
-                fullWidth
-                size="small"
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
+        <Form form={form} layout="vertical">
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item label="Image URL" name="image">
+                <Input />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
                 label="Title"
-                value={formData.title || ""}
-                onChange={(e) => updateField("title", e.target.value)}
-                error={Boolean(errors.title)}
-                helperText={errors.title}
-                fullWidth
-                size="small"
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
+                name="title"
+                rules={[{ required: true }]}
+              >
+                <Input />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
                 label="Author Name"
-                value={formData.author_name || ""}
-                onChange={(e) => updateField("author_name", e.target.value)}
-                error={Boolean(errors.author_name)}
-                helperText={errors.author_name}
-                fullWidth
-                size="small"
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
+                name="author_name"
+                rules={[{ required: true }]}
+              >
+                <Input />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
                 label="Category"
-                value={formData.category || ""}
-                onChange={(e) => updateField("category", e.target.value)}
-                error={Boolean(errors.category)}
-                helperText={errors.category}
-                fullWidth
-                size="small"
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Published Date"
-                type="date"
-                value={formData.published_date || ""}
-                onChange={(e) => updateField("published_date", e.target.value)}
-                InputLabelProps={{ shrink: true }}
-                fullWidth
-                size="small"
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
+                name="category"
+                rules={[{ required: true }]}
+              >
+                <Input />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label="Published Date" name="published_date">
+                <DatePicker style={{ width: "100%" }} />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
                 label="Total Copies"
-                type="number"
-                value={formData.total_copies || 1}
-                onChange={(e) => handleTotalCopiesChange(e.target.value)}
-                error={Boolean(errors.total_copies)}
-                helperText={errors.total_copies}
-                inputProps={{ min: 1 }}
-                fullWidth
-                size="small"
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
+                name="total_copies"
+                rules={[
+                  { required: true },
+                  ({ getFieldValue }) => ({
+                    validator(_, value) {
+                      const available = getFieldValue("available_copies") || 0;
+                      if (value >= available) return Promise.resolve();
+                      return Promise.reject(
+                        new Error(
+                          "Total copies cannot be less than available copies",
+                        ),
+                      );
+                    },
+                  }),
+                ]}
+              >
+                <InputNumber
+                  min={1}
+                  style={{ width: "100%" }}
+                  onChange={handleTotalCopiesChange}
+                />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
                 label="Available Copies"
-                type="number"
-                value={formData.available_copies || 0}
-                onChange={(e) => updateField("available_copies", e.target.value)}
-                error={Boolean(errors.available_copies)}
-                helperText={errors.available_copies}
-                inputProps={{ min: 0 }}
-                fullWidth
-                size="small"
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                label="Description"
-                value={formData.description || ""}
-                onChange={(e) => updateField("description", e.target.value)}
-                multiline
-                minRows={3}
-                fullWidth
-                size="small"
-              />
-            </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setModalOpen(false)}>Cancel</Button>
-          <Button variant="contained" onClick={handleOk} disabled={loading}>
-            Save
-          </Button>
-        </DialogActions>
-      </Dialog>
+                name="available_copies"
+                rules={[
+                  { required: true },
+                  ({ getFieldValue }) => ({
+                    validator(_, value) {
+                      const total = getFieldValue("total_copies") || 0;
+                      if (value <= total) return Promise.resolve();
+                      return Promise.reject(
+                        new Error(
+                          "Available copies cannot exceed total copies",
+                        ),
+                      );
+                    },
+                  }),
+                ]}
+              >
+                <InputNumber min={0} style={{ width: "100%" }} />
+              </Form.Item>
+            </Col>
+            <Col span={24}>
+              <Form.Item label="Description" name="description">
+                <Input.TextArea rows={3} />
+              </Form.Item>
+            </Col>
+          </Row>
+        </Form>
+      </Modal>
     </>
   );
 };
