@@ -14,6 +14,7 @@ const bookRoutes = require("./routes/bookRoutes");
 const borrowerRoutes = require("./routes/borrowerRoutes");
 const borrowedBookRoutes = require("./routes/borrowedBookRoutes");
 const returnedBookRoutes = require("./routes/returnedBookRoutes");
+const borrowRequestRoutes = require("./routes/borrowRequestRoutes");
 
 // Use routes
 app.use("/api/users", userRoutes);
@@ -22,6 +23,7 @@ app.use("/api/borrowers", borrowerRoutes);
 app.use("/api/borrowed-books", borrowedBookRoutes);
 app.use("/api/returned-books", returnedBookRoutes);
 app.use("/api/records", require("./routes/recordRoutes"));
+app.use("/api/borrow-requests", borrowRequestRoutes);
 
 connectToDatabase()
   .then(() => {

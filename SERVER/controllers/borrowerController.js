@@ -1,5 +1,6 @@
 const { collection, getNextSequence } = require("../config/database");
 
+
 const toId = (value) => {
   const numberValue = Number(value);
   return Number.isNaN(numberValue) ? value : numberValue;

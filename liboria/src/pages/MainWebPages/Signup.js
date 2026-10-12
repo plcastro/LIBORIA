@@ -13,7 +13,7 @@ export const Signup = () => {
     username: "",
     password: "",
     confirmPassword: "",
-    account_type: "librarian", // Default to librarian for new registrations
+    account_type: "student", // Default to student for new registrations
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -74,7 +74,7 @@ export const Signup = () => {
           email: formData.email,
           username: formData.username,
           password: formData.password,
-          account_type: "librarian",
+          account_type: "student",
         },
         {
           headers: {

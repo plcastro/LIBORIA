@@ -15,6 +15,13 @@ import ViewRecords from "./pages/DashboardPages/ViewRecords";
 import StaffList from "./pages/DashboardPages/StaffList";
 import ProfilePage from "./pages/DashboardPages/ProfilePage";
 
+
+import StudentDashboardLayout from "./components/StudentDashboard/StudentDashboardLayout";
+import StudentDashboard from "./components/StudentDashboard/StudentDashboard";
+import StudentBooks from "./components/StudentDashboard/StudentBooks";
+import StudentBorrowings from "./components/StudentDashboard/StudentBorrowings";
+
+
 export default function App() {
   useEffect(() => {
     const handleStorageChange = (event) => {
@@ -53,6 +60,14 @@ export default function App() {
           <Route path="view/staff" element={<StaffList />} />
           <Route path="view/profile" element={<ProfilePage />} />
           <Route path="*" element={<NotFound />} />
+        </Route>
+
+        
+        <Route path="/student" element={<StudentDashboardLayout />}>
+          <Route path="dashboard" element={<StudentDashboard />} />
+          <Route path="books" element={<StudentBooks />} />
+          <Route path="borrowings" element={<StudentBorrowings />} />
+?
         </Route>
       </Routes>
     </BrowserRouter>

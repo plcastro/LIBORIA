@@ -31,7 +31,7 @@ const userSchema = new mongoose.Schema({
 
   account_type: {
     type: String,
-    enum: ["non-librarian", "librarian"],
+    enum: ["non-librarian", "librarian", "student"],
     default: "librarian",
   },
 
@@ -46,6 +46,12 @@ const userSchema = new mongoose.Schema({
     default: null,
     select: false,
   },
+
+  userid: {
+  type: Number,
+  unique: true,
+},
+
 });
 
 module.exports = mongoose.model("User", userSchema);
