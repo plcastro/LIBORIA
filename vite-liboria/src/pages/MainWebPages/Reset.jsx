@@ -1,7 +1,17 @@
 import React, { useState, useEffect } from "react";
 import "./login.css";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
+import {
+  Button,
+  TextField,
+  Link,
+  InputAdornment,
+  IconButton,
+} from "@mui/material";
+
+import { Visibility, VisibilityOff } from "@mui/icons-material";
+
 const Reset = () => {
   const { token } = useParams();
   const navigate = useNavigate();
@@ -14,6 +24,8 @@ const Reset = () => {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [tokenValid, setTokenValid] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Verify token when component loads
   useEffect(() => {
@@ -34,8 +46,6 @@ const Reset = () => {
 
       if (response.status >= 200 && response.status < 300) {
         setTokenValid(true);
-        // Note: Your backend needs to return currentPassword for this to work
-        // If it doesn't, we'll rely on server-side validation
         if (data.currentPassword) {
           setCurrentPassword(data.currentPassword);
         }
@@ -135,46 +145,106 @@ const Reset = () => {
 
         <form className="reset-password-form" onSubmit={handleSubmit}>
           <div className="form-group">
-            <input
-              type="password"
+            <TextField
+              fullWidth
+              type={showNewPassword ? "text" : "password"}
               id="newPassword"
-              placeholder="New password"
+              label="New Password"
+              variant="outlined"
+              placeholder="Enter your new password"
               value={formData.newPassword}
               onChange={(e) =>
                 setFormData({ ...formData, newPassword: e.target.value })
               }
-              minLength={8}
+              autoComplete="new-password"
+              slotProps={{
+                htmlInput: {
+                  minLength: 8,
+                },
+                input: {
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        aria-label={
+                          showNewPassword ? "Hide password" : "Show password"
+                        }
+                        onClick={() => setShowNewPassword((prev) => !prev)}
+                        edge="end"
+                        size="small"
+                        sx={{ padding: "4px", width: "32px", height: "32px" }}
+                      >
+                        {showNewPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                },
+              }}
               required
             />
           </div>
 
           <div className="form-group">
-            <input
-              type="password"
+            <TextField
+              fullWidth
+              type={showConfirmPassword ? "text" : "password"}
               id="confirmPassword"
-              placeholder="Confirm new password"
+              label="Confirm New Password"
+              variant="outlined"
+              placeholder="Re-enter your new password"
               value={formData.confirmPassword}
               onChange={(e) =>
                 setFormData({ ...formData, confirmPassword: e.target.value })
               }
-              minLength={8}
+              autoComplete="new-password"
+              slotProps={{
+                htmlInput: {
+                  minLength: 8,
+                },
+                input: {
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        aria-label={
+                          showConfirmPassword
+                            ? "Hide password"
+                            : "Show password"
+                        }
+                        onClick={() => setShowConfirmPassword((prev) => !prev)}
+                        edge="end"
+                        size="small"
+                        sx={{ padding: "4px", width: "32px", height: "32px" }}
+                      >
+                        {showConfirmPassword ? (
+                          <VisibilityOff />
+                        ) : (
+                          <Visibility />
+                        )}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                },
+              }}
               required
             />
           </div>
 
-          <button
-            type="submit"
-            className="recovery-btn"
-            disabled={loading || !tokenValid}
-          >
-            {loading ? "Resetting..." : "RESET PASSWORD"}
-          </button>
+          <div className="w-full !mt-2">
+            <Button
+              type="submit"
+              disabled={loading || !tokenValid}
+              size="large"
+              variant="contained"
+              className="!w-full !bg-black"
+            >
+              {loading ? "Resetting..." : "RESET PASSWORD"}
+            </Button>
+          </div>
 
           {error && <div className="error">{error}</div>}
           {message && <div className="info">{message}</div>}
 
           <div className="signup-link">
-            <Link to="/login">Back to Login</Link>
+            <Link onClick={() => navigate("/login")}>Back to Login</Link>
           </div>
         </form>
       </div>
