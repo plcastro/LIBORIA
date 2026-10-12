@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { SearchOutlined, PlusOutlined } from "../../components/MuiAntIcons";
-import { Input, Row, Col, Button, Table, message, Card } from "../../components/muiAntdCompat";
+import { SearchOutlined, PlusOutlined } from "@ant-design/icons";
+import { Input, Row, Col, Button, Table, message, Card } from "antd";
 import AddBookModal from "../../components/Modal/AddBookModal";
 import EditBookModal from "../../components/Modal/EditBookModal";
 import DeleteBookModal from "../../components/Modal/DeleteBookModal";
@@ -59,7 +59,7 @@ const DisplayBook = () => {
     setLoading(true);
     try {
       const { data } = await axios.get(
-        `http://localhost:8000/api/books/search?q=${encodeURIComponent(query)}`
+        `http://localhost:8000/api/books/search?q=${encodeURIComponent(query)}`,
       );
       setFilteredBooks(data);
     } catch (err) {
@@ -83,8 +83,8 @@ const DisplayBook = () => {
         Object.values(book).some(
           (value) =>
             typeof value === "string" &&
-            value.toLowerCase().includes(searchValue.toLowerCase())
-        )
+            value.toLowerCase().includes(searchValue.toLowerCase()),
+        ),
       );
       setFilteredBooks(filtered);
     }
@@ -103,7 +103,7 @@ const DisplayBook = () => {
 
       setBooks((prev) => prev.filter((b) => b.book_id !== book.book_id));
       setFilteredBooks((prev) =>
-        prev.filter((b) => b.book_id !== book.book_id)
+        prev.filter((b) => b.book_id !== book.book_id),
       );
       messageApi.success("Book deleted successfully");
     } catch (err) {

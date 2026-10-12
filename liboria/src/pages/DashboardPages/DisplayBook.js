@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import axios from "axios";
 import { SearchOutlined, PlusOutlined } from "@ant-design/icons";
 import { Input, Row, Col, Button, Table, message, Card } from "antd";
 import AddBookModal from "../../components/Modal/AddBookModal";
@@ -38,9 +39,7 @@ const DisplayBook = () => {
   const fetchBooks = async () => {
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:8000/api/books");
-      if (!res.ok) throw new Error("Failed to fetch books");
-      const data = await res.json();
+      const { data } = await axios.get("http://localhost:8000/api/books");
       setBooks(data);
     } catch (err) {
       console.error(err);
@@ -59,11 +58,9 @@ const DisplayBook = () => {
 
     setLoading(true);
     try {
-      const res = await fetch(
-        `http://localhost:8000/api/books/search?q=${encodeURIComponent(query)}`
+      const { data } = await axios.get(
+        `http://localhost:8000/api/books/search?q=${encodeURIComponent(query)}`,
       );
-      if (!res.ok) throw new Error("Failed to search books");
-      const data = await res.json();
       setFilteredBooks(data);
     } catch (err) {
       console.error(err);
@@ -86,8 +83,8 @@ const DisplayBook = () => {
         Object.values(book).some(
           (value) =>
             typeof value === "string" &&
-            value.toLowerCase().includes(searchValue.toLowerCase())
-        )
+            value.toLowerCase().includes(searchValue.toLowerCase()),
+        ),
       );
       setFilteredBooks(filtered);
     }
@@ -102,26 +99,16 @@ const DisplayBook = () => {
   // Confirm delete
   const handleConfirmDelete = async (book) => {
     try {
-      const res = await fetch(
-        `http://localhost:8000/api/books/${book.book_id}`,
-        {
-          method: "DELETE",
-        }
-      );
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "Failed to delete book");
-      }
+      await axios.delete(`http://localhost:8000/api/books/${book.book_id}`);
 
       setBooks((prev) => prev.filter((b) => b.book_id !== book.book_id));
       setFilteredBooks((prev) =>
-        prev.filter((b) => b.book_id !== book.book_id)
+        prev.filter((b) => b.book_id !== book.book_id),
       );
       messageApi.success("Book deleted successfully");
     } catch (err) {
       console.error(err);
-      message.error(err.message);
+      message.error(err.response?.data?.error || err.message);
     } finally {
       setDeleteModalOpen(false);
     }

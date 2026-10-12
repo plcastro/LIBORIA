@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Input, Table, Tag, Card, Row, Col, message, Spin } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
-
+import axios from "axios";
 const ViewRecords = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [records, setRecords] = useState([]);
@@ -10,13 +10,19 @@ const ViewRecords = () => {
   // Fetch records from the database
   const fetchRecords = async () => {
     setLoading(true);
+    setError("");
+
     try {
-      const response = await fetch("http://localhost:8000/api/records");
-      const data = await response.json();
+      const { data } = await axios.get("http://localhost:8000/api/records");
+
+      if (!Array.isArray(data)) {
+        throw new Error("Invalid records response");
+      }
+
       setRecords(data);
     } catch (err) {
       console.error(err);
-      message.error("Failed to fetch records. Please try again.");
+      setError("Failed to fetch records. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -28,8 +34,8 @@ const ViewRecords = () => {
 
   const filteredRecords = records.filter((record) =>
     Object.values(record).some((value) =>
-      value?.toString().toLowerCase().includes(searchTerm.toLowerCase())
-    )
+      value?.toString().toLowerCase().includes(searchTerm.toLowerCase()),
+    ),
   );
 
   const columns = [

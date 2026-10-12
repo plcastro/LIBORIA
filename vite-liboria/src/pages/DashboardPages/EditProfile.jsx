@@ -1,30 +1,23 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { Button, Form, Input, Space, Modal, message } from "antd";
 import axios from "axios";
-import {
-  Button,
-  TextField,
-  Stack,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Box,
-  Snackbar,
-  Alert,
-} from "@mui/material";
+const SubmitButton = ({ form, children }) => {
+  const [submittable, setSubmittable] = useState(false);
+  const values = Form.useWatch([], form);
 
-const SubmitButton = ({ form, children, disabled }) => {
+  useEffect(() => {
+    form
+      .validateFields({ validateOnly: true })
+      .then(() => setSubmittable(true))
+      .catch(() => setSubmittable(false));
+  }, [form, values]);
+
   return (
     <Button
-      type="submit"
-      variant="contained"
-      disabled={disabled}
-      sx={{
-        backgroundColor: "#000",
-        color: "#fff",
-        width: "200px",
-        "&:hover": { backgroundColor: "#333" },
-      }}
+      type="primary"
+      htmlType="submit"
+      disabled={!submittable}
+      style={{ backgroundColor: "#000", color: "#fff", width: "200px" }}
     >
       {children}
     </Button>
@@ -32,64 +25,9 @@ const SubmitButton = ({ form, children, disabled }) => {
 };
 
 const EditProfile = ({ initialData, isVisible, onClose, onSave }) => {
-  const [form, setForm] = useState({
-    username: initialData?.username || "",
-    name: initialData?.name || "",
-    email: initialData?.email || "",
-    currPassword: "",
-    password: "",
-    confirmPassword: "",
-  });
-
-  const [errors, setErrors] = useState({});
+  const [messageApi, contextHolder] = message.useMessage();
+  const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
-  const [notification, setNotification] = useState({
-    open: false,
-    severity: "success",
-    text: "",
-  });
-
-  React.useEffect(() => {
-    setForm({
-      username: initialData?.username || "",
-      name: initialData?.name || "",
-      email: initialData?.email || "",
-      currPassword: "",
-      password: "",
-      confirmPassword: "",
-    });
-    setErrors({});
-  }, [initialData, isVisible]);
-
-  const showMessage = (severity, text) => {
-    setNotification({ open: true, severity, text: text || "" });
-  };
-
-  const handleChange = (event) => {
-    const { name, value } = event.target;
-
-    setForm((prev) => ({ ...prev, [name]: value }));
-    setErrors((prev) => ({ ...prev, [name]: "" }));
-  };
-
-  const validateForm = () => {
-    const nextErrors = {};
-
-    if (!form.currPassword) {
-      nextErrors.currPassword = "Please enter your current password";
-    }
-
-    if (!form.password) {
-      nextErrors.password = "Please enter your new password";
-    }
-
-    if (!form.confirmPassword) {
-      nextErrors.confirmPassword = "Please re-enter your new password";
-    }
-
-    setErrors(nextErrors);
-    return Object.keys(nextErrors).length === 0;
-  };
 
   const onFinish = async (event) => {
     event.preventDefault();
@@ -147,140 +85,67 @@ const EditProfile = ({ initialData, isVisible, onClose, onSave }) => {
     }
   };
 
-  const passwordFields = [
-    {
-      name: "currPassword",
-      label: "Current Password",
-      error: errors.currPassword,
-    },
-    {
-      name: "password",
-      label: "New Password",
-      error: errors.password,
-    },
-    {
-      name: "confirmPassword",
-      label: "Confirm New Password",
-      error: errors.confirmPassword,
-    },
-  ];
-
-  const canSubmit =
-    form.currPassword && form.password && form.confirmPassword && !loading;
-
   return (
     <>
-      <Dialog
+      {contextHolder}
+      <Modal
+        title="Change Password"
         open={isVisible}
-        onClose={onClose}
-        fullWidth
-        maxWidth="sm"
-        TransitionProps={{
-          onExited: () => {
-            setForm({
-              username: initialData?.username || "",
-              name: initialData?.name || "",
-              email: initialData?.email || "",
-              currPassword: "",
-              password: "",
-              confirmPassword: "",
-            });
-            setErrors({});
-          },
-        }}
+        onCancel={onClose}
+        footer={null}
+        afterClose={() => form.resetFields()}
       >
-        <DialogTitle>Edit Profile Information</DialogTitle>
-
-        <DialogContent>
-          <Box
-            component="form"
-            id="editProfileForm"
-            onSubmit={onFinish}
-            autoComplete="off"
-            sx={{ pt: 1 }}
-          >
-            <Stack spacing={2}>
-              <TextField
-                name="username"
-                label="Username"
-                value={form.username}
-                fullWidth
-                size="small"
-                InputProps={{ readOnly: true }}
-              />
-
-              <TextField
-                name="name"
-                label="Name"
-                value={form.name}
-                fullWidth
-                size="small"
-                InputProps={{ readOnly: true }}
-              />
-
-              <TextField
-                name="email"
-                label="Email"
-                value={form.email}
-                fullWidth
-                size="small"
-                InputProps={{ readOnly: true }}
-              />
-
-              {passwordFields.map((field) => (
-                <TextField
-                  key={field.name}
-                  name={field.name}
-                  label={field.label}
-                  type="password"
-                  value={form[field.name]}
-                  onChange={handleChange}
-                  required
-                  fullWidth
-                  size="small"
-                  error={Boolean(field.error)}
-                  helperText={field.error}
-                  inputProps={{ minLength: 8 }}
-                />
-              ))}
-
-              <Stack
-                direction="row"
-                spacing={1}
-                alignItems="baseline"
-                sx={{ flexWrap: "wrap" }}
-              >
-                <SubmitButton disabled={!canSubmit}>
-                  {loading ? "Saving..." : "Save Password"}
-                </SubmitButton>
-
-                <Button
-                  onClick={onClose}
-                  type="button"
-                  variant="outlined"
-                  sx={{ width: "200px" }}
-                >
-                  Cancel
-                </Button>
-              </Stack>
-            </Stack>
-          </Box>
-        </DialogContent>
-      </Dialog>
-
-      <Snackbar
-        open={notification.open}
-        autoHideDuration={3000}
-        onClose={() => setNotification((prev) => ({ ...prev, open: false }))}
-      >
-        <Alert
-          severity={notification.severity}
-          variant="filled"
-          onClose={() => setNotification((prev) => ({ ...prev, open: false }))}
+        <Form
+          form={form}
+          name="editProfileForm"
+          layout="vertical"
+          onFinish={onFinish}
+          initialValues={initialData}
+          autoComplete="off"
         >
-          {notification.text}
-        </Alert>
-      </Snackbar>
+          <Form.Item
+            name="currPassword"
+            label="Current Password"
+            rules={[
+              { required: true, message: "Please enter your current password" },
+            ]}
+          >
+            <Input.Password minLength={8} />
+          </Form.Item>
+          <Form.Item
+            name="password"
+            label="New Password"
+            rules={[
+              { required: true, message: "Please enter your new password" },
+            ]}
+          >
+            <Input.Password minLength={8} />
+          </Form.Item>
+
+          <Form.Item
+            name="confirmPassword"
+            label="Confirm New Password"
+            rules={[
+              { required: true, message: "Please re-enter your new password" },
+            ]}
+          >
+            <Input.Password minLength={8} />
+          </Form.Item>
+
+          <Form.Item>
+            <Space align="baseline">
+              <SubmitButton form={form}>Save Password</SubmitButton>
+              <Button
+                onClick={onClose}
+                htmlType="button"
+                style={{ width: "200px" }}
+              >
+                Cancel
+              </Button>
+            </Space>
+          </Form.Item>
+        </Form>
+      </Modal>
     </>
   );
 };

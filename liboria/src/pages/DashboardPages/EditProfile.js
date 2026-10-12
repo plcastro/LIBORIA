@@ -1,11 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button, Form, Input, Space, Modal, message } from "antd";
-
+import axios from "axios";
 const SubmitButton = ({ form, children }) => {
-  const [submittable, setSubmittable] = React.useState(false);
+  const [submittable, setSubmittable] = useState(false);
   const values = Form.useWatch([], form);
 
-  React.useEffect(() => {
+  useEffect(() => {
     form
       .validateFields({ validateOnly: true })
       .then(() => setSubmittable(true))
@@ -29,11 +29,15 @@ const EditProfile = ({ initialData, isVisible, onClose, onSave }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
 
-  const onFinish = async (values) => {
-    const { currPassword, password, confirmPassword } = values;
+  const onFinish = async (event) => {
+    event.preventDefault();
+
+    if (!validateForm()) return;
+
+    const { currPassword, password, confirmPassword } = form;
 
     if (password !== confirmPassword) {
-      messageApi.error("Password and Confirm password do not match!");
+      showMessage("error", "Password and Confirm password do not match!");
       return;
     }
 
@@ -41,32 +45,41 @@ const EditProfile = ({ initialData, isVisible, onClose, onSave }) => {
     const userId = user.userid || user._id || user.id;
 
     if (password === currPassword) {
-      messageApi.error("New password cannot be the same as current password.");
+      showMessage(
+        "error",
+        "New password cannot be the same as current password.",
+      );
       return;
     }
 
     try {
       setLoading(true);
-      const response = await fetch(
+
+      const response = await axios.put(
         `http://localhost:8000/api/users/check-pass/${userId}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ currPassword, newPassword: password }),
-        },
+        { currPassword, newPassword: password },
+        { headers: { "Content-Type": "application/json" } },
       );
 
-      const data = await response.json();
+      showMessage("success", response.data.message);
+      setForm((prev) => ({
+        ...prev,
+        currPassword: "",
+        password: "",
+        confirmPassword: "",
+      }));
 
-      if (response.ok) {
-        messageApi.success(data.message);
-        form.resetFields();
-        onClose();
-      } else {
-        messageApi.error(data.error);
-      }
+      onSave?.(response.data);
+      onClose();
     } catch (err) {
-      messageApi.error("Network error. Please try again.");
+      if (err.response) {
+        showMessage(
+          "error",
+          err.response.data?.error || "Unable to change password.",
+        );
+      } else {
+        showMessage("error", "Network error. Please try again.");
+      }
     } finally {
       setLoading(false);
     }

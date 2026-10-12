@@ -1,35 +1,11 @@
 import React, { useState, useEffect } from "react";
+import { Input, Table, Tag, Card, Row, Col, message, Spin } from "antd";
+import { SearchOutlined } from "@ant-design/icons";
 import axios from "axios";
-
-import {
-  TextField,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Chip,
-  Card,
-  CardContent,
-  Grid,
-  Snackbar,
-  Alert,
-  CircularProgress,
-  InputAdornment,
-  Typography,
-  Box,
-} from "@mui/material";
-
-import { SearchOutlined as SearchIcon } from "../../components/MuiAntIcons";
-
 const ViewRecords = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(false);
-
-  const [error, setError] = useState("");
 
   // Fetch records from the database
   const fetchRecords = async () => {
@@ -62,269 +38,163 @@ const ViewRecords = () => {
     ),
   );
 
-  const formatDate = (date) => {
-    if (!date) return "-";
+  const columns = [
+    {
+      title: "Borrow ID",
+      dataIndex: "borrow_id",
+      key: "borrow_id",
+      width: 120,
+    },
+    {
+      title: "Borrower Name",
+      dataIndex: "borrower_name",
+      key: "borrower_name",
+      width: 150,
+    },
+    {
+      title: "Year Level",
+      dataIndex: "year_level",
+      key: "year_level",
+      width: 120,
+    },
+    {
+      title: "Course",
+      dataIndex: "course",
+      key: "course",
+      width: 150,
+    },
+    {
+      title: "Book Title",
+      dataIndex: "book_title",
+      key: "book_title",
+      width: 200,
+      ellipsis: true,
+      render: (text) => (
+        <span style={{ whiteSpace: "normal", wordBreak: "break-word" }}>
+          {text}
+        </span>
+      ),
+    },
+    {
+      title: "Author",
+      dataIndex: "author_name",
+      key: "author_name",
+      width: 150,
+    },
+    {
+      title: "Borrowed Date",
+      dataIndex: "date_borrowed",
+      key: "date_borrowed",
+      width: 150,
+      render: (date) => new Date(date).toLocaleDateString(),
+    },
+    {
+      title: "Due Date",
+      dataIndex: "due_date",
+      key: "due_date",
+      width: 150,
+      render: (date) => new Date(date).toLocaleDateString(),
+    },
+    {
+      title: "Returned Date",
+      dataIndex: "returned_date",
+      key: "returned_date",
+      width: 150,
+      render: (date) => (date ? new Date(date).toLocaleDateString() : "-"),
+    },
+    {
+      title: "Violation",
+      dataIndex: "violation",
+      key: "violation",
+      width: 130,
+      render: (violation) => (
+        <Tag
+          color={violation === "None" || !violation ? "green" : "red"}
+          style={{ margin: 0 }}
+        >
+          {violation || "None"}
+        </Tag>
+      ),
+    },
+    {
+      title: "Penalty",
+      dataIndex: "penalty",
+      key: "penalty",
+      width: 100,
+      render: (penalty) => (
+        <span
+          style={{
+            color: !penalty || penalty === "0.00" ? "#52c41a" : "#ff4d4f",
+            fontWeight: "bold",
+          }}
+        >
+          ₱{penalty || "0.00"}
+        </span>
+      ),
+    },
+    {
+      title: "Status",
+      dataIndex: "status",
+      key: "status",
+      width: 100,
+      render: (status, record) => {
+        const isReturned = record.returned_date;
+        const currentStatus = status || (isReturned ? "Returned" : "Borrowed");
 
-    const parsedDate = new Date(date);
+        // Define color based on status
+        let tagColor = "orange"; // default
+        if (currentStatus === "Returned") {
+          tagColor = "green";
+        } else if (currentStatus === "Borrowed") {
+          tagColor = "blue";
+        }
 
-    if (Number.isNaN(parsedDate.getTime())) {
-      return "-";
-    }
-
-    return parsedDate.toLocaleDateString();
-  };
-
-  const getStatus = (status, record) => {
-    return status || (record.returned_date ? "Returned" : "Borrowed");
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "Returned":
-        return "success";
-      case "Borrowed":
-        return "info";
-      default:
-        return "warning";
-    }
-  };
+        return (
+          <Tag color={tagColor} style={{ margin: 0 }}>
+            {currentStatus}
+          </Tag>
+        );
+      },
+    },
+  ];
 
   return (
-    <Box sx={{ minHeight: "100vh" }}>
-      <Card elevation={2}>
-        <CardContent>
-          <Grid
-            container
-            spacing={2}
-            alignItems="center"
-            justifyContent="space-between"
-            sx={{ mb: 2 }}
-          >
-            <Grid item xs={12} sm={8} md={5} lg={4}>
-              <TextField
-                placeholder="Search records"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                fullWidth
-                size="small"
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon color="action" />
-                    </InputAdornment>
-                  ),
-                }}
-                inputProps={{
-                  "aria-label": "Search records",
-                }}
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    height: 40,
-                  },
-                }}
-              />
-            </Grid>
-          </Grid>
+    <div style={{ minHeight: "100vh" }}>
+      <Card>
+        <Row
+          align="middle"
+          justify="space-between"
+          style={{ marginBottom: "20px" }}
+        >
+          <Col xs={24} sm={12} md={10} lg={5}>
+            <Input
+              prefix={<SearchOutlined />}
+              placeholder="Search records"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{ height: 40 }}
+            />
+          </Col>
+        </Row>
 
-          {error && (
-            <Alert
-              severity="error"
-              sx={{ mb: 2 }}
-              action={
-                <button
-                  type="button"
-                  onClick={fetchRecords}
-                  style={{
-                    border: 0,
-                    background: "transparent",
-                    cursor: "pointer",
-                    fontWeight: 600,
-                  }}
-                >
-                  Retry
-                </button>
-              }
-            >
-              {error}
-            </Alert>
-          )}
-
-          <TableContainer
-            component={Paper}
-            variant="outlined"
-            sx={{
-              width: "100%",
-              overflowX: "auto",
-            }}
-          >
-            <Table
-              stickyHeader
-              aria-label="Borrowing records"
-              sx={{
-                minWidth: 1650,
-                "& .MuiTableCell-head": {
-                  backgroundColor: "#f5f5f5",
-                  fontWeight: 600,
-                  whiteSpace: "nowrap",
-                },
-              }}
-            >
-              <TableHead>
-                <TableRow>
-                  <TableCell sx={{ minWidth: 120 }}>Borrow ID</TableCell>
-
-                  <TableCell sx={{ minWidth: 150 }}>Borrower Name</TableCell>
-
-                  <TableCell sx={{ minWidth: 120 }}>Year Level</TableCell>
-
-                  <TableCell sx={{ minWidth: 150 }}>Course</TableCell>
-
-                  <TableCell sx={{ minWidth: 200 }}>Book Title</TableCell>
-
-                  <TableCell sx={{ minWidth: 150 }}>Author</TableCell>
-
-                  <TableCell sx={{ minWidth: 150 }}>Borrowed Date</TableCell>
-
-                  <TableCell sx={{ minWidth: 150 }}>Due Date</TableCell>
-
-                  <TableCell sx={{ minWidth: 150 }}>Returned Date</TableCell>
-
-                  <TableCell sx={{ minWidth: 130 }}>Violation</TableCell>
-
-                  <TableCell sx={{ minWidth: 100 }}>Penalty</TableCell>
-
-                  <TableCell sx={{ minWidth: 110 }}>Status</TableCell>
-                </TableRow>
-              </TableHead>
-
-              <TableBody>
-                {loading ? (
-                  <TableRow>
-                    <TableCell colSpan={12} align="center" sx={{ py: 5 }}>
-                      <CircularProgress size={30} />
-
-                      <Typography variant="body2" sx={{ mt: 1 }}>
-                        Loading records...
-                      </Typography>
-                    </TableCell>
-                  </TableRow>
-                ) : filteredRecords.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={12} align="center" sx={{ py: 4 }}>
-                      No records found
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredRecords.map((record) => {
-                    const violation = record.violation;
-                    const penalty = record.penalty;
-
-                    const hasPenalty =
-                      penalty != null &&
-                      penalty !== "" &&
-                      Number(penalty) !== 0;
-
-                    const currentStatus = getStatus(record.status, record);
-
-                    return (
-                      <TableRow key={record.borrow_id} hover>
-                        <TableCell>{record.borrow_id}</TableCell>
-
-                        <TableCell>{record.borrower_name}</TableCell>
-
-                        <TableCell>{record.year_level}</TableCell>
-
-                        <TableCell>{record.course}</TableCell>
-
-                        <TableCell
-                          sx={{
-                            whiteSpace: "normal",
-                            overflowWrap: "anywhere",
-                            maxWidth: 200,
-                          }}
-                        >
-                          {record.book_title}
-                        </TableCell>
-
-                        <TableCell>{record.author_name}</TableCell>
-
-                        <TableCell>
-                          {formatDate(record.date_borrowed)}
-                        </TableCell>
-
-                        <TableCell>{formatDate(record.due_date)}</TableCell>
-
-                        <TableCell>
-                          {formatDate(record.returned_date)}
-                        </TableCell>
-
-                        <TableCell>
-                          <Chip
-                            label={violation || "None"}
-                            color={
-                              violation && violation !== "None"
-                                ? "error"
-                                : "success"
-                            }
-                            size="small"
-                            sx={{
-                              borderRadius: 1,
-                              fontWeight: 500,
-                            }}
-                          />
-                        </TableCell>
-
-                        <TableCell>
-                          <Typography
-                            component="span"
-                            sx={{
-                              color: hasPenalty ? "#ff4d4f" : "#52c41a",
-                              fontWeight: "bold",
-                              whiteSpace: "nowrap",
-                            }}
-                          >
-                            ₱
-                            {penalty == null || penalty === ""
-                              ? "0.00"
-                              : Number(penalty).toFixed(2)}
-                          </Typography>
-                        </TableCell>
-
-                        <TableCell>
-                          <Chip
-                            label={currentStatus}
-                            color={getStatusColor(currentStatus)}
-                            size="small"
-                            sx={{
-                              borderRadius: 1,
-                              fontWeight: 500,
-                            }}
-                          />
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </CardContent>
+        <Table
+          columns={columns}
+          dataSource={filteredRecords.map((record) => ({
+            ...record,
+            key: record.borrow_id,
+          }))}
+          loading={loading}
+          pagination={false}
+          scroll={{
+            y: filteredRecords.length > 10 ? "60vh" : undefined,
+            x: "max-content",
+          }}
+          locale={{
+            emptyText: "No records found",
+          }}
+        />
       </Card>
-
-      <Snackbar
-        open={Boolean(error)}
-        autoHideDuration={5000}
-        onClose={() => setError("")}
-        anchorOrigin={{
-          vertical: "top",
-          horizontal: "right",
-        }}
-      >
-        <Alert severity="error" variant="filled" onClose={() => setError("")}>
-          {error}
-        </Alert>
-      </Snackbar>
-    </Box>
+    </div>
   );
 };
 

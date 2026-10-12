@@ -6,6 +6,7 @@ import {
   PlusOutlined,
   SearchOutlined,
 } from "@ant-design/icons";
+import axios from "axios";
 import StaffModal from "../../components/Modal/StaffModal";
 
 const StaffList = () => {
@@ -20,12 +21,19 @@ const StaffList = () => {
   const loadAllStaff = async () => {
     setLoading(true);
     setError("");
+
     try {
-      const res = await fetch("http://localhost:8000/api/users");
-      const result = await res.json();
-      if (res.ok) {
-        // Ensure each row has a unique key for Ant Design Table
-        setData(result.map((item) => ({ ...item, key: item.userid })));
+      const { data: result } = await axios.get(
+        "http://localhost:8000/api/users",
+      );
+
+      if (Array.isArray(result)) {
+        setData(
+          result.map((item) => ({
+            ...item,
+            key: item.userid,
+          })),
+        );
       } else {
         setError(result.error || "Failed to load staff");
       }
@@ -53,20 +61,16 @@ const StaffList = () => {
 
   const handleEdit = async (record) => {
     try {
-      const res = await fetch(
+      const { data: userData } = await axios.get(
         `http://localhost:8000/api/users/${record.userid}`,
       );
-      const userData = await res.json();
-      if (res.ok) {
-        setSelectedStaff(userData);
-        setModalMode("edit");
-        setModalVisible(true);
-      } else {
-        messageApi.error("Failed to load user details");
-      }
+
+      setSelectedStaff(userData);
+      setModalMode("edit");
+      setModalVisible(true);
     } catch (err) {
       console.error(err);
-      message.error("Network error");
+      showMessage("Network error");
     }
   };
 
