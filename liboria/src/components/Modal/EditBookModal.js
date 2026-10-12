@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import {
   Modal,
@@ -11,76 +12,105 @@ import {
 } from "antd";
 import dayjs from "dayjs";
 import axios from "axios";
+
 const EditBookModal = ({ modalOpen, setModalOpen, book, onBookUpdated }) => {
   const [messageApi, contextHolder] = message.useMessage();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (book) {
+    if (modalOpen && book) {
       form.setFieldsValue({
         title: book.title,
         author_name: book.author_name,
         category: book.category,
-        published_date: book.published_date ? dayjs(book.published_date) : null,
+        published_date: book.published_date
+          ? dayjs(book.published_date)
+          : null,
         total_copies: book.total_copies,
         available_copies: book.available_copies,
         description: book.description,
         image: book.image,
       });
+    } else if (!modalOpen) {
+      form.resetFields();
     }
-  }, [book, form]);
+  }, [modalOpen, book, form]);
 
   const handleOk = async () => {
-    if (!validate()) return;
+    if (!book?.book_id) {
+      messageApi.error("No book selected to update.");
+      return;
+    }
+
+    let values;
+
+    try {
+      values = await form.validateFields();
+    } catch {
+      return;
+    }
 
     try {
       setLoading(true);
 
       const payload = {
-        ...formData,
-        total_copies: Number(formData.total_copies),
-        available_copies: Number(formData.available_copies),
-        published_date: formData.published_date || null,
+        ...values,
+        total_copies: Number(values.total_copies),
+        available_copies: Number(values.available_copies),
+        published_date: values.published_date
+          ? values.published_date.format("YYYY-MM-DD")
+          : null,
       };
 
       await axios.put(
         `http://localhost:8000/api/books/${book.book_id}`,
         payload,
-        { headers: { "Content-Type": "application/json" } },
+        {
+          headers: { "Content-Type": "application/json" },
+        }
       );
 
-      if (onBookUpdated) onBookUpdated({ ...book, ...payload });
+      if (onBookUpdated) {
+        onBookUpdated({ ...book, ...payload });
+      }
+
       setModalOpen(false);
-      notify("success", "Book updated successfully");
+      messageApi.success("Book updated successfully");
+
       setTimeout(() => {
         window.location.reload();
       }, 500);
     } catch (err) {
-      console.error(err);
-      notify("error", err.response?.data?.error || "Failed to update book");
+      console.error("Error updating book:", err);
+
+      messageApi.error(
+        err.response?.data?.error || "Failed to update book"
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  // Update available copies if total copies is lowered below available
+  // Preserve the existing rule for books that are currently borrowed.
   const handleTotalCopiesChange = (value) => {
+    if (value == null || !book) return;
+
     const currentTotal = book.total_copies;
     const currentAvailable = book.available_copies;
     const borrowedCount = currentTotal - currentAvailable;
 
-    // If there are borrowed copies and user tries to reduce below current total
     if (borrowedCount > 0 && value < currentTotal) {
       messageApi.warning(
-        "You cannot decrease total copies while some books are still borrowed.",
+        "You cannot decrease total copies while some books are still borrowed."
       );
+
       form.setFieldsValue({ total_copies: currentTotal });
       return;
     }
 
-    // Keep available_copies valid
     const available = form.getFieldValue("available_copies") || 0;
+
     if (value < available) {
       form.setFieldsValue({ available_copies: value });
     }
@@ -89,6 +119,7 @@ const EditBookModal = ({ modalOpen, setModalOpen, book, onBookUpdated }) => {
   return (
     <>
       {contextHolder}
+
       <Modal
         title="Edit Book"
         open={modalOpen}
@@ -106,52 +137,70 @@ const EditBookModal = ({ modalOpen, setModalOpen, book, onBookUpdated }) => {
                 <Input />
               </Form.Item>
             </Col>
+
             <Col span={12}>
               <Form.Item
                 label="Title"
                 name="title"
-                rules={[{ required: true }]}
+                rules={[{ required: true, message: "Please enter the title." }]}
               >
                 <Input />
               </Form.Item>
             </Col>
+
             <Col span={12}>
               <Form.Item
                 label="Author Name"
                 name="author_name"
-                rules={[{ required: true }]}
+                rules={[
+                  { required: true, message: "Please enter the author name." },
+                ]}
               >
                 <Input />
               </Form.Item>
             </Col>
+
             <Col span={12}>
               <Form.Item
                 label="Category"
                 name="category"
-                rules={[{ required: true }]}
+                rules={[
+                  { required: true, message: "Please enter the category." },
+                ]}
               >
                 <Input />
               </Form.Item>
             </Col>
+
             <Col span={12}>
               <Form.Item label="Published Date" name="published_date">
                 <DatePicker style={{ width: "100%" }} />
               </Form.Item>
             </Col>
+
             <Col span={12}>
               <Form.Item
                 label="Total Copies"
                 name="total_copies"
                 rules={[
-                  { required: true },
+                  { required: true, message: "Enter the total copies." },
+                  {
+                    type: "number",
+                    min: 1,
+                    message: "Total copies must be at least 1.",
+                  },
                   ({ getFieldValue }) => ({
                     validator(_, value) {
                       const available = getFieldValue("available_copies") || 0;
-                      if (value >= available) return Promise.resolve();
+
+                      if (value == null || value >= available) {
+                        return Promise.resolve();
+                      }
+
                       return Promise.reject(
                         new Error(
-                          "Total copies cannot be less than available copies",
-                        ),
+                          "Total copies cannot be less than available copies."
+                        )
                       );
                     },
                   }),
@@ -159,33 +208,49 @@ const EditBookModal = ({ modalOpen, setModalOpen, book, onBookUpdated }) => {
               >
                 <InputNumber
                   min={1}
+                  precision={0}
                   style={{ width: "100%" }}
                   onChange={handleTotalCopiesChange}
                 />
               </Form.Item>
             </Col>
+
             <Col span={12}>
               <Form.Item
                 label="Available Copies"
                 name="available_copies"
                 rules={[
-                  { required: true },
+                  { required: true, message: "Enter available copies." },
+                  {
+                    type: "number",
+                    min: 0,
+                    message: "Available copies cannot be negative.",
+                  },
                   ({ getFieldValue }) => ({
                     validator(_, value) {
                       const total = getFieldValue("total_copies") || 0;
-                      if (value <= total) return Promise.resolve();
+
+                      if (value == null || value <= total) {
+                        return Promise.resolve();
+                      }
+
                       return Promise.reject(
                         new Error(
-                          "Available copies cannot exceed total copies",
-                        ),
+                          "Available copies cannot exceed total copies."
+                        )
                       );
                     },
                   }),
                 ]}
               >
-                <InputNumber min={0} style={{ width: "100%" }} />
+                <InputNumber
+                  min={0}
+                  precision={0}
+                  style={{ width: "100%" }}
+                />
               </Form.Item>
             </Col>
+
             <Col span={24}>
               <Form.Item label="Description" name="description">
                 <Input.TextArea rows={3} />

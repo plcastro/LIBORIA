@@ -1,3 +1,4 @@
+
 import React, { useEffect } from "react";
 import {
   Modal,
@@ -13,31 +14,36 @@ import {
 } from "antd";
 import dayjs from "dayjs";
 import axios from "axios";
+
 const ReturnBookModal = ({ open, onClose, initialValues, REASONS }) => {
   const [form] = Form.useForm();
   const [messageApi, contextHolder] = message.useMessage();
   const colProps = { xs: 24, md: 12 };
 
-  // Calculate penalty based on returned date and violations
   const recalculatePenalty = () => {
     const returnedDate = form.getFieldValue("returnedDate") || dayjs();
     const dueDate = dayjs(initialValues?.due_date);
-    let violations = form.getFieldValue("violation") || [];
 
-    // Automatically add/remove "Late Return"
-    if (returnedDate.isAfter(dueDate)) {
-      if (!violations.includes("Late Return")) violations.push("Late Return");
+    if (!dueDate.isValid() || !returnedDate.isValid()) return;
+
+    let violations = [...(form.getFieldValue("violation") || [])];
+
+    if (returnedDate.isAfter(dueDate, "day")) {
+      if (!violations.includes("Late Return")) {
+        violations.push("Late Return");
+      }
     } else {
       violations = violations.filter((v) => v !== "Late Return");
     }
 
     form.setFieldsValue({ violation: violations });
 
-    // Calculate penalty
-    const daysLate = returnedDate.isAfter(dueDate)
-      ? returnedDate.diff(dueDate, "day")
+    const daysLate = returnedDate.isAfter(dueDate, "day")
+      ? returnedDate.startOf("day").diff(dueDate.startOf("day"), "day")
       : 0;
+
     let penalty = daysLate * 10;
+
     if (violations.includes("Damaged")) penalty += 50;
     if (violations.includes("Lost")) penalty += 200;
 
@@ -45,12 +51,13 @@ const ReturnBookModal = ({ open, onClose, initialValues, REASONS }) => {
   };
 
   useEffect(() => {
-    if (initialValues) {
+    if (open && initialValues) {
       const today = dayjs();
       const dueDate = dayjs(initialValues.due_date);
-      const daysLate = today.isAfter(dueDate) ? today.diff(dueDate, "day") : 0;
-
-      const initialViolations = daysLate > 0 ? ["Late Return"] : [];
+      const daysLate =
+        dueDate.isValid() && today.isAfter(dueDate, "day")
+          ? today.startOf("day").diff(dueDate.startOf("day"), "day")
+          : 0;
 
       form.setFieldsValue({
         name: initialValues.borrower_name,
@@ -58,15 +65,14 @@ const ReturnBookModal = ({ open, onClose, initialValues, REASONS }) => {
         penalty: daysLate * 10,
         inCash: 0,
         returnedDate: today,
-        violation: initialViolations,
+        violation: daysLate > 0 ? ["Late Return"] : [],
       });
-    } else {
+    } else if (!open) {
       form.resetFields();
     }
   }, [initialValues, form, open]);
 
-  const handleViolationChange = (selectedViolations) => {
-    form.setFieldsValue({ violation: selectedViolations });
+  const handleViolationChange = () => {
     recalculatePenalty();
   };
 
@@ -75,77 +81,92 @@ const ReturnBookModal = ({ open, onClose, initialValues, REASONS }) => {
     recalculatePenalty();
   };
 
-  const handleFinish = async () => {
-    const nextErrors = {};
-    if (!formData.returnedDate) {
-      nextErrors.returnedDate = "Returned date is required";
+  const handleFinish = async (values) => {
+    if (!initialValues?.borrow_id || !initialValues?.book_id) {
+      messageApi.error("Missing borrowing or book information.");
+      return;
     }
 
-    const hasViolation = formData.violation.length > 0;
-    if (hasViolation && Number(formData.inCash) < Number(formData.penalty)) {
-      nextErrors.inCash = "Amount paid must cover the penalty.";
-    }
-    if (Number(formData.inCash) < 0) {
-      nextErrors.inCash = "Amount paid cannot be negative.";
+    const returnedDate = values.returnedDate;
+    const violations = Array.isArray(values.violation)
+      ? values.violation
+      : [];
+
+    const amountPaid = Number(values.inCash ?? 0);
+    const penalty = Number(values.penalty ?? 0);
+
+    if (!returnedDate || !returnedDate.isValid()) {
+      messageApi.error("Returned date is required.");
+      return;
     }
 
-    setErrors(nextErrors);
-    if (Object.keys(nextErrors).length) {
-      notify("error", Object.values(nextErrors)[0]);
+    if (amountPaid < 0) {
+      messageApi.error("Amount paid cannot be negative.");
+      return;
+    }
+
+    if (violations.length > 0 && amountPaid < penalty) {
+      messageApi.error("Amount paid must cover the penalty.");
       return;
     }
 
     try {
-      let violations = Array.isArray(formData.violation)
-        ? formData.violation
-        : [];
-      if (!violations.length) violations = ["None"];
+      const normalizedViolations = violations.length ? violations : ["None"];
 
       const payload = {
         borrow_id: initialValues.borrow_id,
-        returned_date: dateValue(formData.returnedDate).format("YYYY-MM-DD"),
-        violation: violations,
-        penalty: formData.penalty || 0,
-        amount_paid: formData.inCash || 0,
+        returned_date: returnedDate.format("YYYY-MM-DD"),
+        violation: normalizedViolations,
+        penalty,
+        amount_paid: amountPaid,
       };
 
-      const status = violations.includes("Lost") ? "Lost" : "Returned";
+      const status = normalizedViolations.includes("Lost")
+        ? "Lost"
+        : "Returned";
 
       await axios.put(
         `http://localhost:8000/api/borrowed-books/${initialValues.borrow_id}`,
         { status },
-        { headers: { "Content-Type": "application/json" } },
+        { headers: { "Content-Type": "application/json" } }
       );
 
-      await axios.post("http://localhost:8000/api/returned-books", payload, {
-        headers: { "Content-Type": "application/json" },
-      });
+      await axios.post(
+        "http://localhost:8000/api/returned-books",
+        payload,
+        { headers: { "Content-Type": "application/json" } }
+      );
 
-      if (!violations.includes("Lost")) {
+      if (status !== "Lost") {
         await axios.put(
           `http://localhost:8000/api/books/${initialValues.book_id}`,
           { incrementAvailable: 1 },
-          { headers: { "Content-Type": "application/json" } },
+          { headers: { "Content-Type": "application/json" } }
         );
       }
 
-      notify(
-        "success",
-        violations.includes("Lost")
+      messageApi.success(
+        status === "Lost"
           ? "Book marked as lost!"
-          : "Book returned successfully!",
+          : "Book returned successfully!"
       );
+
       onClose();
       window.location.reload();
     } catch (err) {
       console.error("Error while returning book:", err);
-      notify("error", "An unexpected error occurred while returning the book.");
+
+      messageApi.error(
+        err.response?.data?.error ||
+          "An unexpected error occurred while returning the book."
+      );
     }
   };
 
   return (
     <>
       {contextHolder}
+
       <Modal
         title="Return Book"
         open={open}
@@ -175,7 +196,7 @@ const ReturnBookModal = ({ open, onClose, initialValues, REASONS }) => {
                   formatter={(v) =>
                     `₱ ${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
                   }
-                  parser={(v) => v.replace(/₱\s?|(,*)/g, "")}
+                  parser={(v) => (v || "").replace(/₱\s?|(,*)/g, "")}
                 />
               </Form.Item>
             </Col>
@@ -192,8 +213,13 @@ const ReturnBookModal = ({ open, onClose, initialValues, REASONS }) => {
                   style={{ width: "100%" }}
                   onChange={handleReturnedDateChange}
                   disabledDate={(current) => {
-                    const borrowDate = dayjs(initialValues.date_borrowed);
-                    return current && current.isBefore(borrowDate, "day");
+                    const borrowDate = dayjs(initialValues?.date_borrowed);
+
+                    return (
+                      current &&
+                      borrowDate.isValid() &&
+                      current.isBefore(borrowDate, "day")
+                    );
                   }}
                 />
               </Form.Item>
@@ -212,11 +238,13 @@ const ReturnBookModal = ({ open, onClose, initialValues, REASONS }) => {
 
             <Col {...colProps}>
               <Form.Item
-                shouldUpdate={(prev, curr) => prev.violation !== curr.violation}
+                shouldUpdate={(prev, curr) =>
+                  prev.violation !== curr.violation
+                }
               >
                 {({ getFieldValue }) => {
-                  const violation = getFieldValue("violation") || [];
-                  const hasViolation = violation.length > 0;
+                  const violations = getFieldValue("violation") || [];
+                  const hasViolation = violations.length > 0;
 
                   return (
                     <Form.Item
@@ -229,12 +257,29 @@ const ReturnBookModal = ({ open, onClose, initialValues, REASONS }) => {
                             "Please enter the amount paid before returning.",
                         },
                         {
-                          validator: (_, value) =>
-                            value >= 0
-                              ? Promise.resolve()
-                              : Promise.reject(
-                                  new Error("Amount paid cannot be negative."),
-                                ),
+                          type: "number",
+                          min: 0,
+                          message: "Amount paid cannot be negative.",
+                        },
+                        {
+                          validator: (_, value) => {
+                            const currentPenalty =
+                              Number(form.getFieldValue("penalty")) || 0;
+
+                            if (
+                              !hasViolation ||
+                              value == null ||
+                              Number(value) >= currentPenalty
+                            ) {
+                              return Promise.resolve();
+                            }
+
+                            return Promise.reject(
+                              new Error(
+                                "Amount paid must cover the penalty."
+                              )
+                            );
+                          },
                         },
                       ]}
                     >
@@ -245,7 +290,7 @@ const ReturnBookModal = ({ open, onClose, initialValues, REASONS }) => {
                         formatter={(v) =>
                           `₱ ${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
                         }
-                        parser={(v) => v.replace(/₱\s?|(,*)/g, "")}
+                        parser={(v) => (v || "").replace(/₱\s?|(,*)/g, "")}
                       />
                     </Form.Item>
                   );

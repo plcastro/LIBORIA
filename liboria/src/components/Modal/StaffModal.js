@@ -1,6 +1,16 @@
+
 import React, { useEffect, useState } from "react";
-import { Modal, Form, Input, Button, Space, message, Select } from "antd";
+import {
+  Modal,
+  Form,
+  Input,
+  Button,
+  Space,
+  message,
+  Select,
+} from "antd";
 import axios from "axios";
+
 const StaffModal = ({
   isVisible,
   mode,
@@ -12,6 +22,7 @@ const StaffModal = ({
   const [messageApi, contextHolder] = message.useMessage();
   const [isSaving, setIsSaving] = useState(false);
   const [form] = Form.useForm();
+
   const isEditMode = mode === "edit";
   const isAddMode = mode === "add";
   const isDeleteMode = mode === "delete";
@@ -20,11 +31,20 @@ const StaffModal = ({
   const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false);
   const [isPreviewConfirmOpen, setIsPreviewConfirmOpen] = useState(false);
   const [previewData, setPreviewData] = useState(null);
-  const [submittable, setSubmittable] = useState(false);
-  const loggedInUserId = JSON.parse(localStorage.getItem("currentUser"))?._id;
-  const values = Form.useWatch([], form);
+
+  const loggedInUserId =
+    JSON.parse(localStorage.getItem("currentUser") || "null")?._id;
+
+  const activeUserId = currentUserId || loggedInUserId;
+
+  const isOwnAccount =
+    selectedStaff?._id != null &&
+    activeUserId != null &&
+    String(selectedStaff._id) === String(activeUserId);
 
   useEffect(() => {
+    if (!isVisible) return;
+
     if (isEditMode && selectedStaff) {
       form.setFieldsValue({
         _id: selectedStaff._id,
@@ -33,17 +53,20 @@ const StaffModal = ({
         username: selectedStaff.username,
         account_type: selectedStaff.account_type,
       });
+    } else if (isAddMode) {
+      form.resetFields();
+      form.setFieldsValue({ account_type: "Librarian" });
     } else {
       form.resetFields();
     }
-  }, [mode, selectedStaff, form]);
+  }, [isVisible, mode, selectedStaff, form, isEditMode, isAddMode]);
 
-  useEffect(() => {
-    form
-      .validateFields({ validateOnly: true })
-      .then(() => setSubmittable(true))
-      .catch(() => setSubmittable(false));
-  }, [form, values]);
+  const resetTransientState = () => {
+    setPreviewData(null);
+    setIsConfirmDeleteOpen(false);
+    setIsCancelConfirmOpen(false);
+    setIsPreviewConfirmOpen(false);
+  };
 
   const handlePrimaryClick = async () => {
     try {
@@ -51,12 +74,15 @@ const StaffModal = ({
       setPreviewData(vals);
       setIsPreviewConfirmOpen(true);
     } catch {
-      message.warning("Please fill out all required fields before proceeding.");
+      messageApi.warning(
+        "Please fill out all required fields before proceeding."
+      );
     }
   };
 
   const finalizeSave = async (dataToSave) => {
     if (isSaving) return;
+
     setIsSaving(true);
 
     try {
@@ -66,33 +92,37 @@ const StaffModal = ({
         response = await axios.post(
           "http://localhost:8000/api/users",
           dataToSave,
-          { headers: { "Content-Type": "application/json" } },
+          { headers: { "Content-Type": "application/json" } }
         );
       } else if (isEditMode) {
         response = await axios.put(
           `http://localhost:8000/api/users/${selectedStaff._id}`,
           dataToSave,
-          { headers: { "Content-Type": "application/json" } },
+          { headers: { "Content-Type": "application/json" } }
         );
       }
 
-      onSave(response?.data);
+      if (onSave) {
+        await onSave(response?.data);
+      }
+
+      form.resetFields();
+      resetTransientState();
       onClose();
 
-      setFormData(initialForm);
-      resetTransientState();
-      notify(
-        "success",
-        isAddMode ? "Staff added successfully!" : "Staff updated successfully!",
+      messageApi.success(
+        isAddMode
+          ? "Staff added successfully!"
+          : "Staff updated successfully!"
       );
     } catch (err) {
-      console.error(err);
-      notify(
-        "error",
+      console.error("Error saving staff:", err);
+
+      messageApi.error(
         err.response?.data?.message ||
           err.response?.data?.error ||
           err.message ||
-          "Something went wrong.",
+          "Something went wrong."
       );
     } finally {
       setIsSaving(false);
@@ -101,76 +131,88 @@ const StaffModal = ({
 
   const handleCancelClick = () => {
     const current = form.getFieldsValue();
+
     const hasValues =
-      Object.values(current).some((v) => v !== undefined && v !== "") ||
-      !!(isEditMode && selectedStaff);
+      Object.values(current).some(
+        (value) => value !== undefined && value !== ""
+      ) || (isEditMode && !!selectedStaff);
 
     if (!hasValues) {
       form.resetFields();
       onClose();
       return;
     }
+
     setIsCancelConfirmOpen(true);
   };
 
   const handleConfirmCancel = () => {
     form.resetFields();
-    setIsCancelConfirmOpen(false);
+    resetTransientState();
     onClose();
   };
-  const handleCancelCancel = () => setIsCancelConfirmOpen(false);
 
-  const handleOpenConfirmDelete = () => setIsConfirmDeleteOpen(true);
+  const handleCancelCancel = () => {
+    setIsCancelConfirmOpen(false);
+  };
+
+  const handleOpenConfirmDelete = () => {
+    setIsConfirmDeleteOpen(true);
+  };
 
   const handleConfirmDelete = async () => {
     try {
       if (!selectedStaff) {
-        notify("error", "No staff selected.");
+        messageApi.error("No staff selected.");
         setIsConfirmDeleteOpen(false);
         return;
       }
 
-      if (selectedStaff._id === currentUserId) {
-        notify("error", "You cannot delete your own account.");
+      if (isOwnAccount) {
+        messageApi.error("You cannot delete your own account.");
         setIsConfirmDeleteOpen(false);
         return;
       }
 
       await axios.delete(
-        `http://localhost:8000/api/users/${selectedStaff._id}`,
+        `http://localhost:8000/api/users/${selectedStaff._id}`
       );
 
-      notify("success", "User deleted successfully!");
-      onSave();
-      setIsConfirmDeleteOpen(false);
-      setFormData(initialForm);
+      if (onSave) {
+        await onSave();
+      }
+
+      form.resetFields();
+      resetTransientState();
       onClose();
+
+      messageApi.success("User deleted successfully!");
     } catch (err) {
-      console.error(err);
-      notify(
-        "error",
+      console.error("Error deleting staff:", err);
+
+      messageApi.error(
         err.response?.data?.message ||
           err.response?.data?.error ||
           err.message ||
-          "Something went wrong.",
+          "Something went wrong."
       );
     }
   };
 
-  const handleCancelDelete = () => setIsConfirmDeleteOpen(false);
+  const handleCancelDelete = () => {
+    setIsConfirmDeleteOpen(false);
+  };
 
   const handleXClose = () => {
     form.resetFields();
-    setPreviewData(null);
-    setIsConfirmDeleteOpen(false);
-    setIsCancelConfirmOpen(false);
-    setIsPreviewConfirmOpen(false);
+    resetTransientState();
     onClose();
   };
 
   return (
     <>
       {contextHolder}
+
       <Modal
         title={
           isAddMode
@@ -202,12 +244,14 @@ const StaffModal = ({
                 onChange={(e) => {
                   const onlyLetters = e.target.value.replace(
                     /[^A-Za-z\s]/g,
-                    "",
+                    ""
                   );
+
                   form.setFieldsValue({ name: onlyLetters });
                 }}
               />
             </Form.Item>
+
             <Form.Item
               name="email"
               label="Email"
@@ -221,6 +265,7 @@ const StaffModal = ({
             >
               <Input placeholder="Enter staff email" />
             </Form.Item>
+
             <Form.Item
               name="username"
               label="Username"
@@ -233,8 +278,9 @@ const StaffModal = ({
                 },
               ]}
             >
-              <Input placeholder="Enter username" min={8} />
+              <Input placeholder="Enter username" />
             </Form.Item>
+
             {isAddMode && (
               <>
                 <Form.Item
@@ -252,13 +298,22 @@ const StaffModal = ({
                   label="Confirm Password"
                   dependencies={["password"]}
                   rules={[
-                    { required: true, message: "Please re-enter password!" },
+                    {
+                      required: true,
+                      message: "Please re-enter password!",
+                    },
                     ({ getFieldValue }) => ({
                       validator(_, value) {
-                        if (!value || getFieldValue("password") === value) {
+                        if (
+                          !value ||
+                          getFieldValue("password") === value
+                        ) {
                           return Promise.resolve();
                         }
-                        return Promise.reject("Passwords do not match!");
+
+                        return Promise.reject(
+                          new Error("Passwords do not match!")
+                        );
                       },
                     }),
                   ]}
@@ -267,32 +322,44 @@ const StaffModal = ({
                 </Form.Item>
               </>
             )}
+
             <Form.Item
               name="account_type"
               label="Role"
               rules={[
-                { required: true, message: "Please select user's role!" },
+                {
+                  required: true,
+                  message: "Please select user's role!",
+                },
               ]}
             >
               <Select
-                placeholder="Select user's role:"
-                defaultValue="librarian"
-              >
-                <Option value="Librarian">Librarian</Option>
-                <Option value="Admin">Admin</Option>
-              </Select>
+                placeholder="Select user's role"
+                options={[
+                  { value: "Librarian", label: "Librarian" },
+                  { value: "Admin", label: "Admin" },
+                ]}
+              />
             </Form.Item>
 
             <Form.Item>
-              <Space>
+              <Space wrap>
                 <Button
                   type="primary"
                   onClick={handlePrimaryClick}
-                  style={{ backgroundColor: "#000", color: "#fff", width: 232 }}
+                  style={{
+                    backgroundColor: "#000",
+                    color: "#fff",
+                    width: 232,
+                  }}
                 >
                   {isEditMode ? "Save Changes" : "Add Staff"}
                 </Button>
-                <Button onClick={handleCancelClick} style={{ width: 232 }}>
+
+                <Button
+                  onClick={handleCancelClick}
+                  style={{ width: 232 }}
+                >
                   Cancel
                 </Button>
               </Space>
@@ -318,6 +385,7 @@ const StaffModal = ({
               <Button onClick={onClose} style={{ width: 232 }}>
                 No
               </Button>
+
               <Button
                 type="primary"
                 onClick={handleOpenConfirmDelete}
@@ -326,13 +394,13 @@ const StaffModal = ({
                   color: "#fff",
                   border: "none",
                 }}
-                disabled={selectedStaff?._id === loggedInUserId} // disable if same user
+                disabled={isOwnAccount}
               >
                 Yes, Delete
               </Button>
             </div>
 
-            {selectedStaff?._id === loggedInUserId && (
+            {isOwnAccount && (
               <p style={{ color: "red", marginTop: 10 }}>
                 You cannot delete your own account while logged in.
               </p>
@@ -344,7 +412,7 @@ const StaffModal = ({
       <Modal
         title={isEditMode ? "Confirm Changes" : "Confirm New Staff"}
         open={isPreviewConfirmOpen}
-        onCancel={handleXClose}
+        onCancel={() => setIsPreviewConfirmOpen(false)}
         footer={null}
         centered
       >
@@ -362,6 +430,7 @@ const StaffModal = ({
             <p>
               <strong>Role:</strong> {previewData.account_type}
             </p>
+
             <div
               style={{
                 display: "flex",
@@ -376,11 +445,16 @@ const StaffModal = ({
               >
                 Back
               </Button>
+
               <Button
                 type="primary"
                 onClick={() => finalizeSave(previewData)}
-                disabled={isSaving}
-                style={{ backgroundColor: "#000", color: "#fff", width: 232 }}
+                loading={isSaving}
+                style={{
+                  backgroundColor: "#000",
+                  color: "#fff",
+                  width: 232,
+                }}
               >
                 Confirm
               </Button>
@@ -394,7 +468,7 @@ const StaffModal = ({
       <Modal
         title="Confirm Delete"
         open={isConfirmDeleteOpen}
-        onCancel={handleXClose}
+        onCancel={handleCancelDelete}
         footer={null}
         centered
       >
@@ -402,6 +476,7 @@ const StaffModal = ({
           This action will permanently delete{" "}
           <strong>{selectedStaff?.name}</strong>. Continue?
         </p>
+
         <div
           style={{
             display: "flex",
@@ -410,9 +485,13 @@ const StaffModal = ({
             marginTop: 20,
           }}
         >
-          <Button onClick={handleCancelDelete} style={{ width: 232 }}>
+          <Button
+            onClick={handleCancelDelete}
+            style={{ width: 232 }}
+          >
             Back
           </Button>
+
           <Button
             type="primary"
             onClick={handleConfirmDelete}
@@ -426,11 +505,12 @@ const StaffModal = ({
       <Modal
         title="Discard Changes?"
         open={isCancelConfirmOpen}
-        onCancel={handleXClose}
+        onCancel={handleCancelCancel}
         footer={null}
         centered
       >
         <p>Are you sure you want to cancel? Unsaved changes will be lost.</p>
+
         <div
           style={{
             display: "flex",
@@ -439,9 +519,13 @@ const StaffModal = ({
             marginTop: 20,
           }}
         >
-          <Button onClick={handleCancelCancel} style={{ width: 232 }}>
+          <Button
+            onClick={handleCancelCancel}
+            style={{ width: 232 }}
+          >
             No
           </Button>
+
           <Button
             type="primary"
             onClick={handleConfirmCancel}
