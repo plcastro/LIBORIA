@@ -6,11 +6,10 @@ const ViewRecords = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(false);
-
+  const [messageApi, contextHolder] = message.useMessage();
   // Fetch records from the database
   const fetchRecords = async () => {
     setLoading(true);
-    setError("");
 
     try {
       const { data } = await axios.get("http://localhost:8000/api/records");
@@ -22,7 +21,7 @@ const ViewRecords = () => {
       setRecords(data);
     } catch (err) {
       console.error(err);
-      setError("Failed to fetch records. Please try again.");
+      messageApi.error("Failed to fetch records. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -160,13 +159,14 @@ const ViewRecords = () => {
 
   return (
     <div style={{ minHeight: "100vh" }}>
+      {contextHolder}
       <Card>
         <Row
           align="middle"
           justify="space-between"
           style={{ marginBottom: "20px" }}
         >
-          <Col xs={24} sm={12} md={10} lg={5}>
+          <Col xs={24} sm={12} md={12} lg={6}>
             <Input
               prefix={<SearchOutlined />}
               placeholder="Search records"
@@ -176,7 +176,7 @@ const ViewRecords = () => {
             />
           </Col>
         </Row>
-
+        {error && <div style={{ color: "red", marginBottom: 16 }}>{error}</div>}
         <Table
           columns={columns}
           dataSource={filteredRecords.map((record) => ({

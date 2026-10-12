@@ -52,13 +52,13 @@ const EditBookModal = ({ modalOpen, setModalOpen, book, onBookUpdated }) => {
 
       if (onBookUpdated) onBookUpdated({ ...book, ...payload });
       setModalOpen(false);
-      notify("success", "Book updated successfully");
+      messageApi.success("Book updated successfully");
       setTimeout(() => {
         window.location.reload();
       }, 500);
     } catch (err) {
       console.error(err);
-      notify("error", err.response?.data?.error || "Failed to update book");
+      messageApi.error(err.response?.data?.error || "Failed to update book");
     } finally {
       setLoading(false);
     }

@@ -161,12 +161,7 @@ const DisplayBook = () => {
         />
       ),
     },
-    {
-      title: "Author Name",
-      dataIndex: "author_name",
-      key: "author_name",
-      width: 200,
-    },
+
     {
       title: "Book Title",
       dataIndex: "title",
@@ -177,6 +172,12 @@ const DisplayBook = () => {
           {record.title}
         </span>
       ),
+    },
+    {
+      title: "Author Name",
+      dataIndex: "author_name",
+      key: "author_name",
+      width: 200,
     },
     { title: "Category", dataIndex: "category", key: "category", width: 150 },
     {
@@ -261,7 +262,7 @@ const DisplayBook = () => {
           justify="space-between"
           style={{ marginBottom: 12 }}
         >
-          <Col xs={24} sm={12} md={10} lg={5}>
+          <Col xs={24} sm={12} md={12} lg={6}>
             <Input
               prefix={<SearchOutlined />}
               placeholder="Search book"
@@ -271,23 +272,21 @@ const DisplayBook = () => {
             />
           </Col>
 
-          <Col xs={24} sm={12} md={10} lg={5}>
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              style={{
-                margin: 0,
-                backgroundColor: "#1600a3",
-                border: "none",
-                height: 40,
-                width: "100%",
-                fontWeight: 500,
-              }}
-              onClick={() => setAddModalOpen(true)}
-            >
-              Add Book
-            </Button>
-          </Col>
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            style={{
+              margin: 0,
+              backgroundColor: "#1600a3",
+              border: "none",
+              height: 40,
+              padding: "8px 16px",
+              fontWeight: 500,
+            }}
+            onClick={() => setAddModalOpen(true)}
+          >
+            Add Book
+          </Button>
         </Row>
 
         <Table
