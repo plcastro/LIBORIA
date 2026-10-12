@@ -9,7 +9,7 @@ const { useBreakpoint } = Grid;
 
 const headerStyle = {
   height: "48px",
-  fontSize: "clamp(27px, 4vw, 32px)",
+  fontSize: 24,
   backgroundColor: "white",
   boxShadow: "0 2px 8px #0000007c",
   fontWeight: "500",
