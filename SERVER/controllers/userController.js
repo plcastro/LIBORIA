@@ -396,7 +396,7 @@ const login = async (req, res) => {
 
     if (!user || !user.password) {
       return res.status(401).json({
-        error: "Invalid username or password",
+        error: "Incorrect username or password",
       });
     }
 
@@ -404,7 +404,7 @@ const login = async (req, res) => {
 
     if (!isPasswordValid) {
       return res.status(401).json({
-        error: "Invalid username or password",
+        error: "Incorrect username or password",
       });
     }
 
@@ -427,41 +427,41 @@ const login = async (req, res) => {
 // FORGOT PASSWORD - Generate reset token (Development version with test link)
 const forgotPassword = async (req, res) => {
   try {
-    const { email } = req.body;
+    const email = req.body.email?.trim().toLowerCase();
 
     if (!email) {
       return res.status(400).json({ error: "Email is required" });
     }
-
-    const genericMessage =
-      "If an account with that email exists, a reset link has been sent.";
     const user = await User.findOne({ email });
 
     if (!user) {
-      return res.json({ message: genericMessage });
+      return res.status(404).json({
+        error: "No account was found with that email address.",
+        accountExists: false,
+      });
     }
 
-    const resetToken = crypto.randomBytes(2).toString("hex").slice(0, 4);
-    const resetTokenExpiry = new Date(Date.now() + 3600000);
+    const resetToken = crypto.randomInt(100000, 1000000).toString();
+    const resetTokenExpiry = new Date(Date.now() + 5 * 60 * 1000);
 
-    await user.updateOne(
-      { _id: user._id },
-      {
-        $set: { reset_token: resetToken, reset_token_expiry: resetTokenExpiry },
-      },
+    user.reset_token = resetToken;
+    user.reset_token_expiry = resetTokenExpiry;
+    console.log(resetToken);
+    await user.save();
+
+    const savedUser = await User.findById(user._id).select(
+      "+reset_token +reset_token_expiry",
     );
 
     const isDevelopment = process.env.NODE_ENV !== "production";
 
-    res.json({
-      message: genericMessage,
+    return res.json({
+      message: "Recovery request submitted successfully.",
+      accountExists: true,
       ...(isDevelopment
         ? { resetLink: `http://localhost:3000/reset-password/${resetToken}` }
         : {}),
     });
-
-    console.log(`Password reset requested for: ${email}`);
-    console.log(`Reset token: ${resetToken}`);
   } catch (err) {
     handleError(res, err);
   }
@@ -470,22 +470,32 @@ const forgotPassword = async (req, res) => {
 // VERIFY RESET TOKEN - Check if token is valid
 const verifyResetToken = async (req, res) => {
   try {
-    const { token } = req.body;
+    const token = req.body.token?.trim();
 
     if (!token) {
-      return res.status(400).json({ error: "Reset token is required" });
+      return res.status(400).json({
+        error: "Reset token is required",
+      });
     }
+    console.log("Submitted token length:", token.length);
+    console.log("Current time:", new Date());
 
     const user = await User.findOne({
       reset_token: token,
-      reset_token_expiry: { $gt: new Date() },
-    });
+    }).select("+reset_token +reset_token_expiry");
 
     if (!user) {
-      return res.status(400).json({ error: "Invalid or expired reset token" });
-    }
+      console.log("Token exists in database:", false);
 
-    res.json({
+      return res.status(400).json({
+        error: "Token does not match any user",
+      });
+    }
+    console.log("Token exists in database:", true);
+    console.log("Token matches:", user.reset_token === token);
+    console.log("Token expiry:", user.reset_token_expiry);
+    console.log("Token expired:", user.reset_token_expiry <= new Date());
+    return res.json({
       message: "Token is valid",
       user: {
         _id: user._id,
@@ -500,46 +510,51 @@ const verifyResetToken = async (req, res) => {
 // RESET PASSWORD - Update password using reset token
 const resetPassword = async (req, res) => {
   try {
-    const { token, newPassword } = req.body;
+    const token = req.body.token?.trim();
+    const { newPassword } = req.body;
 
     if (!token || !newPassword) {
-      return res
-        .status(400)
-        .json({ error: "Token and new password are required" });
+      return res.status(400).json({
+        error: "Token and new password are required",
+      });
     }
 
     if (newPassword.length < 8) {
-      return res
-        .status(400)
-        .json({ error: "Password must be at least 8 characters" });
+      return res.status(400).json({
+        error: "Password must be at least 8 characters",
+      });
     }
 
     const user = await User.findOne({
       reset_token: token,
       reset_token_expiry: { $gt: new Date() },
-    });
+    }).select("+password +reset_token +reset_token_expiry");
 
     if (!user) {
-      return res.status(400).json({ error: "Invalid or expired reset token" });
+      return res.status(400).json({
+        error: "Invalid or expired reset token",
+      });
     }
 
-    if (user.password === newPassword) {
+    const isSamePassword = await bcrypt.compare(newPassword, user.password);
+
+    if (isSamePassword) {
       return res.status(400).json({
         error: "New password cannot be the same as your current password.",
       });
     }
 
-    await User.updateOne(
-      { _id: user._id },
-      {
-        $set: { password: newPassword },
-        $unset: { reset_token: "", reset_token_expiry: "" },
-      },
-    );
+    user.password = await bcrypt.hash(newPassword, 10);
+    user.reset_token = null;
+    user.reset_token_expiry = null;
 
-    res.json({ message: "Password reset successfully" });
+    await user.save();
+
+    return res.json({
+      message: "Password reset successfully",
+    });
   } catch (err) {
-    handleError(res, err);
+    return handleError(res, err);
   }
 };
 

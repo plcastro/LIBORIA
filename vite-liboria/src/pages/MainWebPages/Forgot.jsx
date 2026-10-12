@@ -1,9 +1,13 @@
 import React, { useState } from "react";
 import "./login.css";
-import { Link, useNavigate } from "react-router-dom";
+
+import { useNavigate, Link as RouterLink } from "react-router-dom";
 import axios from "axios";
+import { TextField, Link, Button } from "@mui/material";
+
 const Forgot = () => {
   const navigate = useNavigate();
+
   const [email, setEmail] = useState("");
   const [resetToken, setResetToken] = useState("");
   const [tokenStatus, setTokenStatus] = useState("");
@@ -12,15 +16,20 @@ const Forgot = () => {
   const [loading, setLoading] = useState(false);
   const [confirmLoading, setConfirmLoading] = useState(false);
 
+  // Controls which card is displayed
+  const [showTokenCard, setShowTokenCard] = useState(false);
+
   const validate = () => {
-    if (!email) {
+    if (!email.trim()) {
       setError("Email is required.");
       return false;
     }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       setError("Invalid email format.");
       return false;
     }
+
     return true;
   };
 
@@ -28,53 +37,69 @@ const Forgot = () => {
     e.preventDefault();
     setError("");
     setMessage("");
+
     if (!validate()) return;
 
     setLoading(true);
+
     try {
       const response = await axios.post(
         "http://localhost:8000/api/users/forgot-password",
-        { email },
-        { headers: { "Content-Type": "application/json" } },
+        { email: email.trim().toLowerCase() },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        },
       );
 
-      const data = response.data;
+      // Only show the token verification card if the backend
+      // confirms that the account exists.
+      if (response.data.accountExists === true) {
+        setShowTokenCard(true);
+      } else {
+        setShowTokenCard(false);
+        setError("No account was found with that email address.");
+      }
 
-      if (response.status >= 200 && response.status < 300) {
-        setMessage(data.message);
-
-        // If you want to see the test link in console for debugging:
-        if (data.resetLink) {
-          console.log("Test reset link (not shown to user):", data.resetLink);
-        }
+      if (response.data.resetLink) {
+        console.log("Test reset link:", response.data.resetLink);
       }
     } catch (err) {
+      setShowTokenCard(false);
       setError(err.response?.data?.error || "Network error. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleConfirmToken = async () => {
+  const handleConfirmToken = async (e) => {
+    e.preventDefault();
     setTokenStatus("");
+
+    if (!resetToken.trim()) {
+      setTokenStatus("Please enter your reset token.");
+      return;
+    }
+
     setConfirmLoading(true);
+
     try {
-      // Use the correct endpoint: verify-reset-token (not confirm-reset-token)
-      const response = await axios.post(
+      await axios.post(
         "http://localhost:8000/api/users/verify-reset-token",
-        { token: resetToken },
-        { headers: { "Content-Type": "application/json" } },
+        { token: resetToken.trim() },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        },
       );
 
-      const data = response.data;
+      setTokenStatus("Token confirmed! Redirecting to password reset...");
 
-      if (response.status >= 200 && response.status < 300) {
-        setTokenStatus("Token confirmed! You may now reset your password.");
-        // Navigate to reset password page with the token
-        setTimeout(() => {
-          navigate(`/reset/${resetToken}`);
-        }, 1500);
-      }
+      setTimeout(() => {
+        navigate(`/reset/${encodeURIComponent(resetToken.trim())}`);
+      }, 500);
     } catch (err) {
       setTokenStatus(
         err.response?.data?.error || "Network error. Please try again.",
@@ -84,58 +109,108 @@ const Forgot = () => {
     }
   };
 
+  const handleBack = () => {
+    setShowTokenCard(false);
+    setResetToken("");
+    setTokenStatus("");
+    setError("");
+    setMessage("");
+  };
+
   return (
     <div className="forgot-password-container">
       <div className="forgot-password-content">
-        <h1 className="title">Forgot Password</h1>
-        <p className="subtitle">Please provide your email to proceed</p>
+        {!showTokenCard ? (
+          <>
+            <h1 className="title">Forgot Password</h1>
 
-        <form className="forgot-password-form" onSubmit={handleSubmit}>
-          <div className="form-group">
-            <input
-              type="email"
-              id="email"
-              placeholder="Enter email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
+            <p className="subtitle">Please provide your email to proceed</p>
 
-          <button type="submit" className="recovery-btn" disabled={loading}>
-            {loading ? "Sending..." : "EMAIL ME A RECOVERY LINK"}
-          </button>
-          {error && <div className="error">{error}</div>}
-          {message && <div className="info">{message}</div>}
+            <form className="forgot-password-form" onSubmit={handleSubmit}>
+              <div className="form-group">
+                <TextField
+                  fullWidth
+                  type="email"
+                  id="email"
+                  label="Email Address"
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
 
-          {/* Reset token input and confirm button */}
-          <div
-            className="form-group"
-            style={{ display: "flex", alignItems: "center", marginTop: "20px" }}
-          >
-            <input
-              type="text"
-              id="resetToken"
-              placeholder="Enter reset token"
-              value={resetToken}
-              onChange={(e) => setResetToken(e.target.value)}
-              className="token-input"
-            />
-            <button
-              type="button"
-              className="token-confirm-btn"
-              style={{ color: "#fff" }}
-              onClick={handleConfirmToken}
-              disabled={confirmLoading || !resetToken || !email}
+              {error && <div className="error">{error}</div>}
+
+              <div className="w-full !mt-2">
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  size="large"
+                  variant="contained"
+                  className="!w-full !bg-black"
+                >
+                  {loading ? "Sending..." : "EMAIL ME A RECOVERY LINK"}
+                </Button>
+              </div>
+
+              <div className="signup-link" style={{ marginTop: "20px" }}>
+                Remembered your password?{" "}
+                <Link component={RouterLink} to="/login">
+                  Log in
+                </Link>
+              </div>
+            </form>
+          </>
+        ) : (
+          <>
+            <h1 className="title">Verify OTP</h1>
+
+            <p className="subtitle">
+              Enter the OTP associated with your recovery request.
+            </p>
+
+            {message && <div className="info">{message}</div>}
+
+            <form
+              className="forgot-password-form"
+              onSubmit={handleConfirmToken}
             >
-              {confirmLoading ? "Checking..." : "Confirm"}
-            </button>
-          </div>
-          {tokenStatus && <div className="info">{tokenStatus}</div>}
+              <div className="form-group">
+                <TextField
+                  fullWidth
+                  type="text"
+                  id="resetToken"
+                  label="Enter OTP"
+                  value={resetToken}
+                  onChange={(e) => setResetToken(e.target.value)}
+                  required
+                />
+              </div>
 
-          <div className="signup-link" style={{ marginTop: "20px" }}>
-            Remembered your password? <Link to="/login">Log in</Link>
-          </div>
-        </form>
+              {tokenStatus && <div className="info">{tokenStatus}</div>}
+
+              <div className="w-full !mt-2">
+                <Button
+                  type="submit"
+                  disabled={confirmLoading || !resetToken.trim()}
+                  size="large"
+                  variant="contained"
+                  className="!w-full !bg-black !text-white"
+                >
+                  {confirmLoading ? "Checking..." : "SUBMIT OTP"}
+                </Button>
+              </div>
+
+              <div className="signup-link" style={{ marginTop: "20px" }}>
+                Remembered your password?{" "}
+                <Link component={RouterLink} to="/login">
+                  Log in
+                </Link>
+              </div>
+            </form>
+          </>
+        )}
       </div>
     </div>
   );

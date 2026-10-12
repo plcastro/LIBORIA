@@ -1,3 +1,4 @@
+@import "tailwindcss";
 .login-container {
   display: flex;
   max-width: 450px;

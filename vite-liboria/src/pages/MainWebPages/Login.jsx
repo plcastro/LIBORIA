@@ -186,6 +186,7 @@ const Login = () => {
                 },
               }}
             />
+            {error && <div className="error text-red-700">{error}</div>}
           </div>
 
           <div className="flex w-full items-center">
@@ -241,7 +242,6 @@ const Login = () => {
               {loading ? "Logging in..." : "LOGIN"}
             </Button>
           </div>
-          {error && <div className="error text-red-700">{error}</div>}
 
           <div className="signup-link">
             Don't have an account? <Link to="/signup">Sign up here</Link>
