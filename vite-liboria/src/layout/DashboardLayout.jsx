@@ -44,7 +44,7 @@ const DashboardLayout = () => {
     "/dashboard/view/borrow": "Borrow Books",
     "/dashboard/view/return": "Return Books",
     "/dashboard/view/records": "View Records",
-    "/dashboard/view/staff": "Staff List",
+    "/dashboard/view/staff": "List of Users",
     "/dashboard/view/profile": "Profile",
     "/dashboard/edit/profile": "Edit Profile",
   };

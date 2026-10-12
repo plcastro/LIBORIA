@@ -21,15 +21,13 @@ const StaffModal = ({
   const [isPreviewConfirmOpen, setIsPreviewConfirmOpen] = useState(false);
   const [previewData, setPreviewData] = useState(null);
   const [submittable, setSubmittable] = useState(false);
-  const loggedInUserId = JSON.parse(
-    localStorage.getItem("currentUser"),
-  )?.userid;
+  const loggedInUserId = JSON.parse(localStorage.getItem("currentUser"))?._id;
   const values = Form.useWatch([], form);
 
   useEffect(() => {
     if (isEditMode && selectedStaff) {
       form.setFieldsValue({
-        userid: selectedStaff.userid,
+        _id: selectedStaff._id,
         name: selectedStaff.name,
         email: selectedStaff.email,
         username: selectedStaff.username,
@@ -72,7 +70,7 @@ const StaffModal = ({
         );
       } else if (isEditMode) {
         response = await axios.put(
-          `http://localhost:8000/api/users/${selectedStaff.userid}`,
+          `http://localhost:8000/api/users/${selectedStaff._id}`,
           dataToSave,
           { headers: { "Content-Type": "application/json" } },
         );
@@ -132,14 +130,14 @@ const StaffModal = ({
         return;
       }
 
-      if (selectedStaff.userid === currentUserId) {
+      if (selectedStaff._id === currentUserId) {
         notify("error", "You cannot delete your own account.");
         setIsConfirmDeleteOpen(false);
         return;
       }
 
       await axios.delete(
-        `http://localhost:8000/api/users/${selectedStaff.userid}`,
+        `http://localhost:8000/api/users/${selectedStaff._id}`,
       );
 
       notify("success", "User deleted successfully!");
@@ -328,13 +326,13 @@ const StaffModal = ({
                   color: "#fff",
                   border: "none",
                 }}
-                disabled={selectedStaff?.userid === loggedInUserId} // disable if same user
+                disabled={selectedStaff?._id === loggedInUserId} // disable if same user
               >
                 Yes, Delete
               </Button>
             </div>
 
-            {selectedStaff?.userid === loggedInUserId && (
+            {selectedStaff?._id === loggedInUserId && (
               <p style={{ color: "red", marginTop: 10 }}>
                 You cannot delete your own account while logged in.
               </p>
