@@ -12,16 +12,27 @@ const ViewRecords = () => {
     setLoading(true);
 
     try {
-      const { data } = await axios.get("http://localhost:8000/api/records");
+      const response = await axios.get("http://localhost:8000/api/records", {
+        timeout: 10000,
+      });
 
-      if (!Array.isArray(data)) {
-        throw new Error("Invalid records response");
+      console.log("Records API response:", response.data);
+
+      if (!Array.isArray(response.data)) {
+        throw new Error("Invalid records response: expected an array");
       }
 
-      setRecords(data);
+      setRecords(response.data);
     } catch (err) {
-      console.error(err);
-      messageApi.error("Failed to fetch records. Please try again.");
+      console.error("Fetch records error:", err.message);
+      console.error("HTTP status:", err.response?.status);
+      console.error("Response data:", err.response?.data);
+
+      messageApi.error(
+        err.code === "ECONNABORTED"
+          ? "Request timed out. Check your backend."
+          : "Failed to fetch records. Check the console.",
+      );
     } finally {
       setLoading(false);
     }
@@ -176,7 +187,6 @@ const ViewRecords = () => {
             />
           </Col>
         </Row>
-        {error && <div style={{ color: "red", marginBottom: 16 }}>{error}</div>}
         <Table
           columns={columns}
           dataSource={filteredRecords.map((record) => ({

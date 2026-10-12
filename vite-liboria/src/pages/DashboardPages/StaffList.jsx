@@ -36,8 +36,18 @@ const StaffList = () => {
         messageApi.error(result.error || "Failed to load staff");
       }
     } catch (err) {
-      console.error(err);
-      messageApi.error("Network error");
+      console.error("Load staff error:", err.message);
+      console.error("Error code:", err.code);
+      console.error("HTTP status:", err.response?.status);
+      console.error("Response data:", err.response?.data);
+
+      messageApi.error(
+        err.response
+          ? `Request failed: ${err.response.status}`
+          : err.code === "ECONNABORTED"
+            ? "Request timed out"
+            : "Cannot connect to the backend. Check the server and API URL.",
+      );
     } finally {
       setLoading(false);
     }
@@ -81,8 +91,6 @@ const StaffList = () => {
   const handleSave = () => {
     loadAllStaff(); // reload table after add/edit/delete
   };
-
-  // --- SEARCH ---
   const filteredData = data.filter((item) => {
     if (!searchText) return true; // show all if empty
     const text = searchText.toLowerCase();

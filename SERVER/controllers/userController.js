@@ -394,10 +394,6 @@ const login = async (req, res) => {
       username: normalizedUsername,
     }).select("+password");
 
-    console.log("Username received:", normalizedUsername);
-    console.log("User found:", !!user);
-    console.log("Password field exists:", Boolean(user?.password));
-
     if (!user || !user.password) {
       return res.status(401).json({
         error: "Invalid username or password",
