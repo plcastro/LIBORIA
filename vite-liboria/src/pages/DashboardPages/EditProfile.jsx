@@ -37,17 +37,16 @@ const EditProfile = ({ initialData, isVisible, onClose, onSave }) => {
     const { currPassword, password, confirmPassword } = form;
 
     if (password !== confirmPassword) {
-      showMessage("error", "Password and Confirm password do not match!");
+      messageApi.error("Password and Confirm password do not match!");
       return;
     }
 
     const user = JSON.parse(localStorage.getItem("currentUser")) || {};
-    const userId = user._id || user._id || user.id;
+    const userId = user._id || user.id;
 
     if (password === currPassword) {
-      showMessage(
-        "error",
-        "New password cannot be the same as current password.",
+      messageApi.error(
+        "New password cannot be the same as current password."
       );
       return;
     }
@@ -61,7 +60,7 @@ const EditProfile = ({ initialData, isVisible, onClose, onSave }) => {
         { headers: { "Content-Type": "application/json" } },
       );
 
-      showMessage("success", response.data.message);
+      messageApi.success(response.data.message);
       setForm((prev) => ({
         ...prev,
         currPassword: "",
@@ -73,12 +72,11 @@ const EditProfile = ({ initialData, isVisible, onClose, onSave }) => {
       onClose();
     } catch (err) {
       if (err.response) {
-        showMessage(
-          "error",
+        messageApi.error(
           err.response.data?.error || "Unable to change password.",
         );
       } else {
-        showMessage("error", "Network error. Please try again.");
+        messageApi.error("Network error. Please try again.");
       }
     } finally {
       setLoading(false);

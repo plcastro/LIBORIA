@@ -81,14 +81,12 @@ const StaffModal = ({
 
       setFormData(initialForm);
       resetTransientState();
-      notify(
-        "success",
+      messageApi.success(
         isAddMode ? "Staff added successfully!" : "Staff updated successfully!",
       );
     } catch (err) {
       console.error(err);
-      notify(
-        "error",
+      messageApi.error(
         err.response?.data?.message ||
           err.response?.data?.error ||
           err.message ||
@@ -125,13 +123,13 @@ const StaffModal = ({
   const handleConfirmDelete = async () => {
     try {
       if (!selectedStaff) {
-        notify("error", "No staff selected.");
+        messageApi.error("No staff selected.");
         setIsConfirmDeleteOpen(false);
         return;
       }
 
       if (selectedStaff._id === currentUserId) {
-        notify("error", "You cannot delete your own account.");
+        messageApi.error("You cannot delete your own account.");
         setIsConfirmDeleteOpen(false);
         return;
       }
@@ -140,15 +138,14 @@ const StaffModal = ({
         `http://localhost:8000/api/users/${selectedStaff._id}`,
       );
 
-      notify("success", "User deleted successfully!");
+      messageApi.success("User deleted successfully!");
       onSave();
       setIsConfirmDeleteOpen(false);
       setFormData(initialForm);
       onClose();
     } catch (err) {
       console.error(err);
-      notify(
-        "error",
+      messageApi.error(
         err.response?.data?.message ||
           err.response?.data?.error ||
           err.message ||

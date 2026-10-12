@@ -13,14 +13,12 @@ const StaffList = () => {
   const [messageApi, contextHolder] = message.useMessage();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
   const [searchText, setSearchText] = useState("");
 
   const currentUserId = JSON.parse(localStorage.getItem("currentUser"))?._id;
 
   const loadAllStaff = async () => {
     setLoading(true);
-    setError("");
 
     try {
       const { data: result } = await axios.get(
@@ -35,11 +33,11 @@ const StaffList = () => {
           })),
         );
       } else {
-        setError(result.error || "Failed to load staff");
+        messageApi.error(result.error || "Failed to load staff");
       }
     } catch (err) {
       console.error(err);
-      setError("Network error");
+      messageApi.error("Network error");
     } finally {
       setLoading(false);
     }
@@ -70,7 +68,7 @@ const StaffList = () => {
       setModalVisible(true);
     } catch (err) {
       console.error(err);
-      showMessage("Network error");
+      messageApi.error("Network error");
     }
   };
 

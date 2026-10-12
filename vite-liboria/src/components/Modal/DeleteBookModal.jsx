@@ -14,13 +14,13 @@ const DeleteBookModal = ({ open, setOpen, book, onDelete }) => {
       setOpen(false);
 
       if (onDelete) onDelete(book);
-      notify("success", "Book deleted successfully");
+      messageApi.success("Book deleted successfully");
       setTimeout(() => {
         window.location.reload();
       }, 500);
     } catch (err) {
       console.error(err);
-      notify("error", err.response?.data?.error || "Failed to delete book");
+      messageApi.error(err.response?.data?.error || "Failed to delete book");
     } finally {
       setLoading(false);
     }

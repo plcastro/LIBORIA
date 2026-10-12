@@ -54,10 +54,10 @@ const BorrowBookModal = ({ open, onClose, onSubmit, initialValues }) => {
           year_level: borrower.year_level,
           course: borrower.course,
         }));
-        notify("info", "Borrower found - auto-filled details.");
+        messageApi.info("Borrower found - auto-filled details.");
       } else {
         setFormData((prev) => ({ ...prev, year_level: "", course: "" }));
-        notify("warning", "New borrower detected - please fill out details.");
+        messageApi.warning("New borrower detected - please fill out details.");
       }
     } catch (err) {
       console.error("Error fetching borrower:", err);
@@ -117,20 +117,19 @@ const BorrowBookModal = ({ open, onClose, onSubmit, initialValues }) => {
       onSubmit(borrowRes.data);
       onClose();
       setFormData(initialForm);
-      notify("success", `Borrowed ${initialValues.book_title} successfully!`);
+      messageApi.success(`Borrowed ${initialValues.book_title} successfully!`);
       window.location.reload();
     } catch (err) {
       console.error("Error while borrowing:", err);
       const errorMessage = err.response?.data?.error || "";
       if (errorMessage.includes("already borrowed")) {
-        notify("error", "Student already borrowed this book!");
+        messageApi.error("Student already borrowed this book!");
       } else if (errorMessage.includes("limit reached")) {
-        notify(
-          "error",
+        messageApi.error(
           "Borrow limit reached. You can only borrow up to 3 books at a time.",
         );
       } else {
-        notify("error", "Failed to borrow book. Please try again.");
+        messageApi.error("Failed to borrow book. Please try again.");
       }
     }
   };

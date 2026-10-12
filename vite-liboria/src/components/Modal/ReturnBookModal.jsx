@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Modal,
   Form,
@@ -16,6 +16,7 @@ import axios from "axios";
 const ReturnBookModal = ({ open, onClose, initialValues, REASONS }) => {
   const [form] = Form.useForm();
   const [messageApi, contextHolder] = message.useMessage();
+  const [errors, setErrors] = useState({});
   const colProps = { xs: 24, md: 12 };
 
   // Calculate penalty based on returned date and violations
@@ -91,7 +92,7 @@ const ReturnBookModal = ({ open, onClose, initialValues, REASONS }) => {
 
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length) {
-      notify("error", Object.values(nextErrors)[0]);
+      messageApi.error(Object.values(nextErrors)[0]);
       return;
     }
 
@@ -129,8 +130,7 @@ const ReturnBookModal = ({ open, onClose, initialValues, REASONS }) => {
         );
       }
 
-      notify(
-        "success",
+      messageApi.success(
         violations.includes("Lost")
           ? "Book marked as lost!"
           : "Book returned successfully!",
@@ -139,7 +139,9 @@ const ReturnBookModal = ({ open, onClose, initialValues, REASONS }) => {
       window.location.reload();
     } catch (err) {
       console.error("Error while returning book:", err);
-      notify("error", "An unexpected error occurred while returning the book.");
+      messageApi.error(
+        "An unexpected error occurred while returning the book.",
+      );
     }
   };
 
@@ -151,7 +153,7 @@ const ReturnBookModal = ({ open, onClose, initialValues, REASONS }) => {
         open={open}
         onCancel={onClose}
         footer={null}
-        destroyOnClose
+        destroyOnHidden
       >
         <Form form={form} layout="vertical" onFinish={handleFinish}>
           <Row gutter={[24, 8]}>
