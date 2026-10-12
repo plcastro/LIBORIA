@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import Sidebar from "../components/NavBar/SideBar";
 import { Outlet, useLocation } from "react-router-dom";
-import { Layout, Button, Drawer, Grid } from "../components/muiAntdCompat";
-import { MenuOutlined } from "../components/MuiAntIcons";
+import { Layout, Button, Drawer, Grid } from "antd";
+import { MenuOutlined } from "@ant-design/icons";
 
 const { Header, Sider, Content } = Layout;
 const { useBreakpoint } = Grid;
@@ -56,7 +56,9 @@ const DashboardLayout = () => {
         <>
           <Button
             type="text"
-            icon={<MenuOutlined style={{ fontSize: "clamp(12px, 1.8vw, 16px)" }} />}
+            icon={
+              <MenuOutlined style={{ fontSize: "clamp(12px, 1.8vw, 16px)" }} />
+            }
             onClick={() => setOpen(true)}
             style={{
               position: "fixed",
@@ -71,7 +73,8 @@ const DashboardLayout = () => {
             placement="left"
             onClose={() => setOpen(false)}
             open={open}
-            width="300px"
+            size={300}
+            body={{ style: { padding: 0 } }}
             style={{
               backgroundColor: "#001529",
               color: "white",

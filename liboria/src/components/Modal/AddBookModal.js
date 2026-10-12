@@ -12,9 +12,8 @@ import {
   Space,
   Select,
 } from "antd";
-
+import axios from "axios";
 const { TextArea } = Input;
-const { Option } = Select;
 const AddBookModal = ({ modal2Open, setModal2Open, onBookCreated }) => {
   const [messageApi, contextHolder] = message.useMessage();
   const [form] = Form.useForm();
@@ -52,28 +51,22 @@ const AddBookModal = ({ modal2Open, setModal2Open, onBookCreated }) => {
     try {
       if (!bookData) return;
 
-      const response = await fetch("http://localhost:8000/api/books", {
-        method: "POST",
+      await axios.post("http://localhost:8000/api/books", bookData, {
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(bookData),
       });
 
-      const data = await response.json();
-
-      if (!response.ok) throw new Error(data.error || "Failed to add book");
-
-      form.resetFields();
+      resetForm();
       setIsConfirmOpen(false);
       setModal2Open(false);
 
       if (onBookCreated) onBookCreated();
-      messageApi.success("Book added successfully");
+      notify("success", "Book added successfully");
       setTimeout(() => {
         window.location.reload();
       }, 500);
     } catch (err) {
       console.error(err);
-      messageApi.error(err.message || "Failed to add book");
+      notify("error", err.message || "Failed to add book");
     }
   };
 
@@ -91,7 +84,7 @@ const AddBookModal = ({ modal2Open, setModal2Open, onBookCreated }) => {
         title="ADD BOOK DETAILS"
         centered
         open={modal2Open}
-        maskClosable={false} // disable click outside
+        closable={false}
         keyboard={false}
         footer={[
           <Button
@@ -163,13 +156,17 @@ const AddBookModal = ({ modal2Open, setModal2Open, onBookCreated }) => {
                   },
                 ]}
               >
-                <Select placeholder="Select category:">
-                  <Option value="Trending">Trending</Option>
-                  <Option value="Romance">Romance</Option>
-                  <Option value="Kids">Kids</Option>
-                  <Option value="Thriller">Thriller</Option>
-                  <Option value="Textbooks">Textbooks</Option>
-                </Select>
+                <Select
+                  placeholder="Select category:"
+                  defaultValue="Trending"
+                  options={[
+                    { value: "Trending", label: "Trending" },
+                    { value: "Romance", label: "Romance" },
+                    { value: "Kids", label: "Kids" },
+                    { value: "Thriller", label: "Thriller" },
+                    { value: "Textbooks", label: "Textbooks" },
+                  ]}
+                />
               </Form.Item>
             </Col>
 

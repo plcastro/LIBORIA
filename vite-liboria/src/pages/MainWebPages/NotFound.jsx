@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "../../components/muiAntdCompat";
+import { Button } from "antd";
 import notfoundimg from "../../assets/Book_torn page.png";
 import "./NotFound.css";
 

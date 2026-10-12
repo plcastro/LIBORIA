@@ -8,6 +8,7 @@ import {
   UnorderedListOutlined,
   ContactsOutlined,
 } from "@ant-design/icons";
+import axios from "axios";
 import logo_dark from "../../assets/liboria white.png";
 import BookIcon from "../../assets/books.png";
 import ReturnIcon from "../../assets/return.png";
@@ -25,9 +26,9 @@ const Sidebar = () => {
   const fetchUserInfo = async (userid) => {
     if (!userid) return;
     try {
-      const res = await fetch(`http://localhost:8000/api/users/${userid}`);
-      if (!res.ok) throw new Error("Failed to fetch user info");
-      const data = await res.json();
+      const { data } = await axios.get(
+        `http://localhost:8000/api/users/${userid}`,
+      );
       setUser(data);
     } catch (err) {
       console.error(err);

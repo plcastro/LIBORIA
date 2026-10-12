@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import "./login.css";
 import { Link, useNavigate } from "react-router-dom";
 import { message } from "antd";
+import axios from "axios";
 
 export const Signup = () => {
   const [messageApi, contextHolder] = message.useMessage();
@@ -66,31 +67,34 @@ export const Signup = () => {
 
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:8000/api/users/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+      const response = await axios.post(
+        "http://localhost:8000/api/users/",
+        {
           name: formData.name,
           email: formData.email,
           username: formData.username,
           password: formData.password,
           account_type: "librarian",
-        }),
-      });
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        },
+      );
 
-      const data = await response.json();
+      const data = response.data;
 
-      if (response.ok) {
+      if (response.status >= 200 && response.status < 300) {
         messageApi.success("Registration successful! Please login.");
         navigate("/login");
       } else {
-        setError(data.error || "Registration failed. Username must be unique.");
       }
     } catch (error) {
       console.error("Registration error:", error);
-      setError("Network error. Please try again.");
+      setError(
+        error.response?.data?.error || "Network error. Please try again.",
+      );
     } finally {
       setLoading(false);
     }

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import "./login.css";
 import { Link, useNavigate } from "react-router-dom";
-
+import axios from "axios";
 const Forgot = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
@@ -32,29 +32,24 @@ const Forgot = () => {
 
     setLoading(true);
     try {
-      const response = await fetch(
+      const response = await axios.post(
         "http://localhost:8000/api/users/forgot-password",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email }),
-        }
+        { email },
+        { headers: { "Content-Type": "application/json" } },
       );
 
-      const data = await response.json();
+      const data = response.data;
 
-      if (response.ok) {
+      if (response.status >= 200 && response.status < 300) {
         setMessage(data.message);
 
         // If you want to see the test link in console for debugging:
         if (data.resetLink) {
           console.log("Test reset link (not shown to user):", data.resetLink);
         }
-      } else {
-        setError(data.error || "Failed to send reset email.");
       }
-    } catch {
-      setError("Network error. Please try again.");
+    } catch (err) {
+      setError(err.response?.data?.error || "Network error. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -65,28 +60,25 @@ const Forgot = () => {
     setConfirmLoading(true);
     try {
       // Use the correct endpoint: verify-reset-token (not confirm-reset-token)
-      const response = await fetch(
+      const response = await axios.post(
         "http://localhost:8000/api/users/verify-reset-token",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token: resetToken }), // Send token, not email
-        }
+        { token: resetToken },
+        { headers: { "Content-Type": "application/json" } },
       );
 
-      const data = await response.json();
+      const data = response.data;
 
-      if (response.ok) {
+      if (response.status >= 200 && response.status < 300) {
         setTokenStatus("Token confirmed! You may now reset your password.");
         // Navigate to reset password page with the token
         setTimeout(() => {
           navigate(`/reset/${resetToken}`);
         }, 1500);
-      } else {
-        setTokenStatus(data.error || "Invalid or expired token.");
       }
-    } catch {
-      setTokenStatus("Network error. Please try again.");
+    } catch (err) {
+      setTokenStatus(
+        err.response?.data?.error || "Network error. Please try again.",
+      );
     } finally {
       setConfirmLoading(false);
     }

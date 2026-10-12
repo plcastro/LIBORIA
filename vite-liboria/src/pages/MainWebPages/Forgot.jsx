@@ -1,8 +1,7 @@
 import React, { useState } from "react";
-import axios from "axios";
 import "./login.css";
 import { Link, useNavigate } from "react-router-dom";
-
+import axios from "axios";
 const Forgot = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
@@ -36,7 +35,7 @@ const Forgot = () => {
       const response = await axios.post(
         "http://localhost:8000/api/users/forgot-password",
         { email },
-        { headers: { "Content-Type": "application/json" } }
+        { headers: { "Content-Type": "application/json" } },
       );
 
       const data = response.data;
@@ -64,7 +63,7 @@ const Forgot = () => {
       const response = await axios.post(
         "http://localhost:8000/api/users/verify-reset-token",
         { token: resetToken },
-        { headers: { "Content-Type": "application/json" } }
+        { headers: { "Content-Type": "application/json" } },
       );
 
       const data = response.data;
@@ -78,7 +77,7 @@ const Forgot = () => {
       }
     } catch (err) {
       setTokenStatus(
-        err.response?.data?.error || "Network error. Please try again."
+        err.response?.data?.error || "Network error. Please try again.",
       );
     } finally {
       setConfirmLoading(false);

@@ -1,7 +1,7 @@
 import React from "react";
-import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect } from "react";
+import axios from "axios";
 import "./login.css";
 
 const Login = () => {
@@ -16,9 +16,9 @@ const Login = () => {
 
   // Load saved credentials on component mount
   useEffect(() => {
-    const savedUsername = sessionStorage.getItem("rememberedUsername");
-    const savedPassword = sessionStorage.getItem("rememberedPassword");
-    const savedRememberMe = sessionStorage.getItem("rememberMe") === "true";
+    const savedUsername = localStorage.getItem("rememberedUsername");
+    const savedPassword = localStorage.getItem("rememberedPassword");
+    const savedRememberMe = localStorage.getItem("rememberMe") === "true";
 
     if (savedRememberMe && savedUsername) {
       setFormData({
@@ -42,11 +42,11 @@ const Login = () => {
     setRememberMe(isChecked);
 
     if (!isChecked) {
-      sessionStorage.setItem("rememberMe", "false"); // triggers other tabs
-      sessionStorage.removeItem("rememberedUsername");
-      sessionStorage.removeItem("rememberedPassword");
+      localStorage.setItem("rememberMe", "false"); // triggers other tabs
+      localStorage.removeItem("rememberedUsername");
+      localStorage.removeItem("rememberedPassword");
     } else {
-      sessionStorage.setItem("rememberMe", "true");
+      localStorage.setItem("rememberMe", "true");
     }
   };
 
