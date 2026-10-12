@@ -1,25 +1,9 @@
 import React, { useState } from "react";
+import { Modal, message } from "antd";
 import axios from "axios";
-import {
-  Alert,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Snackbar,
-} from "@mui/material";
-
 const DeleteBookModal = ({ open, setOpen, book, onDelete }) => {
+  const [messageApi, contextHolder] = message.useMessage();
   const [loading, setLoading] = useState(false);
-  const [notification, setNotification] = useState({
-    open: false,
-    severity: "info",
-    message: "",
-  });
-
-  const notify = (severity, message) =>
-    setNotification({ open: true, severity, message });
 
   const handleOk = async () => {
     if (!book) return;
@@ -44,38 +28,25 @@ const DeleteBookModal = ({ open, setOpen, book, onDelete }) => {
 
   return (
     <>
-      <Snackbar
-        open={notification.open}
-        autoHideDuration={3000}
-        onClose={() => setNotification((prev) => ({ ...prev, open: false }))}
+      {contextHolder}
+      <Modal
+        title="Confirm Delete"
+        open={open}
+        onCancel={() => setOpen(false)}
+        onOk={handleOk}
+        okText="Yes, Delete"
+        okType="danger"
+        cancelText="Cancel"
+        confirmLoading={loading} // disables OK while loading
+        centered
       >
-        <Alert severity={notification.severity} variant="filled">
-          {notification.message}
-        </Alert>
-      </Snackbar>
-
-      <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Confirm Delete</DialogTitle>
-        <DialogContent dividers>
-          {book && (
-            <p>
-              Are you sure you want to delete <strong>{book.title}</strong>?
-              This action cannot be undone.
-            </p>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpen(false)}>Cancel</Button>
-          <Button
-            variant="contained"
-            color="error"
-            onClick={handleOk}
-            disabled={loading}
-          >
-            Yes, Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
+        {book && (
+          <p>
+            Are you sure you want to delete <strong>{book.title}</strong>? This
+            action cannot be undone.
+          </p>
+        )}
+      </Modal>
     </>
   );
 };
