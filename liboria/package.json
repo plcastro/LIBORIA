@@ -45,6 +45,7 @@
     ]
   },
   "devDependencies": {
-    "baseline-browser-mapping": "^2.11.28"
+    "baseline-browser-mapping": "^2.11.28",
+    "nodemon": "^3.1.14"
   }
 }

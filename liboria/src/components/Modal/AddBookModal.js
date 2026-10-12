@@ -47,28 +47,34 @@ const AddBookModal = ({ modal2Open, setModal2Open, onBookCreated }) => {
     }
   };
 
-  const handleConfirm = async () => {
-    try {
-      if (!bookData) return;
+  
+const handleConfirm = async () => {
+  try {
+    if (!bookData) return;
 
-      await axios.post("http://localhost:8000/api/books", bookData, {
-        headers: { "Content-Type": "application/json" },
-      });
+    await axios.post("http://localhost:8000/api/books", bookData, {
+      headers: { "Content-Type": "application/json" },
+    });
 
-      resetForm();
-      setIsConfirmOpen(false);
-      setModal2Open(false);
+    form.resetFields();
+    setBookData(null);
+    setIsConfirmOpen(false);
+    setModal2Open(false);
 
-      if (onBookCreated) onBookCreated();
-      notify("success", "Book added successfully");
-      setTimeout(() => {
-        window.location.reload();
-      }, 500);
-    } catch (err) {
-      console.error(err);
-      notify("error", err.message || "Failed to add book");
-    }
-  };
+    if (onBookCreated) onBookCreated();
+
+    messageApi.success("Book added successfully");
+
+    setTimeout(() => {
+      window.location.reload();
+    }, 500);
+  } catch (err) {
+    console.error(err);
+    messageApi.error(
+      err.response?.data?.error || err.message || "Failed to add book"
+    );
+  }
+};
 
   const handleDiscard = () => {
     form.resetFields();
