@@ -1,55 +1,62 @@
 import React from "react";
 import Navbar from "../components/NavBar/Navbar";
-import { Flex, Layout } from "antd";
+import { Layout } from "antd";
 import { Outlet, useLocation } from "react-router-dom";
 import FooterComp from "../components/FooterComp/FooterComp";
-const { Header, Footer, Content } = Layout;
 
-const headerStyle = {
-  color: "#fff",
-  height: 64,
-  lineHeight: "64px",
-};
-const layoutStyle = {
-  display: "flex",
-  flexDirection: "column",
-  width: "100%",
-  overflowX: "hidden",
-};
-const footerStyle = {
-  backgroundColor: "black",
-  color: "white",
-  padding: "50px 10%",
-  width: "100%",
-};
-const contentStyle = {
-  display: "flex",
-  flexDirection: "column",
-  minHeight: "100vh",
-  alignItems: "center",
-  justifyContent: "center",
-};
+const { Header, Footer, Content } = Layout;
 
 const RootLayout = () => {
   const location = useLocation();
   const showFooter = location.pathname === "/home";
-  return (
-    <Flex gap="middle" wrap>
-      <Layout style={layoutStyle}>
-        <Header style={headerStyle}>
-          <Navbar />
-        </Header>
-        <Content style={contentStyle}>
-          <Outlet />
-        </Content>
 
-        {showFooter && (
-          <Footer style={footerStyle}>
-            <FooterComp />
-          </Footer>
-        )}
-      </Layout>
-    </Flex>
+  return (
+    <Layout
+      style={{
+        minHeight: "100vh",
+        width: "100%",
+        overflowX: "hidden",
+      }}
+    >
+      <Header
+        style={{
+          color: "#fff",
+          height: 64,
+          lineHeight: "64px",
+          padding: 0,
+        }}
+      >
+        <Navbar />
+      </Header>
+
+      <Content
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          flex: 1,
+          minHeight: 0,
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <Outlet />
+      </Content>
+
+      {showFooter && (
+        <Footer
+          style={{
+            backgroundColor: "black",
+            color: "white",
+            padding: "50px 10%",
+            width: "100%",
+            boxSizing: "border-box",
+          }}
+        >
+          <FooterComp />
+        </Footer>
+      )}
+    </Layout>
   );
 };
+
 export default RootLayout;

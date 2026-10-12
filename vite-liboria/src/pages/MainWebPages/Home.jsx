@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Button, Row, Col, Divider } from "antd";
+import { Row, Col, Divider } from "antd";
+import { Button } from "@mui/material";
 import BookBackground from "../../assets/book-background.png";
 import bookshelf from "../../assets/bookshelf-black.png";
 import "../../App.css";
@@ -58,6 +59,7 @@ const Home = () => {
           <Button
             type="default"
             size="large"
+            variant="outlined"
             onClick={() => navigate("/login")}
             style={{
               backgroundColor: "white",
