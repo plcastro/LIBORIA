@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import "./login.css";
 import { useParams, useNavigate, Link } from "react-router-dom";
-
+import axios from "axios";
 const Reset = () => {
   const { token } = useParams();
   const navigate = useNavigate();
@@ -28,7 +27,7 @@ const Reset = () => {
       const response = await axios.post(
         "http://localhost:8000/api/users/verify-reset-token",
         { token },
-        { headers: { "Content-Type": "application/json" } }
+        { headers: { "Content-Type": "application/json" } },
       );
 
       const data = response.data;
@@ -42,9 +41,7 @@ const Reset = () => {
         }
       }
     } catch (err) {
-      setError(
-        err.response?.data?.error || "Network error. Please try again."
-      );
+      setError(err.response?.data?.error || "Network error. Please try again.");
       setTokenValid(false);
     }
   };
@@ -86,7 +83,7 @@ const Reset = () => {
           token: token,
           newPassword: formData.newPassword,
         },
-        { headers: { "Content-Type": "application/json" } }
+        { headers: { "Content-Type": "application/json" } },
       );
 
       const data = response.data;

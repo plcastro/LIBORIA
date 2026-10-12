@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import axios from "axios";
 import "./login.css";
 import { Link, useNavigate } from "react-router-dom";
-import { message } from "../../components/muiAntdCompat";
+import { message } from "antd";
+import axios from "axios";
 
 export const Signup = () => {
   const [messageApi, contextHolder] = message.useMessage();
@@ -80,7 +80,7 @@ export const Signup = () => {
           headers: {
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       const data = response.data;
@@ -93,8 +93,7 @@ export const Signup = () => {
     } catch (error) {
       console.error("Registration error:", error);
       setError(
-        error.response?.data?.error ||
-          "Network error. Please try again."
+        error.response?.data?.error || "Network error. Please try again.",
       );
     } finally {
       setLoading(false);

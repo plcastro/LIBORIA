@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect } from "react";
+import axios from "axios";
 import "./login.css";
 
 const Login = () => {
@@ -62,47 +63,53 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:8000/api/users/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+      const response = await axios.post(
+        "http://localhost:8000/api/users/login",
+        {
           username: formData.username.trim(),
           password: formData.password.trim(),
-        }),
-      });
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        },
+      );
 
-      let data;
-      try {
-        data = await response.json(); // parse JSON safely
-      } catch {
-        setError("Invalid response from server");
-        return;
-      }
+      const data = response.data;
 
-      if (response.ok) {
-        // Store user data
-        localStorage.setItem("currentUser", JSON.stringify(data.user));
-        // Handle Remember Me functionality
+      if (response.status >= 200 && response.status < 300) {
+        sessionStorage.setItem("currentUser", JSON.stringify(data.user));
+
         if (rememberMe) {
-          localStorage.setItem("rememberedUsername", formData.username.trim());
-          localStorage.setItem("rememberedPassword", formData.password.trim());
-          localStorage.setItem("rememberMe", "true");
+          sessionStorage.setItem(
+            "rememberedUsername",
+            formData.username.trim(),
+          );
+          sessionStorage.setItem(
+            "rememberedPassword",
+            formData.password.trim(),
+          );
+          sessionStorage.setItem("rememberMe", "true");
         } else {
-          // Clear saved credentials if Remember Me is not checked
-          localStorage.removeItem("rememberedUsername");
-          localStorage.removeItem("rememberedPassword");
-          localStorage.removeItem("rememberMe");
+          sessionStorage.removeItem("rememberedUsername");
+          sessionStorage.removeItem("rememberedPassword");
+          sessionStorage.removeItem("rememberMe");
         }
 
         navigate("/dashboard/view/borrow");
-      } else {
-        setError(data.error || "Login failed");
       }
     } catch (err) {
       console.error("Login error:", err);
-      setError("Network error. Please try again.");
+
+      console.log("Status:", err.response?.status);
+      console.log("Backend response:", err.response?.data);
+
+      setError(
+        err.response?.data?.error ||
+          err.response?.data?.message ||
+          "Login failed. Please check your credentials.",
+      );
     } finally {
       setLoading(false);
     }

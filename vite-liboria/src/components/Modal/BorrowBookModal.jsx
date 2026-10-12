@@ -1,75 +1,39 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
+import React, { useEffect } from "react";
 import {
-  Alert,
+  Modal,
+  Form,
+  Input,
+  DatePicker,
+  Row,
+  Col,
   Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Grid,
-  MenuItem,
-  Snackbar,
-  TextField,
-} from "@mui/material";
-import dateValue from "../../utils/dateValue";
-
-const initialForm = {
-  name: "",
-  year_level: "",
-  course: "",
-  created_at: "",
-  due_date: "",
-  book_title: "",
-};
-
+  Select,
+  message,
+} from "antd";
+import dayjs from "dayjs";
+import axios from "axios";
 const BorrowBookModal = ({ open, onClose, onSubmit, initialValues }) => {
-  const [formData, setFormData] = useState(initialForm);
-  const [errors, setErrors] = useState({});
-  const [notification, setNotification] = useState({
-    open: false,
-    severity: "info",
-    message: "",
-  });
-
-  const notify = (severity, message) =>
-    setNotification({ open: true, severity, message });
+  const [messageApi, contextHolder] = message.useMessage();
+  const [form] = Form.useForm();
+  const colProps = { xs: 24, md: 12 };
 
   useEffect(() => {
     if (open && initialValues) {
-      const today = dateValue();
+      const today = dayjs();
       const dueDate = today.add(7, "day");
 
-      setFormData({
+      form.setFieldsValue({
         name: "",
         year_level: "",
         course: "",
-        created_at: today.format("YYYY-MM-DD"),
-        due_date: dueDate.format("YYYY-MM-DD"),
+        created_at: today,
+        due_date: dueDate,
         book_title: initialValues.book_title || "",
       });
-      setErrors({});
-    } else if (!open) {
-      setFormData(initialForm);
-      setErrors({});
+    } else {
+      form.resetFields();
     }
-  }, [open, initialValues]);
-
-  const updateField = (field, value) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    setErrors((prev) => ({ ...prev, [field]: "" }));
-  };
-
-  const validate = () => {
-    const nextErrors = {};
-    if (!formData.name.trim()) nextErrors.name = "Name is required";
-    if (!formData.year_level) nextErrors.year_level = "Year level is required";
-    if (!formData.course) nextErrors.course = "Course is required";
-    if (!formData.due_date) nextErrors.due_date = "Due date is required";
-
-    setErrors(nextErrors);
-    return Object.keys(nextErrors).length === 0;
-  };
+  }, [open, initialValues, form]);
 
   const handleNameBlur = async () => {
     const name = formData.name.trim();
@@ -77,11 +41,11 @@ const BorrowBookModal = ({ open, onClose, onSubmit, initialValues }) => {
 
     try {
       const { data: borrowers } = await axios.get(
-        "http://localhost:8000/api/borrowers"
+        "http://localhost:8000/api/borrowers",
       );
 
       const borrower = borrowers.find(
-        (b) => b.name.toLowerCase() === name.toLowerCase()
+        (b) => b.name.toLowerCase() === name.toLowerCase(),
       );
 
       if (borrower) {
@@ -99,7 +63,6 @@ const BorrowBookModal = ({ open, onClose, onSubmit, initialValues }) => {
       console.error("Error fetching borrower:", err);
     }
   };
-
   const handleBorrow = async () => {
     if (!validate()) return;
 
@@ -113,11 +76,11 @@ const BorrowBookModal = ({ open, onClose, onSubmit, initialValues }) => {
       };
 
       const { data: borrowers } = await axios.get(
-        "http://localhost:8000/api/borrowers"
+        "http://localhost:8000/api/borrowers",
       );
 
       let borrower = borrowers.find(
-        (b) => b.name.toLowerCase() === name.toLowerCase()
+        (b) => b.name.toLowerCase() === name.toLowerCase(),
       );
 
       if (!borrower) {
@@ -125,13 +88,13 @@ const BorrowBookModal = ({ open, onClose, onSubmit, initialValues }) => {
           const { data } = await axios.post(
             "http://localhost:8000/api/borrowers",
             borrowerPayload,
-            { headers: { "Content-Type": "application/json" } }
+            { headers: { "Content-Type": "application/json" } },
           );
           borrower = data;
         } catch (error) {
           console.error(
             "Borrower creation failed:",
-            error.response?.data?.error
+            error.response?.data?.error,
           );
           return;
         }
@@ -148,7 +111,7 @@ const BorrowBookModal = ({ open, onClose, onSubmit, initialValues }) => {
       const borrowRes = await axios.post(
         "http://localhost:8000/api/borrowed-books",
         borrowPayload,
-        { headers: { "Content-Type": "application/json" } }
+        { headers: { "Content-Type": "application/json" } },
       );
 
       onSubmit(borrowRes.data);
@@ -164,7 +127,7 @@ const BorrowBookModal = ({ open, onClose, onSubmit, initialValues }) => {
       } else if (errorMessage.includes("limit reached")) {
         notify(
           "error",
-          "Borrow limit reached. You can only borrow up to 3 books at a time."
+          "Borrow limit reached. You can only borrow up to 3 books at a time.",
         );
       } else {
         notify("error", "Failed to borrow book. Please try again.");
@@ -172,131 +135,118 @@ const BorrowBookModal = ({ open, onClose, onSubmit, initialValues }) => {
     }
   };
 
-  const borrowDate = dateValue(formData.created_at || undefined);
-  const minDueDate = borrowDate.add(1, "day").format("YYYY-MM-DD");
-  const maxDueDate = borrowDate.add(14, "day").format("YYYY-MM-DD");
+  // Limit 14 days
+  const disabledDate = (current) => {
+    const borrowDate = form.getFieldValue("created_at") || dayjs();
+    const minDate = borrowDate.add(1, "day");
+    const maxDate = borrowDate.add(14, "day");
+    return (
+      current &&
+      (current.isBefore(minDate, "day") || current.isAfter(maxDate, "day"))
+    );
+  };
 
   return (
     <>
-      <Snackbar
-        open={notification.open}
-        autoHideDuration={3000}
-        onClose={() => setNotification((prev) => ({ ...prev, open: false }))}
+      {contextHolder}
+      <Modal
+        title="Borrow Book"
+        open={open}
+        onCancel={onClose}
+        footer={
+          <div style={{ display: "flex", justifyContent: "center", gap: 10 }}>
+            <Button onClick={onClose}>Cancel</Button>
+            <Button
+              type="primary"
+              htmlType="submit"
+              form={form}
+              onClick={handleBorrow}
+            >
+              Borrow
+            </Button>
+          </div>
+        }
       >
-        <Alert severity={notification.severity} variant="filled">
-          {notification.message}
-        </Alert>
-      </Snackbar>
+        <Form form={form} layout="vertical">
+          <Row gutter={[24, 8]}>
+            <Col {...colProps}>
+              <Form.Item name="name" label="Name" rules={[{ required: true }]}>
+                <Input onBlur={handleNameBlur} autoComplete="off" />
+              </Form.Item>
+            </Col>
 
-      <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-        <DialogTitle>Borrow Book</DialogTitle>
-        <DialogContent dividers>
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
-              <TextField
-                label="Name"
-                value={formData.name}
-                onChange={(e) => updateField("name", e.target.value)}
-                onBlur={handleNameBlur}
-                error={Boolean(errors.name)}
-                helperText={errors.name}
-                autoComplete="off"
-                fullWidth
-                size="small"
-              />
-            </Grid>
-
-            <Grid item xs={12} md={6}>
-              <TextField
-                select
+            <Col {...colProps}>
+              <Form.Item
+                name="year_level"
                 label="Year Level"
-                value={formData.year_level}
-                onChange={(e) => updateField("year_level", e.target.value)}
-                error={Boolean(errors.year_level)}
-                helperText={errors.year_level}
-                fullWidth
-                size="small"
+                rules={[{ required: true }]}
               >
-                {["1st Year", "2nd Year", "3rd Year", "4th Year"].map(
-                  (year) => (
-                    <MenuItem key={year} value={year}>
-                      {year}
-                    </MenuItem>
-                  )
-                )}
-              </TextField>
-            </Grid>
+                <Select
+                  placeholder="Select year level"
+                  defaultValue="1st Year"
+                  options={[
+                    { value: "1st Year", label: "1st Year" },
+                    { value: "2nd Year", label: "2nd Year" },
+                    { value: "3rd Year", label: "3rd Year" },
+                    { value: "4th Year", label: "4th Year" },
+                  ]}
+                />
+              </Form.Item>
+            </Col>
 
-            <Grid item xs={12} md={6}>
-              <TextField
-                select
+            <Col {...colProps}>
+              <Form.Item
+                name="course"
                 label="Course"
-                value={formData.course}
-                onChange={(e) => updateField("course", e.target.value)}
-                error={Boolean(errors.course)}
-                helperText={errors.course}
-                fullWidth
-                size="small"
+                rules={[{ required: true }]}
               >
-                {[
-                  "BS Information Technology",
-                  "BS Tourism Management",
-                  "BS Psychology",
-                  "BS Nursing",
-                  "BS Medical Technology",
-                ].map((course) => (
-                  <MenuItem key={course} value={course}>
-                    {course}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Grid>
+                <Select
+                  placeholder="Select course"
+                  defaultValue="BS Information Technology"
+                  options={[
+                    {
+                      value: "BS Information Technology",
+                      label: "BS Information Technology",
+                    },
+                    {
+                      value: "BS Tourism Management",
+                      label: "BS Tourism Management",
+                    },
+                    { value: "BS Psychology", label: "BS Psychology" },
+                    { value: "BS Nursing", label: "BS Nursing" },
+                    {
+                      value: "BS Medical Technology",
+                      label: "BS Medical Technology",
+                    },
+                  ]}
+                />
+              </Form.Item>
+            </Col>
 
-            <Grid item xs={12} md={6}>
-              <TextField
-                label="Book Title"
-                value={formData.book_title}
-                disabled
-                fullWidth
-                size="small"
-              />
-            </Grid>
+            <Col {...colProps}>
+              <Form.Item name="book_title" label="Book Title">
+                <Input disabled />
+              </Form.Item>
+            </Col>
 
-            <Grid item xs={12} md={6}>
-              <TextField
-                label="Borrow Date"
-                type="date"
-                value={formData.created_at}
-                disabled
-                InputLabelProps={{ shrink: true }}
-                fullWidth
-                size="small"
-              />
-            </Grid>
+            <Col {...colProps}>
+              <Form.Item name="created_at" label="Borrow Date">
+                <DatePicker style={{ width: "100%" }} disabled />
+              </Form.Item>
+            </Col>
 
-            <Grid item xs={12} md={6}>
-              <TextField
-                label="Due Date"
-                type="date"
-                value={formData.due_date}
-                onChange={(e) => updateField("due_date", e.target.value)}
-                error={Boolean(errors.due_date)}
-                helperText={errors.due_date || "Select due date (max 14 days)"}
-                inputProps={{ min: minDueDate, max: maxDueDate }}
-                InputLabelProps={{ shrink: true }}
-                fullWidth
-                size="small"
-              />
-            </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions sx={{ justifyContent: "center", gap: 1 }}>
-          <Button onClick={onClose}>Cancel</Button>
-          <Button variant="contained" onClick={handleBorrow}>
-            Borrow
-          </Button>
-        </DialogActions>
-      </Dialog>
+            <Col {...colProps}>
+              <Form.Item name="due_date" label="Due Date">
+                <DatePicker
+                  style={{ width: "100%" }}
+                  disabledDate={disabledDate}
+                  placeholder="Select due date (max 14 days)"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+        </Form>
+      </Modal>
     </>
   );
 };

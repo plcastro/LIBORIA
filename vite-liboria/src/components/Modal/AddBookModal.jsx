@@ -1,96 +1,50 @@
 import React, { useState } from "react";
-import axios from "axios";
 import {
-  Alert,
-  Box,
+  Input,
+  Modal,
+  Form,
+  DatePicker,
+  InputNumber,
+  Col,
+  Row,
+  message,
   Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Grid,
-  MenuItem,
-  Snackbar,
-  TextField,
-} from "@mui/material";
-
-const initialForm = {
-  image: "",
-  title: "",
-  author: "",
-  category: "",
-  published_date: "",
-  total_copies: 1,
-  description: "",
-};
-
-const categories = ["Trending", "Romance", "Kids", "Thriller", "Textbooks"];
-
+  Space,
+  Select,
+} from "antd";
+import axios from "axios";
+const { TextArea } = Input;
 const AddBookModal = ({ modal2Open, setModal2Open, onBookCreated }) => {
-  const [formData, setFormData] = useState(initialForm);
-  const [errors, setErrors] = useState({});
+  const [messageApi, contextHolder] = message.useMessage();
+  const [form] = Form.useForm();
   const [bookData, setBookData] = useState(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isDiscardOpen, setIsDiscardOpen] = useState(false);
-  const [notification, setNotification] = useState({
-    open: false,
-    severity: "info",
-    message: "",
-  });
 
-  const notify = (severity, message) =>
-    setNotification({ open: true, severity, message });
+  const handleAddClick = async () => {
+    try {
+      const values = await form.validateFields();
+      console.log("Validated form values:", values);
 
-  const updateField = (field, value) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    setErrors((prev) => ({ ...prev, [field]: "" }));
-  };
+      const normalizedData = {
+        title: values.title,
+        author_name: values.author,
+        category: values.category,
+        published_date: values.published_date
+          ? values.published_date.format("YYYY-MM-DD")
+          : null,
+        total_copies: values.total_copies,
+        available_copies: values.total_copies,
+        description: values.description,
+        image: values.image,
+      };
 
-  const validate = () => {
-    const nextErrors = {};
-    if (!formData.image.trim()) nextErrors.image = "Please enter the image url";
-    if (!formData.title.trim()) nextErrors.title = "Please enter the book title";
-    if (!formData.author.trim()) {
-      nextErrors.author = "Please enter the author name";
+      setBookData(normalizedData);
+      setIsConfirmOpen(true);
+    } catch (err) {
+      console.error(err);
+      messageApi.error(err.message || "Failed to add book");
     }
-    if (!formData.category) {
-      nextErrors.category = "Please select the book category";
-    }
-    if (!formData.published_date) {
-      nextErrors.published_date = "Please select a published date";
-    }
-    if (!formData.total_copies || Number(formData.total_copies) < 1) {
-      nextErrors.total_copies = "Total copies must be at least 1";
-    }
-
-    setErrors(nextErrors);
-    return Object.keys(nextErrors).length === 0;
-  };
-
-  const resetForm = () => {
-    setFormData(initialForm);
-    setErrors({});
-  };
-
-  const handleAddClick = () => {
-    if (!validate()) {
-      notify("error", "Please complete all required book details.");
-      return;
-    }
-
-    const normalizedData = {
-      title: formData.title,
-      author_name: formData.author,
-      category: formData.category,
-      published_date: formData.published_date || null,
-      total_copies: Number(formData.total_copies),
-      available_copies: Number(formData.total_copies),
-      description: formData.description,
-      image: formData.image,
-    };
-
-    setBookData(normalizedData);
-    setIsConfirmOpen(true);
   };
 
   const handleConfirm = async () => {
@@ -117,220 +71,221 @@ const AddBookModal = ({ modal2Open, setModal2Open, onBookCreated }) => {
   };
 
   const handleDiscard = () => {
-    resetForm();
+    form.resetFields();
     setModal2Open(false);
     setIsDiscardOpen(false);
-    notify("info", "Book entry discarded.");
-  };
-
-  const handleClose = () => {
-    resetForm();
-    setModal2Open(false);
+    messageApi.info("Book entry discarded.");
   };
 
   return (
     <>
-      <Snackbar
-        open={notification.open}
-        autoHideDuration={3000}
-        onClose={() => setNotification((prev) => ({ ...prev, open: false }))}
-      >
-        <Alert severity={notification.severity} variant="filled">
-          {notification.message}
-        </Alert>
-      </Snackbar>
-
-      <Dialog open={modal2Open} onClose={handleClose} maxWidth="sm" fullWidth>
-        <DialogTitle>ADD BOOK DETAILS</DialogTitle>
-        <DialogContent dividers>
-          <Grid container spacing={3}>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Image"
-                placeholder="Enter Image URL"
-                value={formData.image}
-                onChange={(e) => updateField("image", e.target.value)}
-                error={Boolean(errors.image)}
-                helperText={errors.image}
-                fullWidth
-                size="small"
-                sx={{ mb: 2 }}
-              />
-              <TextField
-                label="Title"
-                placeholder="Enter Book Title"
-                value={formData.title}
-                onChange={(e) => updateField("title", e.target.value)}
-                error={Boolean(errors.title)}
-                helperText={errors.title}
-                fullWidth
-                size="small"
-                sx={{ mb: 2 }}
-              />
-              <TextField
-                label="Author"
-                placeholder="Enter Author Name"
-                value={formData.author}
-                onChange={(e) => updateField("author", e.target.value)}
-                error={Boolean(errors.author)}
-                helperText={errors.author}
-                fullWidth
-                size="small"
-                sx={{ mb: 2 }}
-              />
-              <TextField
-                select
-                label="Category"
-                value={formData.category}
-                onChange={(e) => updateField("category", e.target.value)}
-                error={Boolean(errors.category)}
-                helperText={errors.category}
-                fullWidth
-                size="small"
-              >
-                {categories.map((category) => (
-                  <MenuItem key={category} value={category}>
-                    {category}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Published Date"
-                type="date"
-                value={formData.published_date}
-                onChange={(e) => updateField("published_date", e.target.value)}
-                error={Boolean(errors.published_date)}
-                helperText={errors.published_date}
-                InputLabelProps={{ shrink: true }}
-                fullWidth
-                size="small"
-                sx={{ mb: 2 }}
-              />
-              <TextField
-                label="Total Copies"
-                type="number"
-                value={formData.total_copies}
-                onChange={(e) => updateField("total_copies", e.target.value)}
-                error={Boolean(errors.total_copies)}
-                helperText={errors.total_copies}
-                inputProps={{ min: 1 }}
-                fullWidth
-                size="small"
-                sx={{ mb: 2 }}
-              />
-              <TextField
-                label="Book Description"
-                placeholder="Enter Book Description"
-                value={formData.description}
-                onChange={(e) => updateField("description", e.target.value)}
-                multiline
-                minRows={4}
-                fullWidth
-                size="small"
-              />
-            </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setIsDiscardOpen(true)}>Discard</Button>
+      {contextHolder}
+      <Modal
+        title="ADD BOOK DETAILS"
+        centered
+        open={modal2Open}
+        closable={false}
+        keyboard={false}
+        footer={[
           <Button
-            variant="contained"
-            onClick={handleAddClick}
-            sx={{ backgroundColor: "#000", color: "#fff" }}
-          >
-            Add Book
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog
-        open={isConfirmOpen}
-        onClose={() => setIsConfirmOpen(false)}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>Confirm Book Details</DialogTitle>
-        <DialogContent dividers>
-          {bookData ? (
-            <Box>
-              {bookData.image && (
-                <Box sx={{ textAlign: "center", mb: 1 }}>
-                  <img
-                    src={bookData.image}
-                    alt={bookData.title || "Book Image"}
-                    style={{
-                      maxWidth: "100%",
-                      maxHeight: 200,
-                      objectFit: "contain",
-                    }}
-                  />
-                </Box>
-              )}
-              <p>
-                <strong>Title:</strong> {bookData.title}
-              </p>
-              <p>
-                <strong>Author:</strong> {bookData.author_name}
-              </p>
-              <p>
-                <strong>Category:</strong> {bookData.category}
-              </p>
-              <p>
-                <strong>Published Date:</strong> {bookData.published_date}
-              </p>
-              <p>
-                <strong>Total Copies:</strong> {bookData.total_copies}
-              </p>
-              <p>
-                <strong>Description:</strong> {bookData.description}
-              </p>
-            </Box>
-          ) : (
-            <p>No book data to confirm.</p>
-          )}
-        </DialogContent>
-        <DialogActions sx={{ justifyContent: "center" }}>
-          <Button onClick={() => setIsConfirmOpen(false)} sx={{ width: 200 }}>
-            Back
-          </Button>
-          <Button
-            variant="contained"
-            onClick={handleConfirm}
-            sx={{
-              width: 200,
-              backgroundColor: "#000",
-              color: "#fff",
-              borderColor: "#000",
+            key="Discard"
+            onClick={() => {
+              setIsDiscardOpen(true);
             }}
           >
-            Confirm
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog
-        open={isDiscardOpen}
-        onClose={() => setIsDiscardOpen(false)}
-        maxWidth="sm"
-        fullWidth
+            Discard
+          </Button>,
+          <Button
+            key="Add"
+            type="primary"
+            onClick={handleAddClick}
+            style={{ backgroundColor: "#000", color: "#fff" }}
+          >
+            Add Book
+          </Button>,
+        ]}
+        onCancel={() => {
+          form.resetFields();
+          setModal2Open(false);
+        }}
+        width={600}
       >
-        <DialogTitle>Discard Book Entry</DialogTitle>
-        <DialogContent dividers>
-          <p>
-            Are you sure you want to discard this book? All unsaved details will
-            be lost.
-          </p>
-        </DialogContent>
-        <DialogActions sx={{ justifyContent: "center" }}>
+        <Form
+          form={form}
+          layout="vertical"
+          labelAlign="left"
+          initialValues={{ total_copies: 1 }}
+        >
+          <Row gutter={24}>
+            {/* Left Column */}
+            <Col xs={24} sm={12}>
+              <Form.Item
+                label="Image"
+                name="image"
+                rules={[
+                  { required: true, message: "Please enter the image url" },
+                ]}
+              >
+                <Input placeholder="Enter Image URL" />
+              </Form.Item>
+              <Form.Item
+                label="Title"
+                name="title"
+                rules={[
+                  { required: true, message: "Please enter the book title" },
+                ]}
+              >
+                <Input placeholder="Enter Book Title" />
+              </Form.Item>
+              <Form.Item
+                label="Author"
+                name="author"
+                rules={[
+                  { required: true, message: "Please enter the author name" },
+                ]}
+              >
+                <Input placeholder="Enter Author Name" />
+              </Form.Item>
+              <Form.Item
+                label="Category"
+                name="category"
+                rules={[
+                  {
+                    required: true,
+                    message: "Please select the book category",
+                  },
+                ]}
+              >
+                <Select
+                  placeholder="Select category:"
+                  defaultValue="Trending"
+                  options={[
+                    { value: "Trending", label: "Trending" },
+                    { value: "Romance", label: "Romance" },
+                    { value: "Kids", label: "Kids" },
+                    { value: "Thriller", label: "Thriller" },
+                    { value: "Textbooks", label: "Textbooks" },
+                  ]}
+                />
+              </Form.Item>
+            </Col>
+
+            {/* Right Column */}
+            <Col xs={24} sm={12}>
+              <Form.Item
+                label="Published Date"
+                name="published_date"
+                rules={[
+                  { required: true, message: "Please select a published date" },
+                ]}
+              >
+                <DatePicker style={{ width: "100%" }} />
+              </Form.Item>
+              <Form.Item label="Total Copies" name="total_copies">
+                <InputNumber min={1} style={{ width: "100%" }} />
+              </Form.Item>
+              <Form.Item label="Book Description" name="description">
+                <TextArea rows={4} placeholder="Enter Book Description" />
+              </Form.Item>
+            </Col>
+          </Row>
+        </Form>
+      </Modal>
+      <Modal
+        title="Confirm Book Details"
+        open={isConfirmOpen}
+        centered
+        footer={[
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <Space>
+              <Button
+                onClick={() => setIsConfirmOpen(false)}
+                style={{ width: 200 }}
+              >
+                Back
+              </Button>
+              <Button
+                key="confirm"
+                type="primary"
+                onClick={handleConfirm}
+                style={{
+                  width: 200,
+                  backgroundColor: "#000",
+                  color: "#fff",
+                  borderColor: "#000",
+                }}
+              >
+                Confirm
+              </Button>
+            </Space>
+          </div>,
+        ]}
+      >
+        {bookData ? (
+          <div>
+            {bookData.image && (
+              <div style={{ textAlign: "center", marginBottom: 10 }}>
+                <img
+                  src={bookData.image}
+                  alt={bookData.title || "Book Image"}
+                  style={{
+                    maxWidth: "100%",
+                    maxHeight: 200,
+                    objectFit: "contain",
+                  }}
+                />
+              </div>
+            )}
+            <p>
+              <strong>Title:</strong> {bookData.title}
+            </p>
+            <p>
+              <strong>Author:</strong> {bookData.author_name}
+            </p>
+            <p>
+              <strong>Category:</strong> {bookData.category}
+            </p>
+            <p>
+              <strong>Published Date:</strong> {bookData.published_date}
+            </p>
+            <p>
+              <strong>Total Copies:</strong> {bookData.total_copies}
+            </p>
+            <p>
+              <strong>Description:</strong> {bookData.description}
+            </p>
+          </div>
+        ) : (
+          <p>No book data to confirm.</p>
+        )}
+      </Modal>
+
+      <Modal
+        title="Discard Book Entry"
+        open={isDiscardOpen}
+        onCancel={() => setIsDiscardOpen(false)}
+        footer={null}
+        centered
+      >
+        <p>
+          Are you sure you want to discard this book? All unsaved details will
+          be lost.
+        </p>
+
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            gap: "10px",
+            marginTop: "20px",
+          }}
+        >
           <Button onClick={() => setIsDiscardOpen(false)}>No</Button>
-          <Button variant="contained" color="error" onClick={handleDiscard}>
+          <Button type="primary" danger onClick={handleDiscard}>
             Yes, Discard
           </Button>
-        </DialogActions>
-      </Dialog>
+        </div>
+      </Modal>
     </>
   );
 };

@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
-import { Menu, Button, message } from "../muiAntdCompat";
+import { Menu, Button, message } from "antd";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   BookOutlined,
@@ -8,7 +7,8 @@ import {
   ArrowLeftOutlined,
   UnorderedListOutlined,
   ContactsOutlined,
-} from "../MuiAntIcons";
+} from "@ant-design/icons";
+import axios from "axios";
 import logo_dark from "../../assets/liboria white.png";
 import BookIcon from "../../assets/books.png";
 import ReturnIcon from "../../assets/return.png";
@@ -27,7 +27,7 @@ const Sidebar = () => {
     if (!userid) return;
     try {
       const { data } = await axios.get(
-        `http://localhost:8000/api/users/${userid}`
+        `http://localhost:8000/api/users/${userid}`,
       );
       setUser(data);
     } catch (err) {

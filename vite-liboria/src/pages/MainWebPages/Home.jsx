@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Button, Divider } from "@mui/material";
+import { Button, Row, Col, Divider } from "antd";
 import BookBackground from "../../assets/book-background.png";
 import bookshelf from "../../assets/bookshelf-black.png";
 import "../../App.css";
@@ -11,183 +11,165 @@ const Home = () => {
   return (
     <>
       {/* HERO SECTION */}
-      <section
+      <Row
         style={{
           backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url(${BookBackground})`,
           backgroundRepeat: "no-repeat",
           backgroundPosition: "center center",
           backgroundSize: "cover",
           width: "100%",
-          minHeight: "70vh",
-          boxSizing: "border-box",
+          height: "70vh",
           overflowX: "hidden",
           display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          alignItems: "flex-start",
-          padding: "10%",
-        }}
-      >
-        <h1
-          style={{
-            color: "white",
-            fontSize: "clamp(28px, 5vw, 60px)",
-            fontWeight: "bolder",
-            lineHeight: "1.2",
-          }}
-        >
-          FIND BOOKS THAT MATCH YOUR INTERESTS
-        </h1>
-
-        <p
-          style={{
-            marginBottom: "20px",
-            fontSize: "clamp(14px, 2vw, 18px)",
-            maxWidth: "500px",
-            color: "white",
-          }}
-        >
-          Liboria makes it easy to discover books that match your interests.
-        </p>
-
-        <Button
-          onClick={() => navigate("/login")}
-          style={{
-            backgroundColor: "white",
-            color: "black",
-            fontWeight: "bold",
-          }}
-        >
-          Get Started
-        </Button>
-      </section>
-
-      <section
-        style={{
-          padding: "5%",
-          display: "grid",
-          gridTemplateColumns:
-            "repeat(auto-fit, minmax(min(100%, 320px), 1fr))",
           alignItems: "center",
-          gap: "32px",
         }}
       >
-        <div style={{ padding: "5%" }}>
-          <h3
+        <Col
+          xs={{ span: 22, offset: 1 }}
+          sm={{ span: 20, offset: 2 }}
+          md={{ span: 14, offset: 2 }}
+          lg={{ span: 10, offset: 3 }}
+          style={{
+            color: "white",
+            textAlign: "left",
+          }}
+        >
+          <h1
             style={{
-              fontSize: "clamp(24px, 4vw, 40px)",
-              textAlign: "center",
+              color: "white",
+              fontSize: "clamp(28px, 5vw, 60px)",
+              fontWeight: "600",
+              lineHeight: "1.2",
             }}
           >
-            ABOUT US
-          </h3>
+            FIND BOOKS THAT MATCH YOUR INTERESTS
+          </h1>
 
           <p
             style={{
-              textAlign: "justify",
+              marginBottom: "20px",
               fontSize: "clamp(14px, 2vw, 18px)",
-              lineHeight: 1.7,
+              maxWidth: "500px",
             }}
+          >
+            Liboria makes it easy to discover books that match your interests.
+          </p>
+
+          <Button
+            type="default"
+            size="large"
+            onClick={() => navigate("/login")}
+            style={{
+              backgroundColor: "white",
+              color: "black",
+            }}
+          >
+            Get Started
+          </Button>
+        </Col>
+      </Row>
+
+      <Row
+        justify="center"
+        align="middle"
+        style={{
+          margin: "80px auto",
+          padding: "0 10%",
+          display: "flex",
+          alignContent: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        <Divider>
+          <h2 style={{ fontSize: "clamp(24px, 4vw, 40px)" }}>ABOUT US</h2>
+        </Divider>
+
+        <Col lg={11} md={24} sm={24} xs={24}>
+          <img
+            src={bookshelf}
+            alt="bookshelf black"
+            style={{
+              width: "100%",
+              height: "auto",
+              borderRadius: "12px",
+              objectFit: "cover",
+              boxShadow: "0 4px 10px rgba(0,0,0,0.2)",
+            }}
+          />
+        </Col>
+
+        <Col lg={12} md={24} sm={24} xs={24}>
+          <p
+            style={{ textAlign: "justify", fontSize: "clamp(14px, 2vw, 18px)" }}
           >
             Welcome to <strong>Liboria</strong>, your digital library designed
             for readers of all ages and interests. From trending titles to
             heart-fluttering romance novels and magical kids’ stories, Liboria
-            brings the joy of reading into one easy-to-use platform.
-            <br />
+            brings the joy of reading into one easy-to-use platform. <br />
             <br />
             We believe books are for sharing, not just storing. Liboria works as
             a borrowing-based eLibrary, giving you the freedom to explore more
             books without limits—anytime, anywhere.
           </p>
-        </div>
+        </Col>
+      </Row>
 
-        <div style={{ minWidth: 0 }}>
-          <img
-            src={bookshelf}
-            alt="Black bookshelf"
-            style={{
-              display: "block",
-              width: "100%",
-              maxHeight: "50vh",
-              objectFit: "cover",
-              boxShadow: "0 4px 10px rgba(0,0,0,0.2)",
-            }}
-          />
-        </div>
-      </section>
-
-      {/* MISSION AND VISION SECTION */}
-      <section
+      <Row
+        justify="center"
+        align="middle"
         style={{
           margin: "80px auto",
           padding: "0 10%",
-          display: "grid",
-          gridTemplateColumns:
-            "repeat(auto-fit, minmax(min(100%, 280px), 1fr))",
-          gap: "32px",
-          alignItems: "start",
+          display: "flex",
+          alignContent: "center",
+          justifyContent: "space-between",
+          gap: "20px",
         }}
       >
-        <div>
+        <Col sm={24} md={11}>
           <Divider>
             <h2 style={{ fontSize: "clamp(24px, 4vw, 40px)" }}>MISSION</h2>
           </Divider>
-
           <p
-            style={{
-              textAlign: "justify",
-              fontSize: "clamp(14px, 2vw, 18px)",
-              lineHeight: 1.7,
-            }}
+            style={{ textAlign: "justify", fontSize: "clamp(14px, 2vw, 18px)" }}
           >
             At Liboria, our mission is simple: to make reading more accessible,
             enjoyable, and affordable for everyone. We combine the spirit of a
             traditional library with the convenience of the digital world.
+            <br />
           </p>
-        </div>
-
-        <div>
+        </Col>
+        <Col sm={24} md={11}>
           <Divider>
             <h2 style={{ fontSize: "clamp(24px, 4vw, 40px)" }}>VISION</h2>
           </Divider>
-
-          <p
-            style={{
-              textAlign: "justify",
-              fontSize: "clamp(14px, 2vw, 18px)",
-              lineHeight: 1.7,
-            }}
-          >
+          <p>
             Our vision is to build a connected community of readers who believe
             in the power of sharing stories—because every book borrowed is a new
             world discovered.
           </p>
-        </div>
-      </section>
+        </Col>
+      </Row>
 
-      {/* CONTACT / ABOUT SECTION */}
-      <section
+      <Row
+        justify="center"
+        align="middle"
         style={{
           margin: "80px auto",
           padding: "0 10%",
-          display: "grid",
-          gridTemplateColumns: "minmax(0, 1fr)",
-          justifyItems: "center",
+          display: "flex",
+          alignContent: "center",
+          justifyContent: "space-between",
         }}
       >
-        <div style={{ width: "100%", minWidth: 0 }}>
+        <Col span={24}>
           <Divider>
             <h2 style={{ fontSize: "clamp(24px, 4vw, 40px)" }}>
               Let's Talk Books
             </h2>
           </Divider>
-
           <p
-            style={{
-              textAlign: "justify",
-              fontSize: "clamp(14px, 2vw, 18px)",
-              lineHeight: 1.7,
-            }}
+            style={{ textAlign: "justify", fontSize: "clamp(14px, 2vw, 18px)" }}
           >
             At Liboria, we believe every reader is part of our story. Whether
             you’re looking for your next great read, need help borrowing a book,
@@ -195,8 +177,8 @@ const Home = () => {
             team loves hearing from fellow book lovers—because your ideas,
             questions, and feedback help us grow and make Liboria even better.
           </p>
-        </div>
-      </section>
+        </Col>
+      </Row>
     </>
   );
 };
