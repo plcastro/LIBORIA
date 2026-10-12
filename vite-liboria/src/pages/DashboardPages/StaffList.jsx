@@ -89,10 +89,11 @@ const StaffList = () => {
   };
 
   const handleSave = () => {
-    loadAllStaff(); // reload table after add/edit/delete
+    loadAllStaff(); 
   };
+  
   const filteredData = data.filter((item) => {
-    if (!searchText) return true; // show all if empty
+    if (!searchText) return true;
     const text = searchText.toLowerCase();
     return (
       item.name?.toLowerCase().includes(text) ||

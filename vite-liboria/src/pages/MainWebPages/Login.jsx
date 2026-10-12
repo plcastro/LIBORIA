@@ -1,8 +1,20 @@
 import React from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import "./login.css";
+import "../../App.css";
+import {
+  Button,
+  TextField,
+  InputAdornment,
+  IconButton,
+  Checkbox,
+  FormGroup,
+  FormControlLabel,
+  Link,
+} from "@mui/material";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -13,8 +25,12 @@ const Login = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
-  // Load saved credentials on component mount
+  const handleClickShowPassword = () => {
+    setShowPassword((prev) => !prev);
+  };
+
   useEffect(() => {
     const savedUsername = localStorage.getItem("rememberedUsername");
     const savedPassword = localStorage.getItem("rememberedPassword");
@@ -43,8 +59,8 @@ const Login = () => {
 
     if (!isChecked) {
       localStorage.setItem("rememberMe", "false"); // triggers other tabs
-      localStorage.removeItem("rememberedUsername");
-      localStorage.removeItem("rememberedPassword");
+      sessionStorage.removeItem("rememberedUsername");
+      sessionStorage.removeItem("rememberedPassword");
     } else {
       localStorage.setItem("rememberMe", "true");
     }
@@ -90,11 +106,11 @@ const Login = () => {
             "rememberedPassword",
             formData.password.trim(),
           );
-          sessionStorage.setItem("rememberMe", "true");
+          localStorage.setItem("rememberMe", "true");
         } else {
           sessionStorage.removeItem("rememberedUsername");
           sessionStorage.removeItem("rememberedPassword");
-          sessionStorage.removeItem("rememberMe");
+          localStorage.removeItem("rememberMe");
         }
 
         navigate("/dashboard/view/borrow");
@@ -123,53 +139,109 @@ const Login = () => {
 
         <form className="login-form" onSubmit={handleSubmit}>
           <div className="form-group">
-            <label htmlFor="username">Username</label>
-            <input
+            <TextField
               type="text"
               id="username"
-              placeholder="Enter your username"
+              label="Username"
+              variant="outlined"
               value={formData.username}
               onChange={handleInputChange}
               autoComplete="username"
+              className="!w-full"
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="password">Password</label>
-            <input
-              type="password"
+            <TextField
+              type={showPassword ? "text" : "password"}
               id="password"
+              label="Password"
+              variant="outlined"
               placeholder="Enter your password"
               value={formData.password}
               onChange={handleInputChange}
               autoComplete="current-password"
+              fullWidth
+              slotProps={{
+                input: {
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        aria-label={
+                          showPassword ? "Hide password" : "Show password"
+                        }
+                        onClick={handleClickShowPassword}
+                        edge="end"
+                        size="small"
+                        sx={{
+                          padding: "4px",
+                          width: "32px",
+                          height: "32px",
+                        }}
+                      >
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                },
+              }}
             />
           </div>
 
-          <div className="remember-forgot">
-            <div className="remember-me">
-              <input
-                type="checkbox"
-                id="remember"
-                checked={rememberMe}
-                onChange={handleRememberMeChange}
-              />
-              <label htmlFor="remember">Remember me</label>
+          <div className="flex w-full items-center">
+            <div className="flex-1">
+              <FormGroup>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      size="small"
+                      checked={rememberMe}
+                      onChange={handleRememberMeChange}
+                      sx={{ padding: "4px", mr: 0.5 }}
+                    />
+                  }
+                  label="Remember me"
+                  sx={{
+                    "& .MuiFormControlLabel-label": {
+                      fontSize: "14px",
+                    },
+                    margin: 0,
+                    whiteSpace: "nowrap",
+                  }}
+                />
+              </FormGroup>
             </div>
-            <Link to="/forgot" className="forgot-password">
-              Forgot password?
-            </Link>
+
+            <div className="flex flex-1 justify-end">
+              <Link
+                variant="text"
+                size="small"
+                onClick={() => navigate("/forgot")}
+                className="forgot-password !text-gray-500"
+                sx={{
+                  fontSize: "14px",
+                  textTransform: "none",
+                  minWidth: 0,
+                  padding: "4px 0",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                Forgot password?
+              </Link>
+            </div>
           </div>
-
-          <button type="submit" className="login-btn" disabled={loading}>
-            {loading ? "Logging in..." : "LOGIN"}
-          </button>
-
-          {error && (
-            <div className="error" style={{ color: "red" }}>
-              {error}
-            </div>
-          )}
+          <div className="w-full !mt-2">
+            <Button
+              type="submit"
+              disabled={loading}
+              size="large"
+              variant="contained"
+              className="!w-full !bg-black"
+            >
+              {loading ? "Logging in..." : "LOGIN"}
+            </Button>
+          </div>
+          {error && <div className="error text-red-700">{error}</div>}
 
           <div className="signup-link">
             Don't have an account? <Link to="/signup">Sign up here</Link>
