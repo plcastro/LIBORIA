@@ -75,18 +75,6 @@ const ViewRecords = () => {
       width: 150,
     },
     {
-      title: "Year Level",
-      dataIndex: "year_level",
-      key: "year_level",
-      width: 120,
-    },
-    {
-      title: "Course",
-      dataIndex: "course",
-      key: "course",
-      width: 150,
-    },
-    {
       title: "Book Title",
       dataIndex: "book_title",
       key: "book_title",
