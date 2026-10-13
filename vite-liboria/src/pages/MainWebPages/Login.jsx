@@ -154,29 +154,6 @@ const Login = () => {
               onChange={handleInputChange}
               autoComplete="current-password"
               fullWidth
-              slotProps={{
-                input: {
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        aria-label={
-                          showPassword ? "Hide password" : "Show password"
-                        }
-                        onClick={handleClickShowPassword}
-                        edge="end"
-                        size="small"
-                        sx={{
-                          padding: "4px",
-                          width: "32px",
-                          height: "32px",
-                        }}
-                      >
-                        {showPassword ? <VisibilityOff /> : <Visibility />}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                },
-              }}
             />
             {error && <div className="error text-red-700">{error}</div>}
           </div>
