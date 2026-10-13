@@ -99,7 +99,7 @@ const Forgot = () => {
 
       setTimeout(() => {
         navigate(`/reset/${encodeURIComponent(resetToken.trim())}`);
-      }, 500);
+      }, 0);
     } catch (err) {
       setTokenStatus(
         err.response?.data?.error || "Network error. Please try again.",

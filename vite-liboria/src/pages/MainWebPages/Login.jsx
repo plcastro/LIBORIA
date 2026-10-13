@@ -94,7 +94,8 @@ const Login = () => {
       );
 
       const user = response.data.user;
-
+      console.log("Login response user:", user);
+      console.log("Login response user ID:", user?._id);
       if (!user) {
         setError("Login failed: user information was not returned.");
         return;

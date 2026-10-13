@@ -100,7 +100,7 @@ const Reset = () => {
 
       if (response.status >= 200 && response.status < 300) {
         setMessage("Password reset successfully! Redirecting to login...");
-        setTimeout(() => navigate("/login"), 2000);
+        setTimeout(() => navigate("/login"), 3000);
       }
     } catch (err) {
       const errorMessage = err.response?.data?.error;
