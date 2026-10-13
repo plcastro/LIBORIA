@@ -57,6 +57,7 @@ const Sidebar = () => {
 
   // Update selected menu based on the current path
   const selectedCurrent = location.pathname.includes("/dashboard/view/borrow") ? "1"
+    : location.pathname.includes("/dashboard/view/requests") ? "6"
     : location.pathname.includes("/dashboard/view/return") ? "2"
     : location.pathname.includes("/dashboard/view/records") ? "3"
     : location.pathname.includes("/dashboard/view/staff") ? "4"
@@ -71,6 +72,9 @@ const Sidebar = () => {
         break;
       case "2":
         navigate("/dashboard/view/return");
+        break;
+      case "6":
+        navigate("/dashboard/view/requests");
         break;
       case "3":
         navigate("/dashboard/view/records");
@@ -154,6 +158,11 @@ const Sidebar = () => {
                   icon: <BookIcon sx={{ fontSize: 18 }} />,
                 },
                 {
+                  key: "6",
+                  label: "Borrow Requests",
+                  icon: <ListIcon />,
+                },
+                {
                   key: "2",
                   label: "Return Book",
                   icon: <ReturnBookIcon sx={{ fontSize: 18 }} />,
@@ -170,7 +179,7 @@ const Sidebar = () => {
               label: "User Management",
               icon: <PersonIcon />,
               children: [
-                ...(user.account_type !== "librarian"
+                ...(user.account_type === "librarian"
                   ? [
                       {
                         key: "4",

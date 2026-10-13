@@ -28,6 +28,7 @@ const formatDate = (value) => {
 const StudentDashboard = () => {
   const [user, setUser] = useState(null);
   const [borrowings, setBorrowings] = useState([]);
+  const [requests, setRequests] = useState([]);
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -53,12 +54,13 @@ const StudentDashboard = () => {
           return;
         }
 
-        const [userResult, borrowersResult, borrowingResult, booksResult] =
+        const [userResult, borrowersResult, borrowingResult, booksResult, requestsResult] =
           await Promise.allSettled([
             axios.get(`/users/${storedUser._id}`),
             axios.get(`/borrowers`),
             axios.get(`/borrowed-books`),
             axios.get(`/books`),
+            axios.get(`/borrow-requests/student/${storedUser._id}`),
           ]);
 
         if (!active) return;
@@ -72,6 +74,8 @@ const StudentDashboard = () => {
         const normalizedUser = apiUser?.user || apiUser;
 
         setUser(normalizedUser);
+        if (requestsResult.status === "fulfilled") setRequests(requestsResult.value.data);
+        else setError("Borrow requests could not be loaded.");
 
         // Store borrowing records locally before filtering.
         let fetchedBorrowings = [];
@@ -98,24 +102,18 @@ const StudentDashboard = () => {
           const data = borrowersResult.value.data;
           const borrowers = Array.isArray(data) ? data : [];
 
-          const userName = String(normalizedUser?.name || "")
-            .trim()
-            .toLowerCase();
-
           const matchingBorrowers = borrowers.filter(
             (borrower) =>
-              String(borrower.name || "")
-                .trim()
-                .toLowerCase() === userName,
+              String(borrower.user_id || "") === String(storedUser._id),
           );
 
-          if (!userName || matchingBorrowers.length !== 1) {
+          if (matchingBorrowers.length !== 1) {
             setBorrowings([]);
 
             setLinkNotice(
               matchingBorrowers.length > 1
-                ? "Several borrower records have your name. Personal borrowing totals are hidden until your account is linked uniquely."
-                : "Your account is not uniquely linked to a borrower record yet. Personal borrowing totals are hidden rather than guessed.",
+                ? "Multiple borrower records are linked to your account. Please contact the librarian."
+                : "Your account is not linked to a borrower record yet. Please contact the librarian.",
             );
           } else {
             const borrower = matchingBorrowers[0];
@@ -348,6 +346,21 @@ const StudentDashboard = () => {
       </Row>
 
       {/* Recent borrowing activity */}
+      <Card className="student-recent-card" title="Recent Borrow Requests">
+        {requests.length === 0 ? <Empty description="No borrow requests to display" /> : (
+          <Table
+            rowKey="request_id"
+            dataSource={requests}
+            pagination={{ pageSize: 5 }}
+            columns={[
+              { title: "Book", dataIndex: "book_title", key: "book_title", render: (title, request) => title || `Book #${request.book_id}` },
+              { title: "Requested", dataIndex: "requested_at", key: "requested_at", render: formatDate },
+              { title: "Status", dataIndex: "status", key: "status", render: (status) => <Tag color={status === "Approved" ? "success" : status === "Rejected" ? "error" : "processing"}>{status}</Tag> },
+              { title: "Reason", dataIndex: "rejection_reason", key: "rejection_reason", render: (reason) => reason || "—" },
+            ]}
+          />
+        )}
+      </Card>
       <Card
         className="student-recent-card"
         title="Recent Borrowing Activity"

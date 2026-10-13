@@ -15,6 +15,7 @@ import DisplayBook from "./pages/DashboardPages/DisplayBook";
 import ReturnBooks from "./pages/DashboardPages/ReturnBooks";
 import ViewRecords from "./pages/DashboardPages/ViewRecords";
 import StaffList from "./pages/DashboardPages/StaffList";
+import BorrowRequests from "./pages/DashboardPages/BorrowRequests";
 import ProfilePage from "./pages/DashboardPages/ProfilePage";
 
 import StudentDashboardLayout from "./layout/StudentDashboardLayout";
@@ -76,6 +77,7 @@ export default function App() {
           <Route path="view/return" element={<ReturnBooks />} />
           <Route path="view/records" element={<ViewRecords />} />
           <Route path="view/staff" element={<StaffList />} />
+          <Route path="view/requests" element={<BorrowRequests />} />
           <Route path="view/profile" element={<ProfilePage />} />
           <Route path="*" element={<NotFound />} />
         </Route>

@@ -40,11 +40,12 @@ const DashboardLayout = () => {
   const screens = useBreakpoint();
   const isTablet = !screens.lg;
   useEffect(() => {
-    setOpen(false);
+    Promise.resolve().then(() => setOpen(false));
   }, [location.pathname]);
   // Map URL paths to page titles
   const pageMap = {
     "/dashboard/view/borrow": "Borrow Books",
+    "/dashboard/view/requests": "Borrow Requests",
     "/dashboard/view/return": "Return Books",
     "/dashboard/view/records": "View Records",
     "/dashboard/view/staff": "List of Users",

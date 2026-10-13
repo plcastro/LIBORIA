@@ -3,6 +3,7 @@ import axios from "../../api";
 import {
   Avatar,
   Alert,
+  Button,
   Box,
   Card,
   CardContent,
@@ -30,6 +31,11 @@ const StudentBooks = () => {
   const [category, setCategory] = useState("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [feedback, setFeedback] = useState("");
+  const [requests, setRequests] = useState([]);
+  const [activeBookIds, setActiveBookIds] = useState([]);
+  const [submitting, setSubmitting] = useState(null);
+  const userId = JSON.parse(sessionStorage.getItem("currentUser") || "null")?._id;
 
   useEffect(() => {
     let active = true;
@@ -49,6 +55,20 @@ const StudentBooks = () => {
             : [];
 
         if (active) setBooks(list);
+        if (userId) {
+          const [requestResult, borrowerResult, loanResult] = await Promise.allSettled([
+            axios.get(`/borrow-requests/student/${userId}`),
+            axios.get("/borrowers"),
+            axios.get("/borrowed-books"),
+          ]);
+          if (active && requestResult.status === "fulfilled") setRequests(requestResult.value.data);
+          if (active && borrowerResult.status === "fulfilled" && loanResult.status === "fulfilled") {
+            const borrower = borrowerResult.value.data.find((item) => String(item.user_id) === String(userId));
+            setActiveBookIds(borrower ? loanResult.value.data
+              .filter((loan) => String(loan.borrower_id) === String(borrower.borrower_id) && /^(borrowed|overdue)$/i.test(loan.status))
+              .map((loan) => String(loan.book_id)) : []);
+          }
+        }
       } catch (err) {
         console.error("Unable to load books:", err);
 
@@ -68,7 +88,22 @@ const StudentBooks = () => {
     return () => {
       active = false;
     };
-  }, []);
+  }, [userId]);
+
+  const requestBook = async (bookId) => {
+    setSubmitting(String(bookId));
+    setError("");
+    setFeedback("");
+    try {
+      const { data } = await axios.post("/borrow-requests", { user_id: userId, book_id: bookId });
+      setRequests((current) => [data.request, ...current]);
+      setFeedback("Borrow request submitted.");
+    } catch (err) {
+      setError(err.response?.data?.error || "Unable to submit borrow request.");
+    } finally {
+      setSubmitting(null);
+    }
+  };
 
   const categories = useMemo(
     () =>
@@ -115,6 +150,7 @@ const StudentBooks = () => {
           {error}
         </Alert>
       )}
+      {feedback && <Alert severity="success" onClose={() => setFeedback("")}>{feedback}</Alert>}
 
       <Grid container spacing={1.5} className="student-books-filters">
         <Grid size={{ xs: 12, md: 8 }}>
@@ -224,6 +260,8 @@ const StudentBooks = () => {
               const id = book.book_id ?? book._id ?? index;
               const available = Number(book.available_copies);
               const author = getBookAuthor(book);
+              const pending = requests.some((request) => String(request.book_id) === String(id) && request.status === "Pending");
+              const borrowed = activeBookIds.includes(String(id));
 
               const hasAvailability =
                 book.available_copies !== undefined &&
@@ -301,6 +339,15 @@ const StudentBooks = () => {
                           <Chip label="Availability not listed" size="small" />
                         )}
                       </Box>
+                      <Button
+                        variant="contained"
+                        fullWidth
+                        disabled={!userId || !hasAvailability || available <= 0 || pending || borrowed || submitting === String(id)}
+                        onClick={() => requestBook(id)}
+                        sx={{ mt: 2, textTransform: "none" }}
+                      >
+                        {pending ? "Request pending" : borrowed ? "Already borrowed" : "Request to borrow"}
+                      </Button>
                     </CardContent>
                   </Card>
                 </Grid>

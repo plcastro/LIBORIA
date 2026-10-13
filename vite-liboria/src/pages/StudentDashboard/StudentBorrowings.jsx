@@ -15,6 +15,7 @@ const formatDate = (value) => {
 
 const StudentBorrowings = () => {
   const [records, setRecords] = useState([]);
+  const [requests, setRequests] = useState([]);
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -38,11 +39,12 @@ const StudentBorrowings = () => {
           return;
         }
 
-        const [borrowersResult, borrowingsResult, booksResult] =
+        const [borrowersResult, borrowingsResult, booksResult, requestsResult] =
           await Promise.allSettled([
             axios.get(`/borrowers`),
             axios.get(`/borrowed-books`),
             axios.get(`/books`),
+            axios.get(`/borrow-requests/student/${storedUser._id}`),
           ]);
 
         if (!active) return;
@@ -73,6 +75,8 @@ const StudentBorrowings = () => {
           : booksData.books || [];
 
         setBooks(allBooks);
+        if (requestsResult.status === "fulfilled") setRequests(requestsResult.value.data);
+        else setError("Unable to load borrow requests.");
 
         // Match only a unique borrower record.
         // Name matching is temporary; a stable account-to-borrower
@@ -220,6 +224,22 @@ const StudentBorrowings = () => {
           className="student-borrowings-alert"
         />
       )}
+
+      <Card className="student-borrowings-card" title="Borrow Requests">
+        {requests.length === 0 ? <Empty description="No borrow requests to display" /> : (
+          <Table
+            rowKey="request_id"
+            dataSource={requests}
+            pagination={{ pageSize: 8 }}
+            columns={[
+              { title: "Book", dataIndex: "book_title", key: "book_title", render: (title, request) => title || `Book #${request.book_id}` },
+              { title: "Requested", dataIndex: "requested_at", key: "requested_at", render: formatDate },
+              { title: "Status", dataIndex: "status", key: "status", render: (status) => <Tag color={status === "Approved" ? "success" : status === "Rejected" ? "error" : "processing"}>{status}</Tag> },
+              { title: "Reason", dataIndex: "rejection_reason", key: "rejection_reason", render: (reason) => reason || "—" },
+            ]}
+          />
+        )}
+      </Card>
 
       <Card className="student-borrowings-card" title="Borrowing History">
         {records.length === 0 ? (

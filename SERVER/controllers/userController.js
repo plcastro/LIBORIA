@@ -253,6 +253,18 @@ const updateUser = async (req, res) => {
     const userId = toId(req.params.id);
     const { username, password, name, email, account_type } = req.body;
     const update = {};
+    const existingUser = await User.findById(userId).select("account_type");
+    if (!existingUser) return res.status(404).json({ error: "User not found" });
+    if (account_type && !["student", "non-librarian", "librarian"].includes(account_type)) {
+      return res.status(400).json({ error: "Invalid account type" });
+    }
+    if (account_type === "librarian" && existingUser.account_type !== "librarian") {
+      return res.status(403).json({ error: "Librarian accounts must be created from Staff List" });
+    }
+    if (existingUser.account_type === "librarian" && account_type && account_type !== "librarian" &&
+        await User.countDocuments({ account_type: "librarian" }) <= 1) {
+      return res.status(409).json({ error: "The last librarian cannot be demoted" });
+    }
 
     if (username) update.username = username;
     if (password) update.password = await bcrypt.hash(password, 10);
@@ -395,7 +407,14 @@ const updateUserPassword = async (req, res) => {
 // DELETE user
 const deleteUser = async (req, res) => {
   try {
-    const result = await User.deleteOne({ _id: toId(req.params.id) });
+    const userId = toId(req.params.id);
+    const existingUser = await User.findById(userId).select("account_type");
+    if (!existingUser) return res.status(404).json({ error: "User not found" });
+    if (existingUser.account_type === "librarian" &&
+        await User.countDocuments({ account_type: "librarian" }) <= 1) {
+      return res.status(409).json({ error: "The last librarian cannot be deleted" });
+    }
+    const result = await User.deleteOne({ _id: userId });
 
     if (result.deletedCount === 0) {
       return res.status(404).json({ error: "User not found" });

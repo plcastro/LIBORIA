@@ -1,6 +1,6 @@
 import Button from "../MuiButton.jsx";
 import { useEffect, useState } from "react";
-import { Modal, Form, Input, Space, message, Select } from "antd";
+import { Modal, Form, Input, Space, message } from "antd";
 import axios from "../../api";
 const StaffModal = ({
   isVisible,
@@ -70,7 +70,7 @@ const StaffModal = ({
       let response;
 
       if (isAddMode) {
-        response = await axios.post("/users", dataToSave, {
+        response = await axios.post("/users", { ...dataToSave, account_type: "librarian" }, {
           headers: { "Content-Type": "application/json" },
         });
       } else if (isEditMode) {
@@ -266,20 +266,8 @@ const StaffModal = ({
                 </Form.Item>
               </>
             )}
-            <Form.Item
-              name="account_type"
-              label="Role"
-              rules={[
-                { required: true, message: "Please select user's role!" },
-              ]}
-            >
-              <Select
-                placeholder="Select user's role:"
-                defaultValue="librarian"
-              >
-                <Option value="Librarian">Librarian</Option>
-                <Option value="Admin">Admin</Option>
-              </Select>
+            <Form.Item label="Role">
+              <Input value={isAddMode ? "Librarian" : selectedStaff?.account_type} disabled />
             </Form.Item>
 
             <Form.Item>
@@ -360,7 +348,7 @@ const StaffModal = ({
               <strong>Username:</strong> {previewData.username}
             </p>
             <p>
-              <strong>Role:</strong> {previewData.account_type}
+              <strong>Role:</strong> {isAddMode ? "librarian" : selectedStaff?.account_type}
             </p>
             <div
               style={{

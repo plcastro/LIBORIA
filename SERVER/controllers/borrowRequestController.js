@@ -1,6 +1,7 @@
 
 const { collection, getNextSequence } = require("../config/database");
 const User = require("../models/User");
+const mongoose = require("mongoose");
 
 const toId = (value) => {
   const numberValue = Number(value);
@@ -192,58 +193,31 @@ const getStudentRequests = async (req, res) => {
 
 // Librarian approves a pending request.
 const approveRequest = async (req, res) => {
+  const requestId = toId(req.params.id);
+  const session = await mongoose.startSession();
   try {
-    const requestId = toId(req.params.id);
-    const requests = await collection("borrow_requests");
-    const books = await collection("books");
-    const borrowers = await collection("borrowers");
-    const borrowedBooks = await collection("borrowed_books");
-
-    const request = await requests.findOne({
-      request_id: requestId,
-    });
-
-    if (!request) {
-      return res.status(404).json({ error: "Request not found" });
-    }
-
-    if (request.status !== "Pending") {
-      return res.status(409).json({
-        error: "Only pending requests can be approved",
-      });
-    }
-
-    const borrower = await borrowers.findOne({
-      user_id: String(request.user_id),
-    });
-
-    if (!borrower) {
-      return res.status(400).json({
-        error:
-          "This student has no linked borrower record. Link or create the borrower record before approving this request.",
-      });
-    }
-
-    const bookUpdate = await books.updateOne(
-      {
-        book_id: request.book_id,
-        available_copies: { $gt: 0 },
-      },
-      { $inc: { available_copies: -1 } }
-    );
-
-    if (bookUpdate.modifiedCount !== 1) {
-      return res.status(400).json({
-        error: "No copies are currently available",
-      });
-    }
-
-    try {
-      const borrowId = await getNextSequence("borrowed_books");
+    let outcome;
+    await session.withTransaction(async () => {
+      const requests = collection("borrow_requests");
+      const books = collection("books");
+      const borrowers = collection("borrowers");
+      const borrowedBooks = collection("borrowed_books");
+      const request = await requests.findOne({ request_id: requestId }, { session });
+      if (!request) { outcome = { status: 404, error: "Request not found" }; return; }
+      if (request.status !== "Pending") { outcome = { status: 409, error: "Only pending requests can be approved" }; return; }
+      const borrower = await borrowers.findOne({ user_id: String(request.user_id) }, { session });
+      if (!borrower) {
+        outcome = { status: 400, error: "This student has no linked borrower record. Link or create the borrower record before approving this request." };
+        return;
+      }
+      const activeLoan = await borrowedBooks.findOne({ borrower_id: borrower.borrower_id, book_id: request.book_id, status: { $regex: /^borrowed$/i } }, { session });
+      if (activeLoan) { outcome = { status: 409, error: "This student already borrowed this book" }; return; }
+      const bookUpdate = await books.updateOne({ book_id: request.book_id, available_copies: { $gt: 0 } }, { $inc: { available_copies: -1 } }, { session });
+      if (bookUpdate.modifiedCount !== 1) { outcome = { status: 400, error: "No copies are currently available" }; return; }
+      const borrowId = await getNextSequence("borrowed_books", session);
       const dateBorrowed = new Date();
       const dueDate = new Date(dateBorrowed);
       dueDate.setDate(dueDate.getDate() + 14);
-
       await borrowedBooks.insertOne({
         borrow_id: borrowId,
         borrower_id: borrower.borrower_id,
@@ -252,44 +226,21 @@ const approveRequest = async (req, res) => {
         due_date: dueDate,
         status: "Borrowed",
         created_at: new Date(),
-      });
-
+      }, { session });
       const result = await requests.updateOne(
         { request_id: requestId, status: "Pending" },
-        {
-          $set: {
-            status: "Approved",
-            reviewed_at: new Date(),
-            borrow_id: borrowId,
-          },
-        }
+        { $set: { status: "Approved", reviewed_at: new Date(), borrow_id: borrowId } },
+        { session },
       );
-
-      if (result.modifiedCount !== 1) {
-        await borrowedBooks.deleteOne({ borrow_id: borrowId });
-        await books.updateOne(
-          { book_id: request.book_id },
-          { $inc: { available_copies: 1 } }
-        );
-
-        return res.status(409).json({
-          error: "Request status changed. Please refresh and try again.",
-        });
-      }
-
-      return res.json({
-        message: "Request approved and book marked as borrowed",
-        borrow_id: borrowId,
-      });
-    } catch (err) {
-      await books.updateOne(
-        { book_id: request.book_id },
-        { $inc: { available_copies: 1 } }
-      );
-      throw err;
-    }
+      if (result.modifiedCount !== 1) throw new Error("Request status changed during approval");
+      outcome = { status: 200, message: "Request approved and book marked as borrowed", borrow_id: borrowId };
+    });
+    if (outcome.error) return res.status(outcome.status).json({ error: outcome.error });
+    return res.json({ message: outcome.message, borrow_id: outcome.borrow_id });
   } catch (err) {
     return handleError(res, err);
+  } finally {
+    await session.endSession();
   }
 };
 

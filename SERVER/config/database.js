@@ -29,7 +29,7 @@ const collection = (name) => {
 };
 
 // Generate sequential IDs using a counters collection
-const getNextSequence = async (sequenceName) => {
+const getNextSequence = async (sequenceName, session) => {
   const counters = collection("counters");
 
   const result = await counters.findOneAndUpdate(
@@ -38,6 +38,7 @@ const getNextSequence = async (sequenceName) => {
     {
       upsert: true,
       returnDocument: "after",
+      ...(session ? { session } : {}),
     },
   );
 
