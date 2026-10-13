@@ -1,16 +1,7 @@
-import React, { useState, useEffect } from "react";
-import {
-  Modal,
-  Input,
-  InputNumber,
-  message,
-  Form,
-  DatePicker,
-  Row,
-  Col,
-} from "antd";
+import { useState, useEffect } from "react";
+import { Modal, Input, InputNumber, message, Form, DatePicker, Row, Col } from "antd";
 import dayjs from "dayjs";
-import axios from "axios";
+import axios from "../../api";
 const EditBookModal = ({ modalOpen, setModalOpen, book, onBookUpdated }) => {
   const [messageApi, contextHolder] = message.useMessage();
   const [form] = Form.useForm();
@@ -32,30 +23,27 @@ const EditBookModal = ({ modalOpen, setModalOpen, book, onBookUpdated }) => {
   }, [book, form]);
 
   const handleOk = async () => {
-    if (!validate()) return;
-
     try {
+      const formData = await form.validateFields();
       setLoading(true);
 
       const payload = {
         ...formData,
         total_copies: Number(formData.total_copies),
         available_copies: Number(formData.available_copies),
-        published_date: formData.published_date || null,
+        published_date: formData.published_date?.format("YYYY-MM-DD") || null,
       };
 
-      await axios.put(
-        `http://localhost:8000/api/books/${book.book_id}`,
-        payload,
-        { headers: { "Content-Type": "application/json" } },
-      );
+      await axios.put(`/books/${book.book_id}`, payload, {
+        headers: { "Content-Type": "application/json" },
+      });
 
       if (onBookUpdated) onBookUpdated({ ...book, ...payload });
       setModalOpen(false);
       messageApi.success("Book updated successfully");
       setTimeout(() => {
         window.location.reload();
-      }, 500);
+      }, 0);
     } catch (err) {
       console.error(err);
       messageApi.error(err.response?.data?.error || "Failed to update book");

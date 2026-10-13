@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import Button from '../components/MuiButton.jsx';
+import { useState } from "react";
 import Sidebar from "../components/NavBar/SideBar";
 import { Outlet, useLocation } from "react-router-dom";
-import { Layout, Button, Drawer, Grid } from "antd";
+import { Layout, Drawer, Grid } from "antd";
 import { MenuOutlined } from "@ant-design/icons";
 
 const { Header, Sider, Content } = Layout;

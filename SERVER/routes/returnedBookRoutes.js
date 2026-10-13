@@ -1,6 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const returnedBookController = require("../controllers/returnedBookController");
+const { authenticate, authorize } = require('../middleware/auth');
+router.use(authenticate, authorize('librarian'));
 
 // GET all returned books
 router.get("/", returnedBookController.getReturnedBooks);

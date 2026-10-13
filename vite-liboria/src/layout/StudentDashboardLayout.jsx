@@ -1,6 +1,8 @@
-
-import React, { useEffect, useState } from "react";
-import { Layout, Menu, Button, Drawer, Grid, Typography } from "antd";
+import { useState } from "react";
+import { Layout, Menu, Drawer, Grid, Typography } from "antd";
+import Button from "../components/MuiButton.jsx";
+import api from "../api";
+import studentLogo from "../assets/liboria white.png";
 import {
   DashboardOutlined,
   BookOutlined,
@@ -21,18 +23,15 @@ const StudentDashboardLayout = () => {
   const screens = useBreakpoint();
   const isMobile = !screens.md;
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [user, setUser] = useState(null);
-
-  useEffect(() => {
+  const [user] = useState(() => {
     try {
-      const storedUser = JSON.parse(
-        sessionStorage.getItem("currentUser") || "null"
+      return JSON.parse(
+        sessionStorage.getItem("currentUser") || "null",
       );
-      setUser(storedUser);
     } catch {
-      setUser(null);
+      return null;
     }
-  }, []);
+  });
 
   const menuItems = [
     {
@@ -61,7 +60,7 @@ const StudentDashboardLayout = () => {
     menuItems.find(
       (item) =>
         location.pathname === item.key ||
-        location.pathname.startsWith(`${item.key}/`)
+        location.pathname.startsWith(`${item.key}/`),
     )?.key || "/student/dashboard";
 
   const goTo = (path) => {
@@ -69,18 +68,19 @@ const StudentDashboardLayout = () => {
     setDrawerOpen(false);
   };
 
-  const logout = () => {
-    sessionStorage.removeItem("currentUser");
-    navigate("/home", { replace: true });
+  const logout = async () => {
+    try {
+      await api.post("/users/logout");
+    } finally {
+      sessionStorage.removeItem("currentUser");
+      navigate("/home", { replace: true });
+    }
   };
 
   const sidebarContent = (
     <>
       <div className="student-logo">
-        <img
-          src={require("../../assets/liboria white.png")}
-          alt="LIBORIA"
-        />
+        <img src={studentLogo} alt="LIBORIA" />
       </div>
 
       <Menu
@@ -92,12 +92,7 @@ const StudentDashboardLayout = () => {
       />
 
       <div className="student-logout">
-        <Button
-          block
-          type="text"
-          icon={<LogoutOutlined />}
-          onClick={logout}
-        >
+        <Button block type="text" icon={<LogoutOutlined />} onClick={logout}>
           Log Out
         </Button>
       </div>
@@ -111,17 +106,12 @@ const StudentDashboardLayout = () => {
     "/student/profile": "My Profile",
   };
 
-  const pageTitle =
-    pageTitles[location.pathname] || "Student Dashboard";
+  const pageTitle = pageTitles[location.pathname] || "Student Dashboard";
 
   return (
     <Layout className="student-layout">
       {!isMobile && (
-        <Sider
-          width={245}
-          theme="dark"
-          className="student-sider"
-        >
+        <Sider width={245} theme="dark" className="student-sider">
           {sidebarContent}
         </Sider>
       )}
@@ -137,9 +127,7 @@ const StudentDashboardLayout = () => {
             />
           )}
 
-          <Typography.Title level={3}>
-            {pageTitle}
-          </Typography.Title>
+          <Typography.Title level={3}>{pageTitle}</Typography.Title>
 
           <Typography.Text className="student-header-user">
             {user?.name || user?.username || "Student"}

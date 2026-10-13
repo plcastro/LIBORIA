@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from "react";
-import { Input, Table, Tag, Card, Row, Col, message, Button } from "antd";
+import Table from "../../components/MuiTable.jsx";
+import Button from "../../components/MuiButton.jsx";
+import { useState, useEffect, useCallback } from "react";
+import { Input, Tag, Card, Row, Col, message } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
-import axios from "axios";
-
+import axios from "../../api";
 const ViewRecords = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [records, setRecords] = useState([]);
@@ -12,12 +13,12 @@ const ViewRecords = () => {
   const [messageApi, contextHolder] = message.useMessage();
 
   // Fetch records from the database
-  const fetchRecords = async () => {
+  const fetchRecords = useCallback(async () => {
     setLoading(true);
     setError("");
 
     try {
-      const { data } = await axios.get("http://localhost:8000/api/records");
+      const { data } = await axios.get("/records");
 
       if (!Array.isArray(data)) {
         throw new Error("Invalid records response");
@@ -34,11 +35,11 @@ const ViewRecords = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [messageApi]);
 
   useEffect(() => {
-    fetchRecords();
-  }, []);
+    Promise.resolve().then(() => fetchRecords());
+  }, [fetchRecords]);
 
   // Filter records based on the search term
   const filteredRecords = records.filter((record) =>

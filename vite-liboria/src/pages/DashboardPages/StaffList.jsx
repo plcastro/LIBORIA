@@ -1,14 +1,15 @@
-import React, { useState, useEffect } from "react";
-import { Table, Button, Space, message, Row, Col, Input, Card } from "antd";
+import Table from "../../components/MuiTable.jsx";
+import Button from "../../components/MuiButton.jsx";
+import { useState, useEffect, useCallback } from "react";
+import { Space, message, Row, Col, Input, Card } from "antd";
 import {
   EditOutlined,
   DeleteOutlined,
   PlusOutlined,
   SearchOutlined,
 } from "@ant-design/icons";
-import axios from "axios";
+import axios from "../../api";
 import StaffModal from "../../components/Modal/StaffModal";
-
 const StaffList = () => {
   const [messageApi, contextHolder] = message.useMessage();
   const [data, setData] = useState([]);
@@ -16,18 +17,14 @@ const StaffList = () => {
   const [error, setError] = useState("");
   const [searchText, setSearchText] = useState("");
 
-  const currentUserId = JSON.parse(
-    localStorage.getItem("currentUser") || "{}",
-  )?._id;
+  const currentUserId = JSON.parse(sessionStorage.getItem("currentUser"))?._id;
 
-  const loadAllStaff = async () => {
+  const loadAllStaff = useCallback(async () => {
     setLoading(true);
     setError("");
 
     try {
-      const { data: result } = await axios.get(
-        "http://localhost:8000/api/users",
-      );
+      const { data: result } = await axios.get("/users");
 
       if (Array.isArray(result)) {
         setData(
@@ -46,11 +43,11 @@ const StaffList = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [messageApi]);
 
   useEffect(() => {
-    loadAllStaff();
-  }, []);
+    Promise.resolve().then(() => loadAllStaff());
+  }, [loadAllStaff]);
 
   const [modalVisible, setModalVisible] = useState(false);
   const [modalMode, setModalMode] = useState("add");
@@ -65,7 +62,7 @@ const StaffList = () => {
   const handleEdit = async (record) => {
     try {
       const { data: userData } = await axios.get(
-        `http://localhost:8000/api/users/${record._id}`,
+        `/users/${record._id}`,
       );
 
       setSelectedStaff(userData);

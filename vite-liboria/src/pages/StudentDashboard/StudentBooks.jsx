@@ -1,26 +1,9 @@
-
-import React, { useEffect, useMemo, useState } from "react";
-import axios from "axios";
-import {
-  Alert,
-  Avatar,
-  Card,
-  Col,
-  Empty,
-  Input,
-  Row,
-  Select,
-  Skeleton,
-  Tag,
-  Typography,
-} from "antd";
-import {
-  BookOutlined,
-  SearchOutlined,
-} from "@ant-design/icons";
+import { useEffect, useMemo, useState } from "react";
+import axios from "../../api";
+import { Alert, Avatar, Card, Col, Empty, Input, Row, Select, Skeleton, Tag, Typography } from "antd";
+import { BookOutlined, SearchOutlined } from "@ant-design/icons";
 import "./StudentBook.css";
 
-const API = "http://localhost:8000/api";
 
 const StudentBooks = () => {
   const [books, setBooks] = useState([]);
@@ -37,14 +20,14 @@ const StudentBooks = () => {
         setLoading(true);
         setError("");
 
-        const response = await axios.get(`${API}/books`);
+        const response = await axios.get(`/books`);
         const data = response.data;
 
         const list = Array.isArray(data)
           ? data
           : Array.isArray(data.books)
-          ? data.books
-          : [];
+            ? data.books
+            : [];
 
         if (active) setBooks(list);
       } catch (err) {
@@ -53,7 +36,7 @@ const StudentBooks = () => {
         if (active) {
           setError(
             err.response?.data?.message ||
-              "Unable to load books. Please try again."
+              "Unable to load books. Please try again.",
           );
         }
       } finally {
@@ -71,7 +54,7 @@ const StudentBooks = () => {
   const categories = useMemo(
     () =>
       [...new Set(books.map((book) => book.category).filter(Boolean))].sort(),
-    [books]
+    [books],
   );
 
   const filteredBooks = useMemo(() => {
@@ -84,11 +67,12 @@ const StudentBooks = () => {
         book.category,
         book.isbn,
       ].some((value) =>
-        String(value || "").toLowerCase().includes(query)
+        String(value || "")
+          .toLowerCase()
+          .includes(query),
       );
 
-      const matchesCategory =
-        category === "all" || book.category === category;
+      const matchesCategory = category === "all" || book.category === category;
 
       return matchesSearch && matchesCategory;
     });
@@ -144,10 +128,7 @@ const StudentBooks = () => {
       {loading ? (
         <Skeleton active paragraph={{ rows: 8 }} />
       ) : filteredBooks.length === 0 ? (
-        <Empty
-          className="student-books-empty"
-          description="No books found"
-        />
+        <Empty className="student-books-empty" description="No books found" />
       ) : (
         <>
           <Typography.Text type="secondary">

@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from "react";
-import { Table, Tag, Input, Card, message, Button } from "antd";
-import { ReloadOutlined, SearchOutlined } from "@ant-design/icons";
+import Table from "../../components/MuiTable.jsx";
+import Button from "../../components/MuiButton.jsx";
+import { useState, useEffect, useCallback } from "react";
+import { Tag, Input, Card, message } from "antd";
+import { SearchOutlined } from "@ant-design/icons";
 import ReturnBookModal from "../../components/Modal/ReturnBookModal";
-import axios from "axios";
+import axios from "../../api";
 const REASONS = [
   { label: "Late Return", value: "Late Return" },
   { label: "Damaged", value: "Damaged" },
@@ -29,13 +31,11 @@ const ReturnBooks = () => {
   };
 
   // ✅ Fetch borrowed books list (only display logic)
-  const fetchBorrowedBooks = async () => {
+  const fetchBorrowedBooks = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const { data } = await axios.get(
-        "http://localhost:8000/api/borrowed-books",
-      );
+      const { data } = await axios.get("/borrowed-books");
       const activeBorrows = data.filter((book) => book.status === "Borrowed");
       setBorrowedBooks(activeBorrows);
     } catch (err) {
@@ -45,11 +45,11 @@ const ReturnBooks = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [messageApi]);
 
   useEffect(() => {
-    fetchBorrowedBooks();
-  }, []);
+    Promise.resolve().then(() => fetchBorrowedBooks());
+  }, [fetchBorrowedBooks]);
 
   //Filter search
   const filteredData = borrowedBooks.filter((record) =>

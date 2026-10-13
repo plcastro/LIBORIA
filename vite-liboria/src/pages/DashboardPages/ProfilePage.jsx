@@ -1,22 +1,19 @@
-import React, { useState, useEffect } from "react";
-import { Card, Divider, Button, Row, Col, Avatar, message } from "antd";
+import Button from "../../components/MuiButton.jsx";
+import { useState, useEffect } from "react";
+import { Card, Divider, Row, Col, Avatar, message } from "antd";
 import { EditOutlined, UserOutlined } from "@ant-design/icons";
 import EditProfile from "./EditProfile";
-import axios from "axios";
-
+import axios from "../../api";
 const ProfilePage = () => {
   const [user, setUser] = useState({});
 
-  const currentUserId = JSON.parse(localStorage.getItem("currentUser"))?._id;
+  const currentUserId = JSON.parse(sessionStorage.getItem("currentUser"))?._id;
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
 
   const fetchUserInfo = async (_id) => {
     if (!_id) return;
     try {
-      const { data } = await axios.get(
-        `http://localhost:8000/api/users/${_id}`,
-      );
+      const { data } = await axios.get(`/users/${_id}`);
       setUser(data);
     } catch (err) {
       console.error(err);
@@ -25,7 +22,7 @@ const ProfilePage = () => {
   };
 
   useEffect(() => {
-    fetchUserInfo(currentUserId);
+    Promise.resolve().then(() => fetchUserInfo(currentUserId));
 
     // Listen for user updates
     const handleUserUpdate = (e) => {
