@@ -11,6 +11,7 @@ router.post('/verify-reset-token', userController.verifyResetToken);
 router.post('/reset-password', userController.resetPassword);
 router.use(authenticate);
 router.get('/me', userController.me);
+router.put('/me', userController.updateOwnProfile);
 router.post('/logout', userController.logout);
 router.get("/", authorize('librarian'), userController.getUsers);
 router.get("/:id", ownUser, userController.getUserById);

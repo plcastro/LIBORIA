@@ -4,6 +4,7 @@ const bcrypt = require("bcrypt");
 const User = require("../models/User");
 const mongoose = require("mongoose");
 const { ensureBorrowerForUser, ensureBorrowerIndex } = require("../services/borrowerLink");
+const { pickSelfProfileFields } = require("../services/selfProfile");
 const { cookieName, sign, cookieOptions, clearCookieOptions } = require('../middleware/auth');
 
 const toId = (value) => {
@@ -68,6 +69,42 @@ const getUserById = async (req, res) => {
     return res.status(500).json({
       error: "Failed to fetch user",
     });
+  }
+};
+
+const updateOwnProfile = async (req, res) => {
+  try {
+    const { fields, error } = pickSelfProfileFields(req.body);
+    if (error) return res.status(400).json({ error });
+
+    const duplicateConditions = [];
+    if (fields.username) duplicateConditions.push({ username: fields.username });
+    if (fields.email) duplicateConditions.push({ email: fields.email });
+    if (duplicateConditions.length) {
+      const duplicate = await User.findOne({
+        _id: { $ne: req.user.id },
+        $or: duplicateConditions,
+      }).select("username email");
+      if (duplicate) {
+        return res.status(409).json({
+          error: duplicate.username === fields.username
+            ? "Username already exists"
+            : "Email already exists",
+        });
+      }
+    }
+
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      { $set: fields },
+      { new: true, runValidators: true },
+    ).select("_id username name email account_type");
+    if (!user) return res.status(404).json({ error: "User not found" });
+    return res.json(user);
+  } catch (err) {
+    if (err.code === 11000) return res.status(409).json({ error: "Username or email already exists" });
+    if (err.name === "ValidationError") return res.status(400).json({ error: err.message });
+    return handleError(res, err);
   }
 };
 
@@ -675,6 +712,7 @@ module.exports = {
   logout: (req, res) => { res.clearCookie(cookieName, clearCookieOptions()); res.json({ message: 'Logged out' }); },
   getUsers,
   getUserById,
+  updateOwnProfile,
   createUser,
   register,
   updateUserPassword,
