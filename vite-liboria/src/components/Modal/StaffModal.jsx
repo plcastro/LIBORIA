@@ -174,11 +174,7 @@ const StaffModal = ({
       {contextHolder}
       <Modal
         title={
-          isAddMode
-            ? "Add New Staff"
-            : isEditMode
-              ? "Edit Staff"
-              : "Delete Staff"
+          isAddMode ? "Add New User" : isEditMode ? "Edit User" : "Delete User"
         }
         open={isVisible}
         onCancel={handleXClose}
@@ -220,7 +216,7 @@ const StaffModal = ({
                 },
               ]}
             >
-              <Input placeholder="Enter staff email" />
+              <Input placeholder="Enter username email" />
             </Form.Item>
             <Form.Item
               name="username"
@@ -335,7 +331,7 @@ const StaffModal = ({
       </Modal>
 
       <Modal
-        title={isEditMode ? "Confirm Changes" : "Confirm New Staff"}
+        title={isEditMode ? "Confirm Changes" : "Confirm New User"}
         open={isPreviewConfirmOpen}
         onCancel={handleXClose}
         footer={null}

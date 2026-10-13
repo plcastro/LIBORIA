@@ -34,12 +34,12 @@ const StaffList = () => {
           })),
         );
       } else {
-        setError(result?.error || "Failed to load staff");
+        setError(result?.error || "Failed to load users");
       }
     } catch (err) {
-      console.error("Error loading staff:", err);
-      setError("Network error. Failed to load staff.");
-      messageApi.error("Failed to load staff.");
+      console.error("Error loading users:", err);
+      setError("Network error. Failed to load users.");
+      messageApi.error("Failed to load users.");
     } finally {
       setLoading(false);
     }
@@ -61,19 +61,17 @@ const StaffList = () => {
 
   const handleEdit = async (record) => {
     try {
-      const { data: userData } = await axios.get(
-        `/users/${record._id}`,
-      );
+      const { data: userData } = await axios.get(`/users/${record._id}`);
 
       setSelectedStaff(userData);
       setModalMode("edit");
       setModalVisible(true);
     } catch (err) {
-      console.error("Error fetching staff details:", err);
+      console.error("Error fetching user details:", err);
 
       messageApi.error(
         err.response?.data?.error ||
-          "Network error. Unable to load staff details.",
+          "Network error. Unable to load user details.",
       );
     }
   };
@@ -88,7 +86,7 @@ const StaffList = () => {
     loadAllStaff();
   };
 
-  // Search staff
+  // Search users
   const filteredData = data.filter((item) => {
     if (!searchText) return true;
 
@@ -237,7 +235,7 @@ const StaffList = () => {
           loading={loading}
           pagination={false}
           locale={{
-            emptyText: error ? "Unable to load staff" : "No staff found",
+            emptyText: error ? "Unable to load users " : "No users found",
           }}
           scroll={{
             y: filteredData.length > 10 ? 650 : undefined,
