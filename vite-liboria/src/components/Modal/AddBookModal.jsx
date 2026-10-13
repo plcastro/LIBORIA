@@ -8,10 +8,10 @@ import {
   InputNumber,
   Col,
   Row,
-  message,
   Space,
   Select,
 } from "antd";
+import { Alert, Snackbar } from "@mui/material";
 import axios from "../../api";
 const { TextArea } = Input;
 
@@ -22,11 +22,28 @@ const getErrorMessage = (err, fallback) =>
   fallback;
 
 const AddBookModal = ({ modal2Open, setModal2Open, onBookCreated }) => {
-  const [messageApi, contextHolder] = message.useMessage();
   const [form] = Form.useForm();
   const [bookData, setBookData] = useState(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isDiscardOpen, setIsDiscardOpen] = useState(false);
+  const [notification, setNotification] = useState({
+    open: false,
+    message: "",
+    severity: "error",
+  });
+
+  const showAlert = (message, severity = "error") => {
+    setNotification({
+      open: true,
+      message,
+      severity,
+    });
+  };
+
+  const closeAlert = (_, reason) => {
+    if (reason === "clickaway") return;
+    setNotification((current) => ({ ...current, open: false }));
+  };
 
   const handleAddClick = async () => {
     try {
@@ -49,7 +66,7 @@ const AddBookModal = ({ modal2Open, setModal2Open, onBookCreated }) => {
       setIsConfirmOpen(true);
     } catch (err) {
       console.error(err);
-      messageApi.error(getErrorMessage(err, "Failed to add book"));
+      showAlert(getErrorMessage(err, "Failed to add book"));
     }
   };
 
@@ -66,10 +83,9 @@ const AddBookModal = ({ modal2Open, setModal2Open, onBookCreated }) => {
       setModal2Open(false);
 
       if (onBookCreated) onBookCreated();
-      messageApi.success("Book added successfully");
     } catch (err) {
       console.error(err);
-      messageApi.error(getErrorMessage(err, "Failed to add book"));
+      showAlert(getErrorMessage(err, "Failed to add book"));
     }
   };
 
@@ -77,12 +93,11 @@ const AddBookModal = ({ modal2Open, setModal2Open, onBookCreated }) => {
     form.resetFields();
     setModal2Open(false);
     setIsDiscardOpen(false);
-    messageApi.info("Book entry discarded.");
+    showAlert("Book entry discarded.", "info");
   };
 
   return (
     <>
-      {contextHolder}
       <Modal
         title="ADD BOOK DETAILS"
         centered
@@ -288,6 +303,21 @@ const AddBookModal = ({ modal2Open, setModal2Open, onBookCreated }) => {
           </Button>
         </div>
       </Modal>
+      <Snackbar
+        open={notification.open}
+        autoHideDuration={3000}
+        onClose={closeAlert}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+      >
+        <Alert
+          onClose={closeAlert}
+          severity={notification.severity}
+          variant="filled"
+          sx={{ width: "100%" }}
+        >
+          {notification.message}
+        </Alert>
+      </Snackbar>
     </>
   );
 };
