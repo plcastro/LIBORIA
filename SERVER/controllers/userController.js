@@ -669,7 +669,7 @@ const getBorrowingRecords = async (req, res) => {
 
 module.exports = {
   me: async (req, res) => {
-    const user = await User.findById(req.user.id).select('_id username name email account_type').lean();
+    const user = await User.findById(req.user.id).select('_id userid username name email account_type').lean();
     return user ? res.json({ user }) : res.status(401).json({ error: 'Session user not found' });
   },
   logout: (req, res) => { res.clearCookie(cookieName, clearCookieOptions()); res.json({ message: 'Logged out' }); },

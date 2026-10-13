@@ -22,6 +22,7 @@ import StudentDashboardLayout from "./layout/StudentDashboardLayout";
 import StudentDashboard from "./pages/StudentDashboard/StudentDashboard";
 import StudentBooks from "./pages/StudentDashboard/StudentBooks";
 import StudentBorrowings from "./pages/StudentDashboard/StudentBorrowings";
+import StudentProfile from "./pages/StudentDashboard/StudentProfile";
 
 function Protected({ role, children }) {
   const [session, setSession] = useState(undefined);
@@ -86,6 +87,7 @@ export default function App() {
           <Route path="dashboard" element={<StudentDashboard />} />
           <Route path="books" element={<StudentBooks />} />
           <Route path="borrowings" element={<StudentBorrowings />} />
+          <Route path="profile" element={<StudentProfile />} />
         </Route>
       </Routes>
     </BrowserRouter>

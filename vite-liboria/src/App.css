@@ -96,3 +96,63 @@ input {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   }
 }
+
+.student-profile {
+  min-height: 100%;
+  padding: 24px;
+}
+
+.student-profile-heading {
+  margin-bottom: 24px;
+}
+
+.student-profile-heading .ant-typography-paragraph {
+  margin-bottom: 0;
+  color: #777;
+}
+
+.student-profile-alert {
+  margin-bottom: 20px;
+}
+
+.student-profile-card {
+  max-width: 820px;
+  border: 1px solid #ededed;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgb(0 0 0 / 4%);
+}
+
+.student-profile-identity {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.student-profile-identity .ant-typography {
+  margin: 0;
+}
+
+.student-profile-details .ant-descriptions-item-label {
+  color: #777;
+}
+
+@media (max-width: 768px) {
+  .student-profile {
+    padding: 16px;
+  }
+
+  .student-profile-heading h2 {
+    font-size: 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .student-profile {
+    padding: 12px;
+  }
+
+  .student-profile-identity {
+    align-items: flex-start;
+  }
+}
