@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Modal, message } from "antd";
 import axios from "axios";
+import { API_BASE_URL } from "../../utils/API_BASE";
 const DeleteBookModal = ({ open, setOpen, book, onDelete }) => {
   const [messageApi, contextHolder] = message.useMessage();
   const [loading, setLoading] = useState(false);
@@ -9,7 +10,7 @@ const DeleteBookModal = ({ open, setOpen, book, onDelete }) => {
     if (!book) return;
     setLoading(true);
     try {
-      await axios.delete(`http://localhost:8000/api/books/${book.book_id}`);
+      await axios.delete(`${API_BASE_URL}/api/books/${book.book_id}`);
 
       setOpen(false);
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Input, Table, Tag, Card, Row, Col, message, Button } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
 import axios from "axios";
-
+import { API_BASE_URL } from "../../utils/API_BASE";
 const ViewRecords = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [records, setRecords] = useState([]);
@@ -17,7 +17,7 @@ const ViewRecords = () => {
     setError("");
 
     try {
-      const { data } = await axios.get("http://localhost:8000/api/records");
+      const { data } = await axios.get(API_BASE_URL + "/api/records");
 
       if (!Array.isArray(data)) {
         throw new Error("Invalid records response");

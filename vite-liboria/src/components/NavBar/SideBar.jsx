@@ -12,7 +12,7 @@ import {
 } from "@mui/icons-material";
 import axios from "axios";
 import logo_dark from "../../assets/liboria white.png";
-
+import { API_BASE_URL } from "../../utils/API_BASE";
 const Sidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -39,7 +39,7 @@ const Sidebar = () => {
     if (!id) return;
 
     try {
-      const { data } = await axios.get(`http://localhost:8000/api/users/${id}`);
+      const { data } = await axios.get(`${API_BASE_URL}/api/users/${id}`);
 
       setUser(data);
     } catch (err) {

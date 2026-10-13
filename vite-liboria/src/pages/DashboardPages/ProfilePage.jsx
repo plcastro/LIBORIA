@@ -3,7 +3,7 @@ import { Card, Divider, Button, Row, Col, Avatar, message } from "antd";
 import { EditOutlined, UserOutlined } from "@ant-design/icons";
 import EditProfile from "./EditProfile";
 import axios from "axios";
-
+import { API_BASE_URL } from "../../utils/API_BASE";
 const ProfilePage = () => {
   const [user, setUser] = useState({});
 
@@ -14,9 +14,7 @@ const ProfilePage = () => {
   const fetchUserInfo = async (_id) => {
     if (!_id) return;
     try {
-      const { data } = await axios.get(
-        `http://localhost:8000/api/users/${_id}`,
-      );
+      const { data } = await axios.get(`${API_BASE_URL}/api/users/${_id}`);
       setUser(data);
     } catch (err) {
       console.error(err);

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Modal, Form, Input, Button, Space, message, Select } from "antd";
 import axios from "axios";
+import { API_BASE_URL } from "../../utils/API_BASE";
 const StaffModal = ({
   isVisible,
   mode,
@@ -63,14 +64,12 @@ const StaffModal = ({
       let response;
 
       if (isAddMode) {
-        response = await axios.post(
-          "http://localhost:8000/api/users",
-          dataToSave,
-          { headers: { "Content-Type": "application/json" } },
-        );
+        response = await axios.post(API_BASE_URL + "/api/users", dataToSave, {
+          headers: { "Content-Type": "application/json" },
+        });
       } else if (isEditMode) {
         response = await axios.put(
-          `http://localhost:8000/api/users/${selectedStaff._id}`,
+          `${API_BASE_URL}/api/users/${selectedStaff._id}`,
           dataToSave,
           { headers: { "Content-Type": "application/json" } },
         );
@@ -134,9 +133,7 @@ const StaffModal = ({
         return;
       }
 
-      await axios.delete(
-        `http://localhost:8000/api/users/${selectedStaff._id}`,
-      );
+      await axios.delete(`${API_BASE_URL}/api/users/${selectedStaff._id}`);
 
       messageApi.success("User deleted successfully!");
       onSave();
