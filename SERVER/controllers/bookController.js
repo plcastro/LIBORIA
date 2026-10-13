@@ -6,18 +6,25 @@ const toId = (value) => {
 };
 
 const handleError = (res, err) => {
-  console.error(err);
-  return res.status(500).json({ error: "Internal Server Error" });
+  console.error("Book controller error:", err);
+
+  return res.status(500).json({
+    error: "Internal Server Error",
+    ...(process.env.NODE_ENV !== "production" && {
+      details: err.message,
+    }),
+  });
 };
 
 // GET all books
 const getBooks = async (req, res) => {
   try {
-    const books = await collection("books");
+    const books = collection("books");
     const results = await books.find({}).toArray();
-    res.json(results);
+
+    return res.json(results);
   } catch (err) {
-    handleError(res, err);
+    return handleError(res, err);
   }
 };
 
@@ -58,7 +65,10 @@ const createBook = async (req, res) => {
     const books = await collection("books");
     const trimmedTitle = title.trim();
     const existingBook = await books.findOne({
-      title: { $regex: `^${trimmedTitle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, $options: "i" },
+      title: {
+        $regex: `^${trimmedTitle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`,
+        $options: "i",
+      },
     });
 
     if (existingBook) {
@@ -128,7 +138,7 @@ const updateBook = async (req, res) => {
     const result = await books.findOneAndUpdate(
       { book_id: bookId },
       { $set: update },
-      { returnDocument: "after" }
+      { returnDocument: "after" },
     );
     const updatedBook = result.value || result;
 
