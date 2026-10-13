@@ -2,7 +2,7 @@ import axios from 'axios';
 import { API_BASE_URL } from './utils/API_BASE';
 
 const api = axios.create({
-  baseURL: `${API_BASE_URL.replace(/\/$/, '')}/api`,
+  baseURL: `${API_BASE_URL}/api`,
   withCredentials: true,
   headers: { 'X-Liboria-Request': '1' },
 });

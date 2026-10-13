@@ -14,11 +14,24 @@ if (
 }
 
 const app = express();
-app.use(cors({ origin: process.env.CLIENT_ORIGIN, credentials: true }));
+const allowedOrigins = process.env.CLIENT_ORIGIN.split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+const isAllowedOrigin = (origin) => !origin || allowedOrigins.includes(origin);
+
+app.use(
+  cors({
+    origin(origin, callback) {
+      if (isAllowedOrigin(origin)) return callback(null, true);
+      return callback(new Error("Origin denied by CORS"));
+    },
+    credentials: true,
+  }),
+);
 app.use(express.json());
 app.use((req, res, next) => {
   if (["GET", "HEAD", "OPTIONS"].includes(req.method)) return next();
-  if (req.headers.origin && req.headers.origin !== process.env.CLIENT_ORIGIN)
+  if (!isAllowedOrigin(req.headers.origin))
     return res.status(403).json({ error: "Origin denied" });
   if (
     req.headers.cookie?.includes("liboria_session=") &&

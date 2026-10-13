@@ -20,7 +20,8 @@ const verify = (token) => {
   if (!payload.id || !['librarian', 'non-librarian', 'student'].includes(payload.account_type)) throw new Error('Invalid token');
   return payload;
 };
-const cookieOptions = () => ({ httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production', path: '/', maxAge: duration() * 1000 });
+const isProduction = () => process.env.NODE_ENV === 'production';
+const cookieOptions = () => ({ httpOnly: true, sameSite: isProduction() ? 'none' : 'lax', secure: isProduction(), path: '/', maxAge: duration() * 1000 });
 const authenticate = (req, res, next) => {
   try {
     const cookie = req.headers.cookie?.split(';').map(s => s.trim()).find(s => s.startsWith(`${cookieName}=`));
@@ -32,4 +33,5 @@ const authenticate = (req, res, next) => {
 };
 const authorize = (...roles) => (req, res, next) => roles.includes(req.user.account_type) ? next() : res.status(403).json({ error: 'Access denied' });
 const ownUser = (req, res, next) => req.user.account_type === 'librarian' || req.user.id === req.params.id ? next() : res.status(403).json({ error: 'Access denied' });
-module.exports = { cookieName, duration, sign, cookieOptions, authenticate, authorize, ownUser };
+const clearCookieOptions = () => ({ path: '/', sameSite: isProduction() ? 'none' : 'lax', secure: isProduction() });
+module.exports = { cookieName, duration, sign, cookieOptions, clearCookieOptions, authenticate, authorize, ownUser };

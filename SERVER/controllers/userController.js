@@ -2,7 +2,7 @@ const { collection, getNextSequence } = require("../config/database");
 const crypto = require("crypto");
 const bcrypt = require("bcrypt");
 const User = require("../models/User");
-const { cookieName, sign, cookieOptions } = require('../middleware/auth');
+const { cookieName, sign, cookieOptions, clearCookieOptions } = require('../middleware/auth');
 
 const toId = (value) => {
   const numberValue = Number(value);
@@ -644,7 +644,7 @@ module.exports = {
     const user = await User.findById(req.user.id).select('_id username name email account_type').lean();
     return user ? res.json({ user }) : res.status(401).json({ error: 'Session user not found' });
   },
-  logout: (req, res) => { res.clearCookie(cookieName, { path: '/', sameSite: 'lax', secure: process.env.NODE_ENV === 'production' }); res.json({ message: 'Logged out' }); },
+  logout: (req, res) => { res.clearCookie(cookieName, clearCookieOptions()); res.json({ message: 'Logged out' }); },
   getUsers,
   getUserById,
   createUser,
