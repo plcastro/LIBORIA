@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { Modal, Form, Input, InputNumber, DatePicker, Select, Row, Col, message } from "antd";
 import dayjs from "dayjs";
 import axios from "../../api";
-const ReturnBookModal = ({ open, onClose, initialValues, REASONS }) => {
+const ReturnBookModal = ({ open, onClose, onReturned, initialValues, REASONS }) => {
   const [form] = Form.useForm();
   const [messageApi, contextHolder] = message.useMessage();
   const colProps = { xs: 24, md: 12 };
@@ -72,7 +72,7 @@ const ReturnBookModal = ({ open, onClose, initialValues, REASONS }) => {
       nextErrors.returnedDate = "Returned date is required";
     }
 
-    const hasViolation = formData.violation.length > 0;
+    const hasViolation = (formData.violation || []).length > 0;
     if (hasViolation && Number(formData.inCash) < Number(formData.penalty)) {
       nextErrors.inCash = "Amount paid must cover the penalty.";
     }
@@ -108,8 +108,10 @@ const ReturnBookModal = ({ open, onClose, initialValues, REASONS }) => {
           ? "Book marked as lost!"
           : "Book returned successfully!",
       );
+      if (onReturned) {
+        await onReturned();
+      }
       onClose();
-      window.location.reload();
     } catch (err) {
       console.error("Error while returning book:", err);
       messageApi.error(

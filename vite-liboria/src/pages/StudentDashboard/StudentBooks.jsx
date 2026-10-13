@@ -22,6 +22,8 @@ import Search from "@mui/icons-material/Search";
 import ErrorIcon from "@mui/icons-material/Error";
 import "./StudentBook.css";
 
+const getBookAuthor = (book) => book.author_name || book.author || "";
+
 const StudentBooks = () => {
   const [books, setBooks] = useState([]);
   const [search, setSearch] = useState("");
@@ -80,7 +82,7 @@ const StudentBooks = () => {
     return books.filter((book) => {
       const matchesSearch = [
         book.title,
-        book.author,
+        getBookAuthor(book),
         book.category,
         book.isbn,
       ].some((value) =>
@@ -122,6 +124,11 @@ const StudentBooks = () => {
             placeholder="Search title, author, category, or ISBN"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            sx={{
+              "& .MuiInputBase-root": {
+                height: 56,
+              },
+            }}
             slotProps={{
               input: {
                 endAdornment: search ? (
@@ -163,6 +170,9 @@ const StudentBooks = () => {
               onChange={(e) => setCategory(e.target.value)}
               displayEmpty
               inputProps={{ "aria-label": "Filter by category" }}
+              sx={{
+                height: 56,
+              }}
             >
               <MenuItem value="all">All Categories</MenuItem>
 
@@ -213,6 +223,7 @@ const StudentBooks = () => {
             {filteredBooks.map((book, index) => {
               const id = book.book_id ?? book._id ?? index;
               const available = Number(book.available_copies);
+              const author = getBookAuthor(book);
 
               const hasAvailability =
                 book.available_copies !== undefined &&
@@ -264,7 +275,7 @@ const StudentBooks = () => {
                           overflow: "hidden",
                         }}
                       >
-                        {book.author || "Author unavailable"}
+                        {author || "Author unavailable"}
                       </Typography>
 
                       {book.category && (

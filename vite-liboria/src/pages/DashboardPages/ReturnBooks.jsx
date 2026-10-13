@@ -140,6 +140,7 @@ const ReturnBooks = () => {
             backgroundColor: "#009148ff",
             color: "#fff",
             width: "100%",
+            height: "40px",
           }}
         >
           Return
@@ -182,6 +183,7 @@ const ReturnBooks = () => {
         <ReturnBookModal
           open={isModalOpen}
           onClose={handleModalClose}
+          onReturned={fetchBorrowedBooks}
           initialValues={selectedRecord}
           REASONS={REASONS}
         />

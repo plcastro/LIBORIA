@@ -25,22 +25,13 @@ const Sidebar = () => {
     }
   });
 
-  const currentUserId = (() => {
+  const fetchUserInfo = async () => {
     try {
-      return JSON.parse(sessionStorage.getItem("currentUser") || "{}")?._id;
-    } catch (error) {
-      console.error("Failed to parse currentUser:", error);
-      return null;
-    }
-  })();
+      const { data } = await axios.get("/users/me");
+      const nextUser = data.user || data;
 
-  const fetchUserInfo = async (id) => {
-    if (!id) return;
-
-    try {
-      const { data } = await axios.get(`/users/${id}`);
-
-      setUser(data);
+      setUser(nextUser);
+      sessionStorage.setItem("currentUser", JSON.stringify(nextUser));
     } catch (err) {
       console.error("Failed to fetch user info:");
       console.error("URL:", err.config?.url);
@@ -51,7 +42,7 @@ const Sidebar = () => {
   };
 
   useEffect(() => {
-    Promise.resolve().then(() => fetchUserInfo(currentUserId));
+    Promise.resolve().then(() => fetchUserInfo());
 
     const handleUserUpdate = (e) => {
       setUser(e.detail);
@@ -62,7 +53,7 @@ const Sidebar = () => {
     return () => {
       window.removeEventListener("userUpdated", handleUserUpdate);
     };
-  }, [currentUserId]);
+  }, []);
 
   // Update selected menu based on the current path
   const selectedCurrent = location.pathname.includes("/dashboard/view/borrow") ? "1"
