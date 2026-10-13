@@ -24,7 +24,7 @@ export default function App() {
   useEffect(() => {
     const handleStorageChange = (event) => {
       if (event.key === "rememberMe" && event.newValue === "false") {
-        localStorage.removeItem("currentUser");
+        sessionStorage.removeItem("currentUser");
         window.location.href = "/login";
       }
     };

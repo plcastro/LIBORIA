@@ -62,7 +62,7 @@ const EditProfile = ({ initialData, isVisible, onClose, onSave }) => {
     let user = {};
 
     try {
-      user = JSON.parse(localStorage.getItem("currentUser") || "{}");
+      user = JSON.parse(sessionStorage.getItem("currentUser") || "{}");
     } catch {
       messageApi.error("Unable to read user information. Please log in again.");
       return;
