@@ -1,0 +1,44 @@
+.student-borrowings {
+  min-height: 100%;
+  padding: 24px;
+}
+
+.student-borrowings-heading {
+  margin-bottom: 24px;
+}
+
+.student-borrowings-heading .ant-typography-paragraph {
+  color: #777;
+  margin-bottom: 0;
+}
+
+.student-borrowings-alert {
+  margin-bottom: 20px;
+}
+
+.student-borrowings-card {
+  border: 1px solid #ededed;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgb(0 0 0 / 4%);
+}
+
+.student-borrowings-card .ant-card-head {
+  color: #001529;
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .student-borrowings {
+    padding: 16px;
+  }
+
+  .student-borrowings-heading h2 {
+    font-size: 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .student-borrowings {
+    padding: 12px;
+  }
+}
