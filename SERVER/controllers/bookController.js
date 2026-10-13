@@ -8,6 +8,12 @@ const toId = (value) => {
 const handleError = (res, err) => {
   console.error("Book controller error:", err);
 
+  if (err.code === 11000) {
+    return res.status(409).json({
+      error: "A book with the same unique value already exists.",
+    });
+  }
+
   return res.status(500).json({
     error: "Internal Server Error",
     ...(process.env.NODE_ENV !== "production" && {
@@ -58,12 +64,35 @@ const createBook = async (req, res) => {
       image,
     } = req.body;
 
-    if (!title || !author_name) {
+    const trimmedTitle = String(title || "").trim();
+    const trimmedAuthor = String(author_name || "").trim();
+
+    if (!trimmedTitle || !trimmedAuthor) {
       return res.status(400).json({ error: "Title and author are required" });
     }
 
+    if (!category) {
+      return res.status(400).json({ error: "Category is required" });
+    }
+
+    const totalCopies = Number(total_copies);
+    const availableCopies = Number(available_copies ?? total_copies);
+
+    if (!Number.isInteger(totalCopies) || totalCopies < 1) {
+      return res.status(400).json({ error: "Total copies must be at least 1" });
+    }
+
+    if (
+      !Number.isInteger(availableCopies) ||
+      availableCopies < 0 ||
+      availableCopies > totalCopies
+    ) {
+      return res.status(400).json({
+        error: "Available copies must be between 0 and total copies",
+      });
+    }
+
     const books = await collection("books");
-    const trimmedTitle = title.trim();
     const existingBook = await books.findOne({
       title: {
         $regex: `^${trimmedTitle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`,
@@ -80,13 +109,13 @@ const createBook = async (req, res) => {
     const book = {
       book_id: await getNextSequence("books"),
       title: trimmedTitle,
-      author_name: author_name.trim(),
+      author_name: trimmedAuthor,
       category,
       published_date,
-      total_copies: Number(total_copies) || 0,
-      available_copies: Number(available_copies ?? total_copies) || 0,
-      description,
-      image,
+      total_copies: totalCopies,
+      available_copies: availableCopies,
+      description: description || null,
+      image: image || null,
       created_at: new Date(),
     };
 

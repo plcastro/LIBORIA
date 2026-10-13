@@ -41,7 +41,13 @@ const getNextSequence = async (sequenceName) => {
     },
   );
 
-  return result.sequence_value;
+  const counter = result?.value || result;
+
+  if (!counter?.sequence_value) {
+    throw new Error(`Failed to generate sequence for ${sequenceName}`);
+  }
+
+  return counter.sequence_value;
 };
 
 module.exports = {

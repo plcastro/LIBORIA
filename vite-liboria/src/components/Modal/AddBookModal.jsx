@@ -15,6 +15,12 @@ import {
 import axios from "../../api";
 const { TextArea } = Input;
 
+const getErrorMessage = (err, fallback) =>
+  err.response?.data?.error ||
+  err.response?.data?.message ||
+  err.message ||
+  fallback;
+
 const AddBookModal = ({ modal2Open, setModal2Open, onBookCreated }) => {
   const [messageApi, contextHolder] = message.useMessage();
   const [form] = Form.useForm();
@@ -25,11 +31,10 @@ const AddBookModal = ({ modal2Open, setModal2Open, onBookCreated }) => {
   const handleAddClick = async () => {
     try {
       const values = await form.validateFields();
-      console.log("Validated form values:", values);
 
       const normalizedData = {
-        title: values.title,
-        author_name: values.author,
+        title: values.title?.trim(),
+        author_name: values.author?.trim(),
         category: values.category,
         published_date: values.published_date
           ? values.published_date.format("YYYY-MM-DD")
@@ -44,7 +49,7 @@ const AddBookModal = ({ modal2Open, setModal2Open, onBookCreated }) => {
       setIsConfirmOpen(true);
     } catch (err) {
       console.error(err);
-      messageApi.error(err.message || "Failed to add book");
+      messageApi.error(getErrorMessage(err, "Failed to add book"));
     }
   };
 
@@ -64,7 +69,7 @@ const AddBookModal = ({ modal2Open, setModal2Open, onBookCreated }) => {
       messageApi.success("Book added successfully");
     } catch (err) {
       console.error(err);
-      messageApi.error(err.message || "Failed to add book");
+      messageApi.error(getErrorMessage(err, "Failed to add book"));
     }
   };
 
@@ -112,7 +117,7 @@ const AddBookModal = ({ modal2Open, setModal2Open, onBookCreated }) => {
           form={form}
           layout="vertical"
           labelAlign="left"
-          initialValues={{ total_copies: 1 }}
+          initialValues={{ category: "Trending", total_copies: 1 }}
         >
           <Row gutter={24}>
             {/* Left Column */}
@@ -156,7 +161,6 @@ const AddBookModal = ({ modal2Open, setModal2Open, onBookCreated }) => {
               >
                 <Select
                   placeholder="Select category:"
-                  defaultValue="Trending"
                   options={[
                     { value: "Trending", label: "Trending" },
                     { value: "Romance", label: "Romance" },
