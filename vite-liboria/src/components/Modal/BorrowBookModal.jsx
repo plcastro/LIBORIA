@@ -1,6 +1,15 @@
 import Button from "../MuiButton.jsx";
 import { useEffect } from "react";
-import { Modal, Form, Input, DatePicker, Row, Col, Select, message } from "antd";
+import {
+  Modal,
+  Form,
+  Input,
+  DatePicker,
+  Row,
+  Col,
+  Select,
+  message,
+} from "antd";
 import dayjs from "dayjs";
 import axios from "../../api";
 const BorrowBookModal = ({ open, onClose, onSubmit, initialValues }) => {
@@ -31,9 +40,7 @@ const BorrowBookModal = ({ open, onClose, onSubmit, initialValues }) => {
     if (!name) return;
 
     try {
-      const { data: borrowers } = await axios.get(
-        "/borrowers",
-      );
+      const { data: borrowers } = await axios.get("/borrowers");
 
       const borrower = borrowers.find(
         (b) => b.name.toLowerCase() === name.toLowerCase(),
@@ -64,9 +71,7 @@ const BorrowBookModal = ({ open, onClose, onSubmit, initialValues }) => {
         created_at: formData.created_at.format("YYYY-MM-DD"),
       };
 
-      const { data: borrowers } = await axios.get(
-        "/borrowers",
-      );
+      const { data: borrowers } = await axios.get("/borrowers");
 
       let borrower = borrowers.find(
         (b) => b.name.toLowerCase() === name.toLowerCase(),
@@ -74,11 +79,9 @@ const BorrowBookModal = ({ open, onClose, onSubmit, initialValues }) => {
 
       if (!borrower) {
         try {
-          const { data } = await axios.post(
-            "/borrowers",
-            borrowerPayload,
-            { headers: { "Content-Type": "application/json" } },
-          );
+          const { data } = await axios.post("/borrowers", borrowerPayload, {
+            headers: { "Content-Type": "application/json" },
+          });
           borrower = data;
         } catch (error) {
           console.error(
@@ -97,17 +100,14 @@ const BorrowBookModal = ({ open, onClose, onSubmit, initialValues }) => {
         status: "Borrowed",
       };
 
-      const borrowRes = await axios.post(
-        "/borrowed-books",
-        borrowPayload,
-        { headers: { "Content-Type": "application/json" } },
-      );
+      const borrowRes = await axios.post("/borrowed-books", borrowPayload, {
+        headers: { "Content-Type": "application/json" },
+      });
 
       onSubmit(borrowRes.data);
       onClose();
       form.resetFields();
       messageApi.success(`Borrowed ${initialValues.book_title} successfully!`);
-      window.location.reload();
     } catch (err) {
       console.error("Error while borrowing:", err);
       const errorMessage = err.response?.data?.error || "";

@@ -1,6 +1,17 @@
 import Button from "../MuiButton.jsx";
 import { useState } from "react";
-import { Input, Modal, Form, DatePicker, InputNumber, Col, Row, message, Space, Select } from "antd";
+import {
+  Input,
+  Modal,
+  Form,
+  DatePicker,
+  InputNumber,
+  Col,
+  Row,
+  message,
+  Space,
+  Select,
+} from "antd";
 import axios from "../../api";
 const { TextArea } = Input;
 
@@ -51,9 +62,6 @@ const AddBookModal = ({ modal2Open, setModal2Open, onBookCreated }) => {
 
       if (onBookCreated) onBookCreated();
       messageApi.success("Book added successfully");
-      setTimeout(() => {
-        window.location.reload();
-      }, 0);
     } catch (err) {
       console.error(err);
       messageApi.error(err.message || "Failed to add book");

@@ -1,5 +1,5 @@
-import Button from '../components/MuiButton.jsx';
-import { useState } from "react";
+import Button from "../components/MuiButton.jsx";
+import { useEffect, useState } from "react";
 import Sidebar from "../components/NavBar/SideBar";
 import { Outlet, useLocation } from "react-router-dom";
 import { Layout, Drawer, Grid } from "antd";
@@ -24,7 +24,7 @@ const contentStyle = {
 };
 
 const siderStyle = {
-  backgroundColor: "#001529",
+  backgroundColor: "#000000",
   color: "#fff",
   minHeight: "100vh",
   position: "fixed",
@@ -39,7 +39,9 @@ const DashboardLayout = () => {
   const location = useLocation();
   const screens = useBreakpoint();
   const isTablet = !screens.lg;
-
+  useEffect(() => {
+    setOpen(false);
+  }, [location.pathname]);
   // Map URL paths to page titles
   const pageMap = {
     "/dashboard/view/borrow": "Borrow Books",
@@ -54,36 +56,26 @@ const DashboardLayout = () => {
   return (
     <Layout style={{ minHeight: "100vh", overflow: "hidden" }}>
       {isTablet ? (
-        <>
-          <Button
-            type="text"
-            icon={
-              <MenuOutlined style={{ fontSize: "clamp(12px, 1.8vw, 16px)" }} />
-            }
-            onClick={() => setOpen(true)}
-            style={{
-              position: "fixed",
-              top: "-10px",
-              left: "10px",
-              zIndex: 1000,
-              background: "white",
-              borderRadius: "8px",
-            }}
-          />
-          <Drawer
-            placement="left"
-            onClose={() => setOpen(false)}
-            open={open}
-            size={300}
-            body={{ style: { padding: 0 } }}
-            style={{
+        <Drawer
+          placement="left"
+          onClick={() => setOpen((prev) => !prev)}
+          open={open}
+          size={300}
+          styles={{
+            header: {
+              display: "none",
+            },
+            body: {
+              padding: 0,
               backgroundColor: "#001529",
-              color: "white",
-            }}
-          >
-            <Sidebar />
-          </Drawer>
-        </>
+            },
+            content: {
+              backgroundColor: "#001529",
+            },
+          }}
+        >
+          <Sidebar />
+        </Drawer>
       ) : (
         <Sider width="15%" style={siderStyle}>
           <Sidebar />
@@ -97,7 +89,39 @@ const DashboardLayout = () => {
           overflowX: "hidden",
         }}
       >
-        <Header style={headerStyle}>{page}</Header>
+        <Header
+          style={{
+            ...headerStyle,
+            position: "relative",
+          }}
+        >
+          {isTablet && (
+            <Button
+              type="text"
+              icon={
+                <MenuOutlined
+                  style={{
+                    fontSize: 16,
+                    color: open ? "white" : "black",
+                  }}
+                />
+              }
+              onClick={() => setOpen(true)}
+              style={{
+                position: "absolute",
+                left: 10,
+                top: "50%",
+                transform: "translateY(-50%)",
+                zIndex: 10,
+                background: open ? "#001529" : "white",
+                borderRadius: 8,
+              }}
+            />
+          )}
+
+          {page}
+        </Header>
+
         <Content style={contentStyle}>
           <Outlet />
         </Content>
