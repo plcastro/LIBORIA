@@ -49,62 +49,33 @@ const StudentBorrowings = () => {
 
         if (!active) return;
 
-        if (
-          borrowersResult.status !== "fulfilled" ||
-          borrowingsResult.status !== "fulfilled"
-        ) {
-          setError("Unable to load borrowing records from the server.");
-          return;
+        for (const [label, result] of [["borrowers", borrowersResult], ["loans", borrowingsResult], ["books", booksResult], ["requests", requestsResult]]) {
+          if (result.status === "rejected") console.error(`Unable to load ${label}:`, result.reason.response?.status, result.reason.response?.data || result.reason);
         }
-
-        const borrowersData = borrowersResult.value.data;
-        const borrowingData = borrowingsResult.value.data;
-        const booksData =
-          booksResult.status === "fulfilled" ? booksResult.value.data : [];
-
-        const borrowers = Array.isArray(borrowersData)
-          ? borrowersData
-          : borrowersData.borrowers || [];
-
-        const allRecords = Array.isArray(borrowingData)
-          ? borrowingData
-          : borrowingData.borrowings || borrowingData.borrowedBooks || [];
-
-        const allBooks = Array.isArray(booksData)
-          ? booksData
-          : booksData.books || [];
-
-        setBooks(allBooks);
+        if (borrowingsResult.status === "fulfilled") {
+          const data = borrowingsResult.value.data;
+          setRecords(Array.isArray(data) ? data : data.borrowings || data.borrowedBooks || []);
+        }
         if (requestsResult.status === "fulfilled") setRequests(requestsResult.value.data);
-        else setError("Unable to load borrow requests.");
-
-        // Match only a unique borrower record.
-        // Name matching is temporary; a stable account-to-borrower
-        // relationship is safer and should replace this when available.
-
-        const userId = String(storedUser._id);
-
-        const matches = borrowers.filter(
-          (borrower) => String(borrower.user_id || "") === userId,
-        );
-
-        if (matches.length !== 1) {
-          setRecords([]);
-          setNotice(
-            matches.length > 1
-              ? "Multiple borrower records are linked to your account. Please contact the librarian."
-              : "Your account is not linked to a borrower record yet. Please contact the librarian.",
-          );
-          return;
+        if (booksResult.status === "fulfilled") {
+          const data = booksResult.value.data;
+          setBooks(Array.isArray(data) ? data : data.books || []);
         }
-
-        const borrowerId = matches[0].borrower_id;
-
-        const personalRecords = allRecords.filter(
-          (record) => String(record.borrower_id) === String(borrowerId),
-        );
-
-        setRecords(personalRecords);
+        if (borrowingsResult.status !== "fulfilled" && requestsResult.status !== "fulfilled") {
+          setError("Unable to load your loans and borrow requests from the server.");
+        } else if (borrowingsResult.status !== "fulfilled") {
+          setError("Unable to load your borrowing history.");
+        } else if (requestsResult.status !== "fulfilled") {
+          setError("Unable to load your borrow requests.");
+        }
+        if (borrowersResult.status === "fulfilled") {
+          const data = borrowersResult.value.data;
+          const borrowers = Array.isArray(data) ? data : data.borrowers || [];
+          const matches = borrowers.filter((borrower) => String(borrower.user_id) === String(storedUser._id));
+          if (matches.length !== 1) setNotice(matches.length > 1
+            ? "Multiple borrower records are linked to your account. Please contact the librarian."
+            : "Your borrower record could not be linked. Please contact the librarian.");
+        }
       } catch (err) {
         console.error("Student borrowing history error:", err);
 

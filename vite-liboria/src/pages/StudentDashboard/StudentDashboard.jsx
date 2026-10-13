@@ -74,64 +74,32 @@ const StudentDashboard = () => {
         const normalizedUser = apiUser?.user || apiUser;
 
         setUser(normalizedUser);
+        for (const [label, result] of [["user", userResult], ["borrowers", borrowersResult], ["loans", borrowingResult], ["books", booksResult], ["requests", requestsResult]]) {
+          if (result.status === "rejected") console.error(`Unable to load ${label}:`, result.reason.response?.status, result.reason.response?.data || result.reason);
+        }
         if (requestsResult.status === "fulfilled") setRequests(requestsResult.value.data);
-        else setError("Borrow requests could not be loaded.");
-
-        // Store borrowing records locally before filtering.
-        let fetchedBorrowings = [];
-
         if (borrowingResult.status === "fulfilled") {
           const data = borrowingResult.value.data;
-
-          fetchedBorrowings = Array.isArray(data) ? data : [];
-        } else {
-          setError(
-            "Borrowing records could not be loaded. Check your backend API.",
-          );
+          setBorrowings(Array.isArray(data) ? data : data.borrowings || data.borrowedBooks || []);
         }
-
-        // Load the book catalog for displaying book titles.
         if (booksResult.status === "fulfilled") {
           const data = booksResult.value.data;
-
-          setBooks(Array.isArray(data) ? data : []);
+          setBooks(Array.isArray(data) ? data : data.books || []);
         }
-
-        // Match the current user to exactly one borrower record.
+        if (borrowingResult.status !== "fulfilled" && requestsResult.status !== "fulfilled") {
+          setError("Unable to load your loans and borrow requests.");
+        } else if (borrowingResult.status !== "fulfilled") {
+          setError("Unable to load your borrowing history.");
+        } else if (requestsResult.status !== "fulfilled") {
+          setError("Unable to load your borrow requests.");
+        }
         if (borrowersResult.status === "fulfilled") {
           const data = borrowersResult.value.data;
-          const borrowers = Array.isArray(data) ? data : [];
-
-          const matchingBorrowers = borrowers.filter(
-            (borrower) =>
-              String(borrower.user_id || "") === String(storedUser._id),
-          );
-
-          if (matchingBorrowers.length !== 1) {
-            setBorrowings([]);
-
-            setLinkNotice(
-              matchingBorrowers.length > 1
-                ? "Multiple borrower records are linked to your account. Please contact the librarian."
-                : "Your account is not linked to a borrower record yet. Please contact the librarian.",
-            );
-          } else {
-            const borrower = matchingBorrowers[0];
-
-            const personalRecords = fetchedBorrowings.filter(
-              (record) =>
-                String(record.borrower_id) === String(borrower.borrower_id),
-            );
-
-            setBorrowings(personalRecords);
-            setLinkNotice("");
-          }
-        } else {
-          setBorrowings([]);
-
-          setLinkNotice(
-            "Borrower information could not be loaded. Personal borrowing totals are unavailable.",
-          );
+          const borrowers = Array.isArray(data) ? data : data.borrowers || [];
+          const matches = borrowers.filter((borrower) => String(borrower.user_id) === String(storedUser._id));
+          if (matches.length !== 1) setLinkNotice(matches.length > 1
+            ? "Multiple borrower records are linked to your account. Please contact the librarian."
+            : "Your borrower record could not be linked. Please contact the librarian.");
         }
       } catch (err) {
         console.error("Student dashboard error:", err);
@@ -176,11 +144,13 @@ const StudentDashboard = () => {
     today.setHours(0, 0, 0, 0);
 
     return activeBorrowings.filter((record) => {
+      if (String(record.status || "").toLowerCase() === "overdue") return true;
       if (!record.due_date) return false;
 
       const dueDate = new Date(record.due_date);
 
-      return !Number.isNaN(dueDate.getTime()) && dueDate < today;
+      return String(record.status || "").toLowerCase() === "overdue" ||
+        (!Number.isNaN(dueDate.getTime()) && dueDate < today);
     });
   }, [activeBorrowings]);
 
@@ -269,7 +239,7 @@ const StudentDashboard = () => {
       <div className="student-welcome">
         <div>
           <Typography.Title level={2}>
-            Welcome{user?.name ? `, ${user.name}` : ""}!
+            Welcome{user?.name || user?.username ? `, ${user.name || user.username}` : ""}!
           </Typography.Title>
 
           <Typography.Paragraph>
@@ -346,7 +316,7 @@ const StudentDashboard = () => {
       </Row>
 
       {/* Recent borrowing activity */}
-      <Card className="student-recent-card" title="Recent Borrow Requests">
+      <Card className="student-recent-card" title={`Recent Borrow Requests (${requests.filter((request) => request.status === "Pending").length} pending)`}>
         {requests.length === 0 ? <Empty description="No borrow requests to display" /> : (
           <Table
             rowKey="request_id"

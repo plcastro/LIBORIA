@@ -1,4 +1,5 @@
 const { collection, getNextSequence } = require("../config/database");
+const { activeStatus, getMaxBorrowedBooks, getBorrowUsage, limitMessage } = require("../services/borrowLimit");
 
 const toId = (value) => {
   const numberValue = Number(value);
@@ -112,7 +113,7 @@ const borrowBook = async (req, res) => {
     const duplicate = await borrowedBooks.findOne({
       book_id: bookId,
       borrower_id: borrowerId,
-      status: { $regex: /^borrowed$/i },
+      status: activeStatus,
     });
 
     if (duplicate) {
@@ -121,12 +122,16 @@ const borrowBook = async (req, res) => {
 
     const activeBorrows = await borrowedBooks.countDocuments({
       borrower_id: borrowerId,
-      status: { $regex: /^borrowed$/i },
+      status: activeStatus,
     });
 
-    if (activeBorrows >= 3) {
+    const borrower = await collection("borrowers").findOne({ borrower_id: borrowerId });
+    const used = borrower?.user_id
+      ? (await getBorrowUsage(borrower.user_id, borrowerId)).used
+      : activeBorrows;
+    if (used >= getMaxBorrowedBooks()) {
       return res.status(400).json({
-        error: "Borrow limit reached. You can only borrow up to 3 books at a time.",
+        error: limitMessage(getMaxBorrowedBooks()),
       });
     }
 
@@ -209,7 +214,7 @@ const getBorrowedBooksByBorrower = async (req, res) => {
       .aggregate(
         borrowDetailsPipeline({
           borrower_id: borrowerId,
-          status: { $regex: /^borrowed$/i },
+          status: activeStatus,
         })
       )
       .toArray();
@@ -226,7 +231,7 @@ const getActiveBorrowsCount = async (req, res) => {
     const borrowedBooks = await collection("borrowed_books");
     const activeBorrows = await borrowedBooks.countDocuments({
       borrower_id: toId(req.params.borrowerId),
-      status: { $regex: /^borrowed$/i },
+      status: activeStatus,
     });
 
     res.json({ active_borrows: activeBorrows });

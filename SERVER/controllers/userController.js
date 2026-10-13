@@ -2,6 +2,8 @@ const { collection, getNextSequence } = require("../config/database");
 const crypto = require("crypto");
 const bcrypt = require("bcrypt");
 const User = require("../models/User");
+const mongoose = require("mongoose");
+const { ensureBorrowerForUser, ensureBorrowerIndex } = require("../services/borrowerLink");
 const { cookieName, sign, cookieOptions, clearCookieOptions } = require('../middleware/auth');
 
 const toId = (value) => {
@@ -206,16 +208,25 @@ const register = async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const userid = await getNextSequence("users");
-
-    const user = await User.create({
-      userid,
-      name: normalizedName,
-      email: normalizedEmail,
-      username: normalizedUsername,
-      password: hashedPassword,
-      account_type: "student",
-    });
+    await ensureBorrowerIndex();
+    const session = await mongoose.startSession();
+    let user;
+    try {
+      await session.withTransaction(async () => {
+        const userid = await getNextSequence("users", session);
+        [user] = await User.create([{
+          userid,
+          name: normalizedName,
+          email: normalizedEmail,
+          username: normalizedUsername,
+          password: hashedPassword,
+          account_type: "student",
+        }], { session });
+        await ensureBorrowerForUser(user, session);
+      });
+    } finally {
+      await session.endSession();
+    }
 
     return res.status(201).json({
       message: "Student registration successful",

@@ -15,6 +15,7 @@ import {
   MenuItem,
   Select,
   Skeleton,
+  Tooltip,
   TextField,
   Typography,
 } from "@mui/material";
@@ -34,6 +35,7 @@ const StudentBooks = () => {
   const [feedback, setFeedback] = useState("");
   const [requests, setRequests] = useState([]);
   const [activeBookIds, setActiveBookIds] = useState([]);
+  const [usage, setUsage] = useState(null);
   const [submitting, setSubmitting] = useState(null);
   const userId = JSON.parse(sessionStorage.getItem("currentUser") || "null")?._id;
 
@@ -45,30 +47,25 @@ const StudentBooks = () => {
         setLoading(true);
         setError("");
 
-        const response = await axios.get(`/books`);
-        const data = response.data;
-
-        const list = Array.isArray(data)
-          ? data
-          : Array.isArray(data.books)
-            ? data.books
-            : [];
-
-        if (active) setBooks(list);
-        if (userId) {
-          const [requestResult, borrowerResult, loanResult] = await Promise.allSettled([
-            axios.get(`/borrow-requests/student/${userId}`),
-            axios.get("/borrowers"),
-            axios.get("/borrowed-books"),
-          ]);
-          if (active && requestResult.status === "fulfilled") setRequests(requestResult.value.data);
-          if (active && borrowerResult.status === "fulfilled" && loanResult.status === "fulfilled") {
-            const borrower = borrowerResult.value.data.find((item) => String(item.user_id) === String(userId));
-            setActiveBookIds(borrower ? loanResult.value.data
-              .filter((loan) => String(loan.borrower_id) === String(borrower.borrower_id) && /^(borrowed|overdue)$/i.test(loan.status))
-              .map((loan) => String(loan.book_id)) : []);
-          }
+        const [booksResult, requestsResult, loansResult, limitResult] = await Promise.allSettled([
+          axios.get("/books"),
+          userId ? axios.get(`/borrow-requests/student/${userId}`) : Promise.resolve({ data: [] }),
+          userId ? axios.get("/borrowed-books") : Promise.resolve({ data: [] }),
+          userId ? axios.get("/borrow-requests/limit") : Promise.resolve({ data: null }),
+        ]);
+        if (!active) return;
+        for (const [label, result] of [["books", booksResult], ["requests", requestsResult], ["loans", loansResult], ["limit", limitResult]]) {
+          if (result.status === "rejected") console.error(`Unable to load ${label}:`, result.reason.response?.status, result.reason.response?.data || result.reason);
         }
+        if (booksResult.status === "fulfilled") {
+          const data = booksResult.value.data;
+          setBooks(Array.isArray(data) ? data : data.books || []);
+        } else setError("Unable to load books. Please try again.");
+        if (requestsResult.status === "fulfilled") setRequests(requestsResult.value.data);
+        if (loansResult.status === "fulfilled") setActiveBookIds(loansResult.value.data
+          .filter((loan) => /^(borrowed|overdue)$/i.test(loan.status))
+          .map((loan) => String(loan.book_id)));
+        if (limitResult.status === "fulfilled") setUsage(limitResult.value.data);
       } catch (err) {
         console.error("Unable to load books:", err);
 
@@ -97,6 +94,7 @@ const StudentBooks = () => {
     try {
       const { data } = await axios.post("/borrow-requests", { user_id: userId, book_id: bookId });
       setRequests((current) => [data.request, ...current]);
+      setUsage((current) => current ? { ...current, pending: current.pending + 1, used: current.used + 1 } : current);
       setFeedback("Borrow request submitted.");
     } catch (err) {
       setError(err.response?.data?.error || "Unable to submit borrow request.");
@@ -139,6 +137,7 @@ const StudentBooks = () => {
         <Typography variant="body1">
           Explore the library catalog and find your next read.
         </Typography>
+        {usage && <Typography variant="body2">{usage.used} of {usage.limit} books used</Typography>}
       </div>
 
       {error && (
@@ -262,6 +261,7 @@ const StudentBooks = () => {
               const author = getBookAuthor(book);
               const pending = requests.some((request) => String(request.book_id) === String(id) && request.status === "Pending");
               const borrowed = activeBookIds.includes(String(id));
+              const atLimit = usage && usage.used >= usage.limit;
 
               const hasAvailability =
                 book.available_copies !== undefined &&
@@ -339,15 +339,16 @@ const StudentBooks = () => {
                           <Chip label="Availability not listed" size="small" />
                         )}
                       </Box>
-                      <Button
+                      <Tooltip title={atLimit ? `Borrow limit reached (${usage.used} of ${usage.limit} books used)` : ""}>
+                      <span><Button
                         variant="contained"
                         fullWidth
-                        disabled={!userId || !hasAvailability || available <= 0 || pending || borrowed || submitting === String(id)}
+                        disabled={!userId || !hasAvailability || available <= 0 || pending || borrowed || atLimit || submitting === String(id)}
                         onClick={() => requestBook(id)}
                         sx={{ mt: 2, textTransform: "none" }}
                       >
-                        {pending ? "Request pending" : borrowed ? "Already borrowed" : "Request to borrow"}
-                      </Button>
+                        {pending ? "Request pending" : borrowed ? "Already borrowed" : atLimit ? "Borrow limit reached" : "Request to borrow"}
+                      </Button></span></Tooltip>
                     </CardContent>
                   </Card>
                 </Grid>

@@ -2,6 +2,8 @@
 const { collection, getNextSequence } = require("../config/database");
 const User = require("../models/User");
 const mongoose = require("mongoose");
+const { ensureBorrowerForUser, ensureBorrowerIndex } = require("../services/borrowerLink");
+const { activeStatus, getBorrowUsage, getMaxBorrowedBooks, limitMessage } = require("../services/borrowLimit");
 
 const toId = (value) => {
   const numberValue = Number(value);
@@ -26,13 +28,14 @@ const createRequest = async (req, res) => {
       });
     }
 
-    const user = await User.findById(user_id).select("_id name account_type");
+    const user = await User.findById(user_id).select("_id name username account_type");
 
     if (!user || !['student', 'non-librarian'].includes(user.account_type)) {
       return res.status(403).json({
         error: "A valid student account is required",
       });
     }
+    const linkedBorrower = await ensureBorrowerForUser(user);
 
     const books = await collection("books");
     const requests = await collection("borrow_requests");
@@ -63,24 +66,19 @@ const createRequest = async (req, res) => {
       });
     }
 
-    // Prevent duplicate active loans where the borrower can be identified.
-    const borrowers = await collection("borrowers");
-    const linkedBorrower = await borrowers.findOne({
-      user_id: String(user._id),
+    const usage = await getBorrowUsage(user._id, linkedBorrower.borrower_id);
+    if (usage.used >= usage.limit) {
+      return res.status(409).json({ error: limitMessage(usage.limit) });
+    }
+    const existingLoan = await borrowedBooks.findOne({
+      borrower_id: linkedBorrower.borrower_id,
+      book_id: bookId,
+      status: activeStatus,
     });
-
-    if (linkedBorrower) {
-      const existingLoan = await borrowedBooks.findOne({
-        borrower_id: linkedBorrower.borrower_id,
-        book_id: bookId,
-        status: { $regex: /^borrowed$/i },
+    if (existingLoan) {
+      return res.status(409).json({
+        error: "You have already borrowed this book",
       });
-
-      if (existingLoan) {
-        return res.status(409).json({
-          error: "You have already borrowed this book",
-        });
-      }
     }
 
     const request = {
@@ -101,6 +99,17 @@ const createRequest = async (req, res) => {
       message: "Borrow request submitted successfully",
       request,
     });
+  } catch (err) {
+    return handleError(res, err);
+  }
+};
+
+const getStudentLimit = async (req, res) => {
+  try {
+    const borrowers = collection("borrowers");
+    const borrower = await borrowers.findOne({ user_id: String(req.user.id) });
+    const usage = await getBorrowUsage(req.user.id, borrower?.borrower_id);
+    return res.json(usage);
   } catch (err) {
     return handleError(res, err);
   }
@@ -196,21 +205,24 @@ const approveRequest = async (req, res) => {
   const requestId = toId(req.params.id);
   const session = await mongoose.startSession();
   try {
+    await ensureBorrowerIndex();
     let outcome;
     await session.withTransaction(async () => {
       const requests = collection("borrow_requests");
       const books = collection("books");
-      const borrowers = collection("borrowers");
       const borrowedBooks = collection("borrowed_books");
       const request = await requests.findOne({ request_id: requestId }, { session });
       if (!request) { outcome = { status: 404, error: "Request not found" }; return; }
       if (request.status !== "Pending") { outcome = { status: 409, error: "Only pending requests can be approved" }; return; }
-      const borrower = await borrowers.findOne({ user_id: String(request.user_id) }, { session });
-      if (!borrower) {
-        outcome = { status: 400, error: "This student has no linked borrower record. Link or create the borrower record before approving this request." };
+      const user = await User.findById(request.user_id).session(session).select("_id name username account_type");
+      if (!user) { outcome = { status: 404, error: "Student account not found" }; return; }
+      const borrower = await ensureBorrowerForUser(user, session);
+      const usage = await getBorrowUsage(user._id, borrower.borrower_id, session);
+      if (usage.active >= getMaxBorrowedBooks()) {
+        outcome = { status: 409, error: limitMessage(usage.limit) };
         return;
       }
-      const activeLoan = await borrowedBooks.findOne({ borrower_id: borrower.borrower_id, book_id: request.book_id, status: { $regex: /^borrowed$/i } }, { session });
+      const activeLoan = await borrowedBooks.findOne({ borrower_id: borrower.borrower_id, book_id: request.book_id, status: activeStatus }, { session });
       if (activeLoan) { outcome = { status: 409, error: "This student already borrowed this book" }; return; }
       const bookUpdate = await books.updateOne({ book_id: request.book_id, available_copies: { $gt: 0 } }, { $inc: { available_copies: -1 } }, { session });
       if (bookUpdate.modifiedCount !== 1) { outcome = { status: 400, error: "No copies are currently available" }; return; }
@@ -282,6 +294,7 @@ module.exports = {
   createRequest,
   getAllRequests,
   getStudentRequests,
+  getStudentLimit,
   approveRequest,
   rejectRequest,
 };
