@@ -17,7 +17,9 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { MenuBook, Search, ErrorIcon } from "@mui/icons-material";
+import MenuBook from "@mui/icons-material/MenuBook";
+import Search from "@mui/icons-material/Search";
+import ErrorIcon from "@mui/icons-material/Error";
 import "./StudentBook.css";
 
 const StudentBooks = () => {
