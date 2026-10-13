@@ -13,14 +13,14 @@ const toId = (value) => {
 };
 
 const handleError = (res, err) => {
-  console.error("Borrow request error:", err);
+  console.error("Borrow request error:", err?.message, err?.stack);
   return res.status(500).json({ error: "Internal Server Error" });
 };
 
 // Student submits a request for one book.
 const createRequest = async (req, res) => {
   try {
-    const { user_id, book_id } = req.body;
+    const { user_id, book_id } = req.body || {};
 
     if (!user_id || book_id === undefined || book_id === null) {
       return res.status(400).json({
@@ -260,7 +260,7 @@ const approveRequest = async (req, res) => {
 const rejectRequest = async (req, res) => {
   try {
     const requestId = toId(req.params.id);
-    const reason = String(req.body.reason || "").trim();
+    const reason = String(req.body?.reason ?? "").trim();
     const requests = await collection("borrow_requests");
 
     const result = await requests.updateOne(

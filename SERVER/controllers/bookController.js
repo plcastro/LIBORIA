@@ -62,7 +62,7 @@ const createBook = async (req, res) => {
       available_copies,
       description,
       image,
-    } = req.body;
+    } = req.body || {};
 
     const trimmedTitle = String(title || "").trim();
     const trimmedAuthor = String(author_name || "").trim();
@@ -139,7 +139,7 @@ const updateBook = async (req, res) => {
       available_copies,
       description,
       image,
-    } = req.body;
+    } = req.body || {};
 
     const books = await collection("books");
     const existingTitle = await books.findOne({

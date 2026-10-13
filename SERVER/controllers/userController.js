@@ -74,7 +74,7 @@ const getUserById = async (req, res) => {
 // CREATE user (for admin)
 const createUser = async (req, res) => {
   try {
-    const { username, password, name, email, account_type } = req.body;
+    const { username, password, name, email, account_type } = req.body || {};
 
     if (!username || !password) {
       return res.status(400).json({
@@ -155,7 +155,7 @@ const createUser = async (req, res) => {
 
 const register = async (req, res) => {
   try {
-    const { name, email, username, password } = req.body;
+    const { name, email, username, password } = req.body || {};
 
     if (!name?.trim() || !email?.trim() || !username?.trim() || !password) {
       return res.status(400).json({
@@ -262,7 +262,7 @@ const register = async (req, res) => {
 const updateUser = async (req, res) => {
   try {
     const userId = toId(req.params.id);
-    const { username, password, name, email, account_type } = req.body;
+    const { username, password, name, email, account_type } = req.body || {};
     const update = {};
     const existingUser = await User.findById(userId).select("account_type");
     if (!existingUser) return res.status(404).json({ error: "User not found" });
@@ -333,7 +333,7 @@ const updateUser = async (req, res) => {
 const changePassword = async (req, res) => {
   try {
     const userId = req.params.id;
-    const { currPassword, newPassword } = req.body;
+    const { currPassword, newPassword } = req.body || {};
 
     if (!currPassword || !newPassword) {
       return res.status(400).json({
@@ -384,7 +384,7 @@ const changePassword = async (req, res) => {
 const updateUserPassword = async (req, res) => {
   try {
     const userId = req.params.id;
-    const { password } = req.body;
+    const { password } = req.body || {};
 
     if (!password || password.length < 8) {
       return res.status(400).json({
@@ -440,7 +440,7 @@ const deleteUser = async (req, res) => {
 // LOGIN user
 const login = async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const { username, password } = req.body || {};
 
     if (!username || !password) {
       return res.status(400).json({
@@ -488,7 +488,7 @@ const login = async (req, res) => {
 // FORGOT PASSWORD - Generate reset token (Development version with test link)
 const forgotPassword = async (req, res) => {
   try {
-    const email = req.body.email?.trim().toLowerCase();
+    const email = req.body?.email?.trim().toLowerCase();
 
     if (!email) {
       return res.status(400).json({ error: "Email is required" });
@@ -526,7 +526,7 @@ const forgotPassword = async (req, res) => {
 // VERIFY RESET TOKEN - Check if token is valid
 const verifyResetToken = async (req, res) => {
   try {
-    const token = req.body.token?.trim();
+    const token = req.body?.token?.trim();
 
     if (!token) {
       return res.status(400).json({
@@ -560,8 +560,8 @@ const verifyResetToken = async (req, res) => {
 // RESET PASSWORD - Update password using reset token
 const resetPassword = async (req, res) => {
   try {
-    const token = req.body.token?.trim();
-    const { newPassword } = req.body;
+    const token = req.body?.token?.trim();
+    const { newPassword } = req.body || {};
 
     if (!token || !newPassword) {
       return res.status(400).json({

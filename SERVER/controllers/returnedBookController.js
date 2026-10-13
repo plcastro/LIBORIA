@@ -96,8 +96,8 @@ const getReturnedBookById = async (req, res) => {
 // RETURN a book (mark as returned)
 const returnBook = async (req, res) => {
   try {
-    const borrowId = toId(req.body.borrow_id);
-    const { violation, penalty, amount_paid, returned_date } = req.body;
+    const borrowId = toId(req.body?.borrow_id);
+    const { violation, penalty, amount_paid, returned_date } = req.body || {};
 
     if (!borrowId) {
       return res.status(400).json({ error: "Borrow ID is required" });
@@ -172,7 +172,7 @@ const returnBook = async (req, res) => {
 const updateReturnedBook = async (req, res) => {
   try {
     const returnId = toId(req.params.id);
-    const { violation, penalty, amount_paid } = req.body;
+    const { violation, penalty, amount_paid } = req.body || {};
     const returnedBooks = await collection("returned_books");
 
     const result = await returnedBooks.updateOne(
