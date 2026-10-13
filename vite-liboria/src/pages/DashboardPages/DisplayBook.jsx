@@ -295,7 +295,7 @@ const DisplayBook = () => {
           rowKey="id"
           loading={loading}
           pagination={{
-            position: ["bottomRight"],
+            placement: ["bottomRight"],
             pageSize: 3,
           }}
           scroll={{
