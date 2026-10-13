@@ -1,5 +1,5 @@
 import Button from "../MuiButton.jsx";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Modal, Form, Input, Space, message, Select } from "antd";
 import axios from "../../api";
 const StaffModal = ({
@@ -24,6 +24,12 @@ const StaffModal = ({
   const [submittable, setSubmittable] = useState(false);
   const loggedInUserId = JSON.parse(sessionStorage.getItem("currentUser"))?._id;
   const values = Form.useWatch([], form);
+  const resetTransientState = () => {
+    form.resetFields();
+    setIsPreviewConfirmOpen(false);
+    setIsConfirmDeleteOpen(false);
+    setIsCancelConfirmOpen(false);
+  };
 
   useEffect(() => {
     if (isEditMode && selectedStaff) {
@@ -37,7 +43,7 @@ const StaffModal = ({
     } else {
       form.resetFields();
     }
-  }, [mode, selectedStaff, form]);
+  }, [mode, isEditMode, selectedStaff, form]);
 
   useEffect(() => {
     form
@@ -78,7 +84,6 @@ const StaffModal = ({
       onSave(response?.data);
       onClose();
 
-      setFormData(initialForm);
       resetTransientState();
       messageApi.success(
         isAddMode ? "Staff added successfully!" : "Staff updated successfully!",
@@ -138,7 +143,7 @@ const StaffModal = ({
       messageApi.success("User deleted successfully!");
       onSave();
       setIsConfirmDeleteOpen(false);
-      setFormData(initialForm);
+      form.resetFields();
       onClose();
     } catch (err) {
       console.error(err);
@@ -281,6 +286,7 @@ const StaffModal = ({
               <Space>
                 <Button
                   type="primary"
+                  disabled={!submittable || isSaving}
                   onClick={handlePrimaryClick}
                   style={{ backgroundColor: "#000", color: "#fff", width: 232 }}
                 >

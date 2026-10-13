@@ -1,5 +1,5 @@
 import Button from "../MuiButton.jsx";
-import React, { useState } from "react";
+import { useState } from "react";
 import { Input, Modal, Form, DatePicker, InputNumber, Col, Row, message, Space, Select } from "antd";
 import axios from "../../api";
 const { TextArea } = Input;
@@ -45,7 +45,7 @@ const AddBookModal = ({ modal2Open, setModal2Open, onBookCreated }) => {
         headers: { "Content-Type": "application/json" },
       });
 
-      resetForm();
+      form.resetFields();
       setIsConfirmOpen(false);
       setModal2Open(false);
 

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Modal, message } from "antd";
 import axios from "../../api";
 const DeleteBookModal = ({ open, setOpen, book, onDelete }) => {

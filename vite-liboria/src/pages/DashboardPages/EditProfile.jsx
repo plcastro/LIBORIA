@@ -1,5 +1,5 @@
 import Button from "../../components/MuiButton.jsx";
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Form, Input, Space, Modal, message } from "antd";
 import axios from "../../api";
 const SubmitButton = ({ form, children, loading }) => {
@@ -59,7 +59,7 @@ const EditProfile = ({ initialData, isVisible, onClose, onSave }) => {
     }
 
     // Get the logged-in user
-    let user = {};
+    let user;
 
     try {
       user = JSON.parse(sessionStorage.getItem("currentUser") || "{}");

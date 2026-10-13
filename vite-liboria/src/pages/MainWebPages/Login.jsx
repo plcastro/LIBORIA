@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import React, { useState, useEffect } from "react";
+import { useState } from "react";
 import axios from "../../api";
 import "./login.css";
 import "../../App.css";
@@ -19,28 +19,13 @@ const Login = () => {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
-    username: "",
+    username: localStorage.getItem("rememberMe") === "true" ? sessionStorage.getItem("rememberedUsername") || "" : "",
     password: "",
   });
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
+  const [rememberMe, setRememberMe] = useState(() => localStorage.getItem("rememberMe") === "true");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
-  // Load saved credentials when the component mounts
-  useEffect(() => {
-    const savedUsername = sessionStorage.getItem("rememberedUsername");
-    const savedPassword = sessionStorage.getItem("rememberedPassword");
-    const savedRememberMe = localStorage.getItem("rememberMe") === "true";
-
-    if (savedRememberMe && savedUsername) {
-      setFormData({
-        username: savedUsername,
-        password: savedPassword || "",
-      });
-      setRememberMe(true);
-    }
-  }, []);
 
   const handleClickShowPassword = () => {
     setShowPassword((prev) => !prev);
@@ -62,7 +47,6 @@ const Login = () => {
     if (!isChecked) {
       localStorage.setItem("rememberMe", "false");
       sessionStorage.removeItem("rememberedUsername");
-      sessionStorage.removeItem("rememberedPassword");
     } else {
       localStorage.setItem("rememberMe", "true");
     }
@@ -94,8 +78,6 @@ const Login = () => {
       );
 
       const user = response.data.user;
-      console.log("Login response user:", user);
-      console.log("Login response user ID:", user?._id);
       if (!user) {
         setError("Login failed: user information was not returned.");
         return;
@@ -105,16 +87,14 @@ const Login = () => {
 
       if (rememberMe) {
         sessionStorage.setItem("rememberedUsername", formData.username.trim());
-        sessionStorage.setItem("rememberedPassword", formData.password);
         localStorage.setItem("rememberMe", "true");
       } else {
         sessionStorage.removeItem("rememberedUsername");
-        sessionStorage.removeItem("rememberedPassword");
         localStorage.setItem("rememberMe", "false");
       }
 
       // Redirect based on account type
-      if (user.account_type === "student") {
+      if (["student", "non-librarian"].includes(user.account_type)) {
         navigate("/student/dashboard");
       } else if (user.account_type === "librarian") {
         navigate("/dashboard/view/borrow");

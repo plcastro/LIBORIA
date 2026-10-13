@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import "./login.css";
 import { Link, useNavigate } from "react-router-dom";
 import { message } from "antd";
@@ -82,12 +82,9 @@ export const Signup = () => {
         },
       );
 
-      const data = response.data;
-
       if (response.status >= 200 && response.status < 300) {
         messageApi.success("Registration successful! Please login.");
         navigate("/login");
-      } else {
       }
     } catch (error) {
       console.error("Registration error:", error);

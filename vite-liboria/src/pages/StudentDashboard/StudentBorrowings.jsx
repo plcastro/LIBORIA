@@ -1,5 +1,5 @@
 import Table from "../../components/MuiTable.jsx";
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import axios from "../../api";
 import { Alert, Card, Empty, Skeleton, Tag, Typography } from "antd";
 import "./StudentBorrowings.css";

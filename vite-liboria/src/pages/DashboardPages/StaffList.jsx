@@ -1,6 +1,6 @@
 import Table from "../../components/MuiTable.jsx";
 import Button from "../../components/MuiButton.jsx";
-import React, { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Space, message, Row, Col, Input, Card } from "antd";
 import {
   EditOutlined,
@@ -19,7 +19,7 @@ const StaffList = () => {
 
   const currentUserId = JSON.parse(sessionStorage.getItem("currentUser"))?._id;
 
-  const loadAllStaff = async () => {
+  const loadAllStaff = useCallback(async () => {
     setLoading(true);
     setError("");
 
@@ -43,11 +43,11 @@ const StaffList = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [messageApi]);
 
   useEffect(() => {
-    loadAllStaff();
-  }, []);
+    Promise.resolve().then(() => loadAllStaff());
+  }, [loadAllStaff]);
 
   const [modalVisible, setModalVisible] = useState(false);
   const [modalMode, setModalMode] = useState("add");

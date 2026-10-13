@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { Menu, message } from "antd";
+import { useEffect, useState } from "react";
+import { Menu } from "antd";
 import { Button } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
@@ -51,7 +51,7 @@ const Sidebar = () => {
   };
 
   useEffect(() => {
-    fetchUserInfo(currentUserId);
+    Promise.resolve().then(() => fetchUserInfo(currentUserId));
 
     const handleUserUpdate = (e) => {
       setUser(e.detail);
@@ -65,21 +65,11 @@ const Sidebar = () => {
   }, [currentUserId]);
 
   // Update selected menu based on the current path
-  useEffect(() => {
-    if (location.pathname.includes("/dashboard/view/borrow")) {
-      setCurrent("1");
-    } else if (location.pathname.includes("/dashboard/view/return")) {
-      setCurrent("2");
-    } else if (location.pathname.includes("/dashboard/view/records")) {
-      setCurrent("3");
-    } else if (location.pathname.includes("/dashboard/view/staff")) {
-      setCurrent("4");
-    } else if (location.pathname.includes("/dashboard/view/profile")) {
-      setCurrent("5");
-    } else {
-      setCurrent("");
-    }
-  }, [location.pathname]);
+  const selectedCurrent = location.pathname.includes("/dashboard/view/borrow") ? "1"
+    : location.pathname.includes("/dashboard/view/return") ? "2"
+    : location.pathname.includes("/dashboard/view/records") ? "3"
+    : location.pathname.includes("/dashboard/view/staff") ? "4"
+    : location.pathname.includes("/dashboard/view/profile") ? "5" : current;
 
   const onClickMenu = ({ key }) => {
     setCurrent(key);
@@ -105,9 +95,13 @@ const Sidebar = () => {
     }
   };
 
-  const onLogout = () => {
-    sessionStorage.removeItem("currentUser");
-    navigate("/home");
+  const onLogout = async () => {
+    try {
+      await axios.post("/users/logout");
+    } finally {
+      sessionStorage.removeItem("currentUser");
+      navigate("/home");
+    }
   };
 
   return (
@@ -149,7 +143,7 @@ const Sidebar = () => {
         <Menu
           theme="dark"
           mode="inline"
-          selectedKeys={[current]}
+          selectedKeys={[selectedCurrent]}
           defaultOpenKeys={["sub1", "sub2"]}
           onClick={onClickMenu}
           style={{
