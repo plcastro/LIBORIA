@@ -96,9 +96,9 @@ const getBorrowedBookById = async (req, res) => {
 // BORROW a book with all validations
 const borrowBook = async (req, res) => {
   try {
-    const bookId = toId(req.body.book_id);
-    const borrowerId = toId(req.body.borrower_id);
-    const { due_date } = req.body;
+    const bookId = toId(req.body?.book_id);
+    const borrowerId = toId(req.body?.borrower_id);
+    const { due_date } = req.body || {};
 
     if (!bookId || !borrowerId || !due_date) {
       return res.status(400).json({
@@ -197,7 +197,7 @@ const borrowBook = async (req, res) => {
 const updateBorrowedBook = async (req, res) => {
   try {
     const borrowId = toId(req.params.id);
-    const { status } = req.body;
+    const { status } = req.body || {};
     const borrowedBooks = await collection("borrowed_books");
 
     const result = await borrowedBooks.updateOne(

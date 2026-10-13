@@ -87,7 +87,8 @@ export default function App() {
           <Route path="dashboard" element={<StudentDashboard />} />
           <Route path="books" element={<StudentBooks />} />
           <Route path="borrowings" element={<StudentBorrowings />} />
-          <Route path="profile" element={<StudentProfile />} />
+          <Route path="profile" element={<ProfilePage />} />
+          <Route path="profile/edit" element={<ProfilePage />} />
         </Route>
       </Routes>
     </BrowserRouter>
