@@ -27,7 +27,7 @@ const createRequest = async (req, res) => {
 
     const user = await User.findById(user_id).select("_id name account_type");
 
-    if (!user || user.account_type !== "student") {
+    if (!user || !['student', 'non-librarian'].includes(user.account_type)) {
       return res.status(403).json({
         error: "A valid student account is required",
       });

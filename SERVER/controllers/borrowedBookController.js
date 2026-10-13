@@ -54,7 +54,13 @@ const borrowDetailsPipeline = (match = {}) => [
 const getBorrowedBooks = async (req, res) => {
   try {
     const borrowedBooks = await collection("borrowed_books");
-    const results = await borrowedBooks.aggregate(borrowDetailsPipeline()).toArray();
+    let match = {};
+    if (req.user.account_type !== 'librarian') {
+      const borrowers = await collection('borrowers');
+      const own = await borrowers.find({ user_id: req.user.id }, { projection: { borrower_id: 1 } }).toArray();
+      match = { borrower_id: { $in: own.map(item => item.borrower_id) } };
+    }
+    const results = await borrowedBooks.aggregate(borrowDetailsPipeline(match)).toArray();
     res.json(results);
   } catch (err) {
     handleError(res, err);

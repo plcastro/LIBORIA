@@ -1,19 +1,7 @@
+import Button from "../MuiButton.jsx";
 import React, { useState } from "react";
-import {
-  Input,
-  Modal,
-  Form,
-  DatePicker,
-  InputNumber,
-  Col,
-  Row,
-  message,
-  Button,
-  Space,
-  Select,
-} from "antd";
-import axios from "axios";
-import { API_BASE_URL } from "../../utils/API_BASE";
+import { Input, Modal, Form, DatePicker, InputNumber, Col, Row, message, Space, Select } from "antd";
+import axios from "../../api";
 const { TextArea } = Input;
 
 const AddBookModal = ({ modal2Open, setModal2Open, onBookCreated }) => {
@@ -53,7 +41,7 @@ const AddBookModal = ({ modal2Open, setModal2Open, onBookCreated }) => {
     try {
       if (!bookData) return;
 
-      await axios.post(`${API_BASE_URL}/api/books`, bookData, {
+      await axios.post(`/books`, bookData, {
         headers: { "Content-Type": "application/json" },
       });
 

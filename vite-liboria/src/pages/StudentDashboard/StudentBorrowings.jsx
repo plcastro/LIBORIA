@@ -1,10 +1,9 @@
+import Table from "../../components/MuiTable.jsx";
 import React, { useEffect, useMemo, useState } from "react";
-import axios from "axios";
-import { API_BASE_URL } from "../../utils/API_BASE";
-import { Alert, Card, Empty, Skeleton, Table, Tag, Typography } from "antd";
+import axios from "../../api";
+import { Alert, Card, Empty, Skeleton, Tag, Typography } from "antd";
 import "./StudentBorrowings.css";
 
-const API = API_BASE_URL + "/api";
 
 const formatDate = (value) => {
   if (!value) return "—";
@@ -41,9 +40,9 @@ const StudentBorrowings = () => {
 
         const [borrowersResult, borrowingsResult, booksResult] =
           await Promise.allSettled([
-            axios.get(`${API}/borrowers`),
-            axios.get(`${API}/borrowed-books`),
-            axios.get(`${API}/books`),
+            axios.get(`/borrowers`),
+            axios.get(`/borrowed-books`),
+            axios.get(`/books`),
           ]);
 
         if (!active) return;

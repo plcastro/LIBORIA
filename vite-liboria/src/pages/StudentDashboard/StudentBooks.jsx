@@ -1,23 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
-import axios from "axios";
-import { API_BASE_URL } from "../../utils/API_BASE";
-import {
-  Alert,
-  Avatar,
-  Card,
-  Col,
-  Empty,
-  Input,
-  Row,
-  Select,
-  Skeleton,
-  Tag,
-  Typography,
-} from "antd";
+import axios from "../../api";
+import { Alert, Avatar, Card, Col, Empty, Input, Row, Select, Skeleton, Tag, Typography } from "antd";
 import { BookOutlined, SearchOutlined } from "@ant-design/icons";
 import "./StudentBook.css";
 
-const API = API_BASE_URL + "/api";
 
 const StudentBooks = () => {
   const [books, setBooks] = useState([]);
@@ -34,7 +20,7 @@ const StudentBooks = () => {
         setLoading(true);
         setError("");
 
-        const response = await axios.get(`${API}/books`);
+        const response = await axios.get(`/books`);
         const data = response.data;
 
         const list = Array.isArray(data)

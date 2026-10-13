@@ -10,9 +10,8 @@ import {
   Contacts as ContactsIcon,
   KeyboardReturn as ReturnBookIcon,
 } from "@mui/icons-material";
-import axios from "axios";
+import axios from "../../api";
 import logo_dark from "../../assets/liboria white.png";
-import { API_BASE_URL } from "../../utils/API_BASE";
 const Sidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -39,7 +38,7 @@ const Sidebar = () => {
     if (!id) return;
 
     try {
-      const { data } = await axios.get(`${API_BASE_URL}/api/users/${id}`);
+      const { data } = await axios.get(`/users/${id}`);
 
       setUser(data);
     } catch (err) {

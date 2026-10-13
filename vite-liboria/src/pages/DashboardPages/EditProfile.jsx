@@ -1,7 +1,7 @@
+import Button from "../../components/MuiButton.jsx";
 import React, { useState, useEffect } from "react";
-import { Button, Form, Input, Space, Modal, message } from "antd";
-import axios from "axios";
-import { API_BASE_URL } from "../../utils/API_BASE";
+import { Form, Input, Space, Modal, message } from "antd";
+import axios from "../../api";
 const SubmitButton = ({ form, children, loading }) => {
   const [submittable, setSubmittable] = useState(false);
   const values = Form.useWatch([], form);
@@ -85,7 +85,7 @@ const EditProfile = ({ initialData, isVisible, onClose, onSave }) => {
       setLoading(true);
 
       const response = await axios.put(
-        `${API_BASE_URL}/api/users/check-pass/${userId}`,
+        `/users/check-pass/${userId}`,
         {
           currPassword,
           newPassword: password,

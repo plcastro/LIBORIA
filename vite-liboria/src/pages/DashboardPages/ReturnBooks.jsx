@@ -1,9 +1,10 @@
+import Table from "../../components/MuiTable.jsx";
+import Button from "../../components/MuiButton.jsx";
 import React, { useState, useEffect } from "react";
-import { Table, Tag, Input, Card, message, Button } from "antd";
+import { Tag, Input, Card, message } from "antd";
 import { ReloadOutlined, SearchOutlined } from "@ant-design/icons";
 import ReturnBookModal from "../../components/Modal/ReturnBookModal";
-import axios from "axios";
-import { API_BASE_URL } from "../../utils/API_BASE";
+import axios from "../../api";
 const REASONS = [
   { label: "Late Return", value: "Late Return" },
   { label: "Damaged", value: "Damaged" },
@@ -34,7 +35,7 @@ const ReturnBooks = () => {
     setLoading(true);
     setError(null);
     try {
-      const { data } = await axios.get(API_BASE_URL + "/api/borrowed-books");
+      const { data } = await axios.get("/borrowed-books");
       const activeBorrows = data.filter((book) => book.status === "Borrowed");
       setBorrowedBooks(activeBorrows);
     } catch (err) {

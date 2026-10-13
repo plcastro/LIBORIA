@@ -15,7 +15,7 @@ const handleError = (res, err) => {
 const getBorrowers = async (req, res) => {
   try {
     const borrowers = await collection("borrowers");
-    const results = await borrowers.find({}).toArray();
+    const results = await borrowers.find(req.user.account_type === 'librarian' ? {} : { user_id: req.user.id }).toArray();
     res.json(results);
   } catch (err) {
     handleError(res, err);
