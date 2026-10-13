@@ -1,9 +1,24 @@
 import { useEffect, useMemo, useState } from "react";
 import axios from "../../api";
-import { Alert, Avatar, Card, Col, Empty, Input, Row, Select, Skeleton, Tag, Typography } from "antd";
-import { BookOutlined, SearchOutlined } from "@ant-design/icons";
+import {
+  Avatar,
+  Alert,
+  Box,
+  Card,
+  CardContent,
+  CardMedia,
+  Chip,
+  FormControl,
+  Grid,
+  InputAdornment,
+  MenuItem,
+  Select,
+  Skeleton,
+  TextField,
+  Typography,
+} from "@mui/material";
+import { MenuBook, Search, ErrorOutline } from "@mui/icons-material";
 import "./StudentBook.css";
-
 
 const StudentBooks = () => {
   const [books, setBooks] = useState([]);
@@ -81,126 +96,204 @@ const StudentBooks = () => {
   return (
     <div className="student-books">
       <div className="student-books-heading">
-        <Typography.Title level={2}>Browse Books</Typography.Title>
-        <Typography.Paragraph>
+        <Typography variant="h3">Browse Books</Typography>
+        <Typography variant="body1">
           Explore the library catalog and find your next read.
-        </Typography.Paragraph>
+        </Typography>
       </div>
 
       {error && (
         <Alert
+          icon={<ErrorOutline fontSize="inherit" />}
+          severity="error"
           className="student-books-error"
-          type="error"
-          showIcon
-          message={error}
-        />
+        >
+          {error}
+        </Alert>
       )}
 
-      <Row gutter={[12, 12]} className="student-books-filters">
-        <Col xs={24} md={16}>
-          <Input
-            size="large"
-            allowClear
-            prefix={<SearchOutlined />}
+      <Grid container spacing={1.5} className="student-books-filters">
+        <Grid size={{ xs: 12, md: 8 }}>
+          <TextField
+            fullWidth
+            size="medium"
             placeholder="Search title, author, category, or ISBN"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            slotProps={{
+              input: {
+                endAdornment: search ? (
+                  <InputAdornment position="end">
+                    <Box
+                      component="button"
+                      type="button"
+                      onClick={() => setSearch("")}
+                      aria-label="Clear search"
+                      sx={{
+                        border: 0,
+                        background: "transparent",
+                        cursor: "pointer",
+                        color: "text.secondary",
+                        fontSize: 20,
+                        lineHeight: 1,
+                      }}
+                    >
+                      ×
+                    </Box>
+                  </InputAdornment>
+                ) : null,
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Search />
+                  </InputAdornment>
+                ),
+              },
+            }}
           />
-        </Col>
+        </Grid>
 
-        <Col xs={24} md={8}>
-          <Select
-            size="large"
-            className="student-books-category"
-            value={category}
-            onChange={setCategory}
-            options={[
-              { label: "All Categories", value: "all" },
-              ...categories.map((item) => ({
-                label: item,
-                value: item,
-              })),
-            ]}
-          />
-        </Col>
-      </Row>
+        <Grid size={{ xs: 12, md: 4 }}>
+          <FormControl fullWidth>
+            <Select
+              size="medium"
+              className="student-books-category"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              displayEmpty
+              inputProps={{ "aria-label": "Filter by category" }}
+            >
+              <MenuItem value="all">All Categories</MenuItem>
+
+              {categories.map((item) => (
+                <MenuItem key={item} value={item}>
+                  {item}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+      </Grid>
 
       {loading ? (
-        <Skeleton active paragraph={{ rows: 8 }} />
+        <Box>
+          <Skeleton variant="text" width="35%" height={32} />
+          <Grid container spacing={2} className="student-books-grid">
+            {Array.from({ length: 8 }).map((_, index) => (
+              <Grid size={{ xs: 12, sm: 6, lg: 4, xl: 3 }} key={index}>
+                <Card className="student-book-card">
+                  <Skeleton variant="rectangular" height={200} />
+                  <CardContent>
+                    <Skeleton variant="text" height={28} />
+                    <Skeleton variant="text" width="65%" />
+                    <Skeleton variant="rounded" width={90} height={24} />
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
       ) : filteredBooks.length === 0 ? (
-        <Empty className="student-books-empty" description="No books found" />
+        <Box
+          className="student-books-empty"
+          sx={{ textAlign: "center", py: 6 }}
+        >
+          <Typography variant="body1" color="text.secondary">
+            No books found
+          </Typography>
+        </Box>
       ) : (
         <>
-          <Typography.Text type="secondary">
+          <Typography variant="body2" color="text.secondary">
             {filteredBooks.length} book(s) found
-          </Typography.Text>
+          </Typography>
 
-          <Row gutter={[16, 16]} className="student-books-grid">
+          <Grid container spacing={2} className="student-books-grid">
             {filteredBooks.map((book, index) => {
               const id = book.book_id ?? book._id ?? index;
               const available = Number(book.available_copies);
+
               const hasAvailability =
                 book.available_copies !== undefined &&
                 book.available_copies !== null &&
                 Number.isFinite(available);
 
               return (
-                <Col xs={24} sm={12} lg={8} xl={6} key={id}>
+                <Grid size={{ xs: 12, sm: 6, lg: 4, xl: 3 }} key={id}>
                   <Card
-                    hoverable
                     className="student-book-card"
-                    cover={
-                      book.image ? (
-                        <img
-                          className="student-book-cover"
-                          src={book.image}
-                          alt={book.title || "Book cover"}
-                        />
-                      ) : (
-                        <div className="student-book-cover-placeholder">
-                          <Avatar
-                            size={88}
-                            shape="square"
-                            icon={<BookOutlined />}
-                          />
-                        </div>
-                      )
-                    }
+                    sx={{
+                      height: "100%",
+                      display: "flex",
+                      flexDirection: "column",
+                    }}
                   >
-                    <Card.Meta
-                      title={book.title || "Untitled"}
-                      description={
-                        <div>
-                          <Typography.Paragraph
-                            ellipsis={{ rows: 2 }}
-                            className="student-book-author"
-                          >
-                            {book.author || "Author unavailable"}
-                          </Typography.Paragraph>
+                    {book.image ? (
+                      <CardMedia
+                        component="img"
+                        image={book.image}
+                        alt={book.title || "Book cover"}
+                        className="student-book-cover"
+                      />
+                    ) : (
+                      <Box className="student-book-cover-placeholder">
+                        <Avatar sx={{ width: 88, height: 88 }} variant="square">
+                          <MenuBook sx={{ fontSize: 48 }} />
+                        </Avatar>
+                      </Box>
+                    )}
 
-                          {book.category && (
-                            <Tag color="blue">{book.category}</Tag>
-                          )}
+                    <CardContent sx={{ flexGrow: 1 }}>
+                      <Typography
+                        variant="h6"
+                        component="div"
+                        className="student-book-title"
+                      >
+                        {book.title || "Untitled"}
+                      </Typography>
 
-                          <div className="student-book-availability">
-                            {hasAvailability ? (
-                              <Tag color={available > 0 ? "success" : "error"}>
-                                {available > 0
-                                  ? `${available} available`
-                                  : "Unavailable"}
-                              </Tag>
-                            ) : (
-                              <Tag>Availability not listed</Tag>
-                            )}
-                          </div>
-                        </div>
-                      }
-                    />
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        className="student-book-author"
+                        sx={{
+                          display: "-webkit-box",
+                          WebkitBoxOrient: "vertical",
+                          WebkitLineClamp: 2,
+                          overflow: "hidden",
+                        }}
+                      >
+                        {book.author || "Author unavailable"}
+                      </Typography>
+
+                      {book.category && (
+                        <Chip
+                          label={book.category}
+                          color="primary"
+                          size="small"
+                        />
+                      )}
+
+                      <Box className="student-book-availability">
+                        {hasAvailability ? (
+                          <Chip
+                            color={available > 0 ? "success" : "error"}
+                            size="small"
+                            label={
+                              available > 0
+                                ? `${available} available`
+                                : "Unavailable"
+                            }
+                          />
+                        ) : (
+                          <Chip label="Availability not listed" size="small" />
+                        )}
+                      </Box>
+                    </CardContent>
                   </Card>
-                </Col>
+                </Grid>
               );
             })}
-          </Row>
+          </Grid>
         </>
       )}
     </div>
