@@ -43,7 +43,7 @@ const FooterComp = () => {
 
       <Row justify="center">
         <Col span={24} style={{ textAlign: "left" }}>
-          <p>©2025 Liboria. All rights reserved.</p>
+          <p>©2026 Liboria. All rights reserved.</p>
         </Col>
       </Row>
     </footer>
