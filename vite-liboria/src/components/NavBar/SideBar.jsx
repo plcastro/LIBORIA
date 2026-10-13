@@ -20,9 +20,8 @@ const Sidebar = () => {
   const [current, setCurrent] = useState("");
   const [user, setUser] = useState({});
 
-  const currentUserId = JSON.parse(localStorage.getItem("currentUser"))?._id;
-
-  // Fetch user info based on user ID
+  const currentUserId = JSON.parse(sessionStorage.getItem("currentUser"))?._id;
+  console.log(currentUserId);
   const fetchUserInfo = async (_id) => {
     if (!_id) return;
     try {
@@ -89,7 +88,7 @@ const Sidebar = () => {
   };
 
   const onLogout = () => {
-    localStorage.removeItem("currentUser");
+    sessionStorage.removeItem("currentUser");
     navigate("/home");
   };
 
@@ -100,7 +99,7 @@ const Sidebar = () => {
         width: "100%",
         display: "flex",
         flexDirection: "column",
-        backgroundColor: "#001529",
+        backgroundColor: "#000000",
         color: "white",
       }}
     >
@@ -123,7 +122,7 @@ const Sidebar = () => {
           selectedKeys={[current]}
           defaultOpenKeys={["sub1", "sub2"]}
           onClick={onClickMenu}
-          style={{ flex: 1, borderInline: "none", backgroundColor: "#001529" }}
+          style={{ flex: 1, borderInline: "none", backgroundColor: "#000000" }}
           items={[
             {
               key: "sub1",
