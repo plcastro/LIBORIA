@@ -13,7 +13,9 @@ import {
   Select,
 } from "antd";
 import axios from "axios";
+import { API_BASE_URL } from "../../utils/API_BASE";
 const { TextArea } = Input;
+
 const AddBookModal = ({ modal2Open, setModal2Open, onBookCreated }) => {
   const [messageApi, contextHolder] = message.useMessage();
   const [form] = Form.useForm();
@@ -51,7 +53,7 @@ const AddBookModal = ({ modal2Open, setModal2Open, onBookCreated }) => {
     try {
       if (!bookData) return;
 
-      await axios.post("http://localhost:8000/api/books", bookData, {
+      await axios.post(`${API_BASE_URL}/api/books`, bookData, {
         headers: { "Content-Type": "application/json" },
       });
 

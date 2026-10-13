@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import "./login.css";
-
+import { API_BASE_URL } from "../../utils/API_BASE";
 import { useNavigate, Link as RouterLink } from "react-router-dom";
 import axios from "axios";
 import { TextField, Link, Button } from "@mui/material";
@@ -44,7 +44,7 @@ const Forgot = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:8000/api/users/forgot-password",
+        API_BASE_URL + "/api/users/forgot-password",
         { email: email.trim().toLowerCase() },
         {
           headers: {
@@ -86,7 +86,7 @@ const Forgot = () => {
 
     try {
       await axios.post(
-        "http://localhost:8000/api/users/verify-reset-token",
+        API_BASE_URL + "/api/users/verify-reset-token",
         { token: resetToken.trim() },
         {
           headers: {

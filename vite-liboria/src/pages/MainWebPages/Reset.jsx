@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import "./login.css";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { API_BASE_URL } from "../../utils/API_BASE";
 import {
   Button,
   TextField,
@@ -37,7 +38,7 @@ const Reset = () => {
   const verifyToken = async (token) => {
     try {
       const response = await axios.post(
-        "http://localhost:8000/api/users/verify-reset-token",
+        API_BASE_URL + "/api/users/verify-reset-token",
         { token },
         { headers: { "Content-Type": "application/json" } },
       );
@@ -88,7 +89,7 @@ const Reset = () => {
     setLoading(true);
     try {
       const response = await axios.post(
-        "http://localhost:8000/api/users/reset-password",
+        API_BASE_URL + "/api/users/reset-password",
         {
           token: token,
           newPassword: formData.newPassword,

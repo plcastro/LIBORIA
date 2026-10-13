@@ -17,7 +17,7 @@ import {
   Snackbar,
   Alert,
 } from "@mui/material";
-
+import { API_BASE_URL } from "../../utils/API_BASE";
 import SearchOutlinedIcon from "@mui/icons-material/SearchOutlined";
 import AddIcon from "@mui/icons-material/Add";
 
@@ -70,7 +70,7 @@ const DisplayBook = () => {
     setLoading(true);
 
     try {
-      const { data } = await axios.get("http://localhost:8000/api/books");
+      const { data } = await axios.get(API_BASE_URL + "/api/books");
       setBooks(data);
     } catch (err) {
       console.error(err);
@@ -113,7 +113,7 @@ const DisplayBook = () => {
   // Confirm delete
   const handleConfirmDelete = async (book) => {
     try {
-      await axios.delete(`http://localhost:8000/api/books/${book.book_id}`);
+      await axios.delete(`${API_BASE_URL}/api/books/${book.book_id}`);
 
       setBooks((prev) => prev.filter((b) => b.book_id !== book.book_id));
 

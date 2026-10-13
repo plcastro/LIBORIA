@@ -8,7 +8,7 @@ import {
 } from "@ant-design/icons";
 import axios from "axios";
 import StaffModal from "../../components/Modal/StaffModal";
-
+import { API_BASE_URL } from "../../utils/API_BASE";
 const StaffList = () => {
   const [messageApi, contextHolder] = message.useMessage();
   const [data, setData] = useState([]);
@@ -23,9 +23,7 @@ const StaffList = () => {
     setError("");
 
     try {
-      const { data: result } = await axios.get(
-        "http://localhost:8000/api/users",
-      );
+      const { data: result } = await axios.get(API_BASE_URL + "/api/users");
 
       if (Array.isArray(result)) {
         setData(
@@ -63,7 +61,7 @@ const StaffList = () => {
   const handleEdit = async (record) => {
     try {
       const { data: userData } = await axios.get(
-        `http://localhost:8000/api/users/${record._id}`,
+        `${API_BASE_URL}/api/users/${record._id}`,
       );
 
       setSelectedStaff(userData);

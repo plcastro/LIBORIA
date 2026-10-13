@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "./login.css";
 import "../../App.css";
+import { API_BASE_URL } from "../../utils/API_BASE";
 import {
   Button,
   TextField,
@@ -81,7 +82,7 @@ const Login = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:8000/api/users/login",
+        API_BASE_URL + "/api/users/login",
         {
           username: formData.username.trim(),
           password: formData.password,

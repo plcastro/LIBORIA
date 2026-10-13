@@ -10,6 +10,7 @@ import {
   Select,
   message,
 } from "antd";
+import { API_BASE_URL } from "../../utils/API_BASE";
 import dayjs from "dayjs";
 import axios from "axios";
 const BorrowBookModal = ({ open, onClose, onSubmit, initialValues }) => {
@@ -41,7 +42,7 @@ const BorrowBookModal = ({ open, onClose, onSubmit, initialValues }) => {
 
     try {
       const { data: borrowers } = await axios.get(
-        "http://localhost:8000/api/borrowers",
+        API_BASE_URL + "/api/borrowers",
       );
 
       const borrower = borrowers.find(
@@ -76,7 +77,7 @@ const BorrowBookModal = ({ open, onClose, onSubmit, initialValues }) => {
       };
 
       const { data: borrowers } = await axios.get(
-        "http://localhost:8000/api/borrowers",
+        API_BASE_URL + "/api/borrowers",
       );
 
       let borrower = borrowers.find(
@@ -86,7 +87,7 @@ const BorrowBookModal = ({ open, onClose, onSubmit, initialValues }) => {
       if (!borrower) {
         try {
           const { data } = await axios.post(
-            "http://localhost:8000/api/borrowers",
+            API_BASE_URL + "/api/borrowers",
             borrowerPayload,
             { headers: { "Content-Type": "application/json" } },
           );
@@ -109,7 +110,7 @@ const BorrowBookModal = ({ open, onClose, onSubmit, initialValues }) => {
       };
 
       const borrowRes = await axios.post(
-        "http://localhost:8000/api/borrowed-books",
+        API_BASE_URL + "/api/borrowed-books",
         borrowPayload,
         { headers: { "Content-Type": "application/json" } },
       );

@@ -1,6 +1,6 @@
-
 import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
+import { API_BASE_URL } from "../../utils/API_BASE";
 import {
   Alert,
   Avatar,
@@ -25,7 +25,7 @@ import {
 } from "@ant-design/icons";
 import "./StudentDashboard.css";
 
-const API = "http://localhost:8000/api";
+const API = API_BASE_URL + "/api";
 
 const formatDate = (value) => {
   if (!value) return "—";
@@ -57,29 +57,23 @@ const StudentDashboard = () => {
 
       try {
         const storedUser = JSON.parse(
-          sessionStorage.getItem("currentUser") || "null"
+          sessionStorage.getItem("currentUser") || "null",
         );
 
         if (!storedUser?._id) {
           if (active) {
-            setError(
-              "Your login session was not found. Please log in again."
-            );
+            setError("Your login session was not found. Please log in again.");
           }
           return;
         }
 
-        const [
-          userResult,
-          borrowersResult,
-          borrowingResult,
-          booksResult,
-        ] = await Promise.allSettled([
-          axios.get(`${API}/users/${storedUser._id}`),
-          axios.get(`${API}/borrowers`),
-          axios.get(`${API}/borrowed-books`),
-          axios.get(`${API}/books`),
-        ]);
+        const [userResult, borrowersResult, borrowingResult, booksResult] =
+          await Promise.allSettled([
+            axios.get(`${API}/users/${storedUser._id}`),
+            axios.get(`${API}/borrowers`),
+            axios.get(`${API}/borrowed-books`),
+            axios.get(`${API}/books`),
+          ]);
 
         if (!active) return;
 
@@ -102,7 +96,7 @@ const StudentDashboard = () => {
           fetchedBorrowings = Array.isArray(data) ? data : [];
         } else {
           setError(
-            "Borrowing records could not be loaded. Check your backend API."
+            "Borrowing records could not be loaded. Check your backend API.",
           );
         }
 
@@ -126,7 +120,7 @@ const StudentDashboard = () => {
             (borrower) =>
               String(borrower.name || "")
                 .trim()
-                .toLowerCase() === userName
+                .toLowerCase() === userName,
           );
 
           if (!userName || matchingBorrowers.length !== 1) {
@@ -135,15 +129,14 @@ const StudentDashboard = () => {
             setLinkNotice(
               matchingBorrowers.length > 1
                 ? "Several borrower records have your name. Personal borrowing totals are hidden until your account is linked uniquely."
-                : "Your account is not uniquely linked to a borrower record yet. Personal borrowing totals are hidden rather than guessed."
+                : "Your account is not uniquely linked to a borrower record yet. Personal borrowing totals are hidden rather than guessed.",
             );
           } else {
             const borrower = matchingBorrowers[0];
 
             const personalRecords = fetchedBorrowings.filter(
               (record) =>
-                String(record.borrower_id) ===
-                String(borrower.borrower_id)
+                String(record.borrower_id) === String(borrower.borrower_id),
             );
 
             setBorrowings(personalRecords);
@@ -153,7 +146,7 @@ const StudentDashboard = () => {
           setBorrowings([]);
 
           setLinkNotice(
-            "Borrower information could not be loaded. Personal borrowing totals are unavailable."
+            "Borrower information could not be loaded. Personal borrowing totals are unavailable.",
           );
         }
       } catch (err) {
@@ -162,7 +155,7 @@ const StudentDashboard = () => {
         if (active) {
           setError(
             err.response?.data?.message ||
-              "Unable to load your dashboard. Please try again."
+              "Unable to load your dashboard. Please try again.",
           );
         }
       } finally {
@@ -181,20 +174,15 @@ const StudentDashboard = () => {
 
   // Map book IDs to book information.
   const bookById = useMemo(() => {
-    return new Map(
-      books.map((book) => [
-        String(book.book_id),
-        book,
-      ])
-    );
+    return new Map(books.map((book) => [String(book.book_id), book]));
   }, [books]);
 
   // Currently borrowed books.
   const activeBorrowings = useMemo(() => {
     return borrowings.filter((record) =>
       ["borrowed", "overdue"].includes(
-        String(record.status || "").toLowerCase()
-      )
+        String(record.status || "").toLowerCase(),
+      ),
     );
   }, [borrowings]);
 
@@ -208,19 +196,14 @@ const StudentDashboard = () => {
 
       const dueDate = new Date(record.due_date);
 
-      return (
-        !Number.isNaN(dueDate.getTime()) &&
-        dueDate < today
-      );
+      return !Number.isNaN(dueDate.getTime()) && dueDate < today;
     });
   }, [activeBorrowings]);
 
   // Completed borrowing records.
   const returnedCount = useMemo(() => {
     return borrowings.filter((record) =>
-      ["returned", "lost"].includes(
-        String(record.status || "").toLowerCase()
-      )
+      ["returned", "lost"].includes(String(record.status || "").toLowerCase()),
     ).length;
   }, [borrowings]);
 
@@ -240,15 +223,11 @@ const StudentDashboard = () => {
                 alt={book.title || "Book cover"}
               />
             ) : (
-              <Avatar
-                shape="square"
-                icon={<BookOutlined />}
-              />
+              <Avatar shape="square" icon={<BookOutlined />} />
             )}
 
             <Typography.Text strong>
-              {book?.title ||
-                `Book #${record.book_id ?? "—"}`}
+              {book?.title || `Book #${record.book_id ?? "—"}`}
             </Typography.Text>
           </Space>
         );
@@ -314,10 +293,7 @@ const StudentDashboard = () => {
           </Typography.Paragraph>
         </div>
 
-        <Avatar
-          size={56}
-          icon={<UserOutlined />}
-        />
+        <Avatar size={56} icon={<UserOutlined />} />
       </div>
 
       {/* Error message */}
@@ -406,8 +382,7 @@ const StudentDashboard = () => {
             columns={recentColumns}
             dataSource={[...borrowings].sort(
               (a, b) =>
-                new Date(b.date_borrowed || 0) -
-                new Date(a.date_borrowed || 0)
+                new Date(b.date_borrowed || 0) - new Date(a.date_borrowed || 0),
             )}
             pagination={{
               pageSize: 5,
