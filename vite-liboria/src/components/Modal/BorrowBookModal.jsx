@@ -1,17 +1,8 @@
-import React, { useEffect } from "react";
-import {
-  Modal,
-  Form,
-  Input,
-  DatePicker,
-  Row,
-  Col,
-  Button,
-  Select,
-  message,
-} from "antd";
+import Button from "../MuiButton.jsx";
+import { useEffect } from "react";
+import { Modal, Form, Input, DatePicker, Row, Col, Select, message } from "antd";
 import dayjs from "dayjs";
-import axios from "axios";
+import axios from "../../api";
 const BorrowBookModal = ({ open, onClose, onSubmit, initialValues }) => {
   const [messageApi, contextHolder] = message.useMessage();
   const [form] = Form.useForm();
@@ -36,12 +27,12 @@ const BorrowBookModal = ({ open, onClose, onSubmit, initialValues }) => {
   }, [open, initialValues, form]);
 
   const handleNameBlur = async () => {
-    const name = formData.name.trim();
+    const name = String(form.getFieldValue("name") || "").trim();
     if (!name) return;
 
     try {
       const { data: borrowers } = await axios.get(
-        "http://localhost:8000/api/borrowers",
+        "/borrowers",
       );
 
       const borrower = borrowers.find(
@@ -49,14 +40,13 @@ const BorrowBookModal = ({ open, onClose, onSubmit, initialValues }) => {
       );
 
       if (borrower) {
-        setFormData((prev) => ({
-          ...prev,
+        form.setFieldsValue({
           year_level: borrower.year_level,
           course: borrower.course,
-        }));
+        });
         messageApi.info("Borrower found - auto-filled details.");
       } else {
-        setFormData((prev) => ({ ...prev, year_level: "", course: "" }));
+        form.setFieldsValue({ year_level: "", course: "" });
         messageApi.warning("New borrower detected - please fill out details.");
       }
     } catch (err) {
@@ -64,19 +54,18 @@ const BorrowBookModal = ({ open, onClose, onSubmit, initialValues }) => {
     }
   };
   const handleBorrow = async () => {
-    if (!validate()) return;
-
     try {
+      const formData = await form.validateFields();
       const name = formData.name.trim();
       const borrowerPayload = {
         name,
         year_level: formData.year_level,
         course: formData.course,
-        created_at: dateValue(formData.created_at).format("YYYY-MM-DD"),
+        created_at: formData.created_at.format("YYYY-MM-DD"),
       };
 
       const { data: borrowers } = await axios.get(
-        "http://localhost:8000/api/borrowers",
+        "/borrowers",
       );
 
       let borrower = borrowers.find(
@@ -86,7 +75,7 @@ const BorrowBookModal = ({ open, onClose, onSubmit, initialValues }) => {
       if (!borrower) {
         try {
           const { data } = await axios.post(
-            "http://localhost:8000/api/borrowers",
+            "/borrowers",
             borrowerPayload,
             { headers: { "Content-Type": "application/json" } },
           );
@@ -103,20 +92,20 @@ const BorrowBookModal = ({ open, onClose, onSubmit, initialValues }) => {
       const borrowPayload = {
         borrower_id: borrower.borrower_id,
         book_id: initialValues.book_id,
-        date_borrowed: dateValue(formData.created_at).format("YYYY-MM-DD"),
-        due_date: dateValue(formData.due_date).format("YYYY-MM-DD"),
+        date_borrowed: formData.created_at.format("YYYY-MM-DD"),
+        due_date: formData.due_date.format("YYYY-MM-DD"),
         status: "Borrowed",
       };
 
       const borrowRes = await axios.post(
-        "http://localhost:8000/api/borrowed-books",
+        "/borrowed-books",
         borrowPayload,
         { headers: { "Content-Type": "application/json" } },
       );
 
       onSubmit(borrowRes.data);
       onClose();
-      setFormData(initialForm);
+      form.resetFields();
       messageApi.success(`Borrowed ${initialValues.book_title} successfully!`);
       window.location.reload();
     } catch (err) {

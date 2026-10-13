@@ -1,19 +1,9 @@
-import React, { useState } from "react";
-import {
-  Input,
-  Modal,
-  Form,
-  DatePicker,
-  InputNumber,
-  Col,
-  Row,
-  message,
-  Button,
-  Space,
-  Select,
-} from "antd";
-import axios from "axios";
+import Button from "../MuiButton.jsx";
+import { useState } from "react";
+import { Input, Modal, Form, DatePicker, InputNumber, Col, Row, message, Space, Select } from "antd";
+import axios from "../../api";
 const { TextArea } = Input;
+
 const AddBookModal = ({ modal2Open, setModal2Open, onBookCreated }) => {
   const [messageApi, contextHolder] = message.useMessage();
   const [form] = Form.useForm();
@@ -51,11 +41,11 @@ const AddBookModal = ({ modal2Open, setModal2Open, onBookCreated }) => {
     try {
       if (!bookData) return;
 
-      await axios.post("http://localhost:8000/api/books", bookData, {
+      await axios.post(`/books`, bookData, {
         headers: { "Content-Type": "application/json" },
       });
 
-      resetForm();
+      form.resetFields();
       setIsConfirmOpen(false);
       setModal2Open(false);
 
@@ -63,7 +53,7 @@ const AddBookModal = ({ modal2Open, setModal2Open, onBookCreated }) => {
       messageApi.success("Book added successfully");
       setTimeout(() => {
         window.location.reload();
-      }, 500);
+      }, 0);
     } catch (err) {
       console.error(err);
       messageApi.error(err.message || "Failed to add book");

@@ -1,26 +1,16 @@
-import React, { useEffect, useMemo, useState } from "react";
-import axios from "axios";
-import {
-  Alert,
-  Card,
-  Empty,
-  Skeleton,
-  Table,
-  Tag,
-  Typography,
-} from "antd";
+import Table from "../../components/MuiTable.jsx";
+import { useEffect, useMemo, useState } from "react";
+import axios from "../../api";
+import { Alert, Card, Empty, Skeleton, Tag, Typography } from "antd";
 import "./StudentBorrowings.css";
 
-const API = "http://localhost:8000/api";
 
 const formatDate = (value) => {
   if (!value) return "—";
 
   const date = new Date(value);
 
-  return Number.isNaN(date.getTime())
-    ? "—"
-    : date.toLocaleDateString();
+  return Number.isNaN(date.getTime()) ? "—" : date.toLocaleDateString();
 };
 
 const StudentBorrowings = () => {
@@ -40,7 +30,7 @@ const StudentBorrowings = () => {
         setNotice("");
 
         const storedUser = JSON.parse(
-          sessionStorage.getItem("currentUser") || "null"
+          sessionStorage.getItem("currentUser") || "null",
         );
 
         if (!storedUser?._id) {
@@ -50,9 +40,9 @@ const StudentBorrowings = () => {
 
         const [borrowersResult, borrowingsResult, booksResult] =
           await Promise.allSettled([
-            axios.get(`${API}/borrowers`),
-            axios.get(`${API}/borrowed-books`),
-            axios.get(`${API}/books`),
+            axios.get(`/borrowers`),
+            axios.get(`/borrowed-books`),
+            axios.get(`/books`),
           ]);
 
         if (!active) return;
@@ -68,9 +58,7 @@ const StudentBorrowings = () => {
         const borrowersData = borrowersResult.value.data;
         const borrowingData = borrowingsResult.value.data;
         const booksData =
-          booksResult.status === "fulfilled"
-            ? booksResult.value.data
-            : [];
+          booksResult.status === "fulfilled" ? booksResult.value.data : [];
 
         const borrowers = Array.isArray(borrowersData)
           ? borrowersData
@@ -89,37 +77,37 @@ const StudentBorrowings = () => {
         // Match only a unique borrower record.
         // Name matching is temporary; a stable account-to-borrower
         // relationship is safer and should replace this when available.
-        
-const userId = String(storedUser._id);
 
-const matches = borrowers.filter(
-  (borrower) => String(borrower.user_id || "") === userId
-);
+        const userId = String(storedUser._id);
 
-if (matches.length !== 1) {
-  setRecords([]);
-  setNotice(
-    matches.length > 1
-      ? "Multiple borrower records are linked to your account. Please contact the librarian."
-      : "Your account is not linked to a borrower record yet. Please contact the librarian."
-  );
-  return;
-}
+        const matches = borrowers.filter(
+          (borrower) => String(borrower.user_id || "") === userId,
+        );
 
-const borrowerId = matches[0].borrower_id;
+        if (matches.length !== 1) {
+          setRecords([]);
+          setNotice(
+            matches.length > 1
+              ? "Multiple borrower records are linked to your account. Please contact the librarian."
+              : "Your account is not linked to a borrower record yet. Please contact the librarian.",
+          );
+          return;
+        }
 
-const personalRecords = allRecords.filter(
-  (record) => String(record.borrower_id) === String(borrowerId)
-);
+        const borrowerId = matches[0].borrower_id;
 
-setRecords(personalRecords);
+        const personalRecords = allRecords.filter(
+          (record) => String(record.borrower_id) === String(borrowerId),
+        );
+
+        setRecords(personalRecords);
       } catch (err) {
         console.error("Student borrowing history error:", err);
 
         if (active) {
           setError(
             err.response?.data?.message ||
-              "Something went wrong loading your borrowing history."
+              "Something went wrong loading your borrowing history.",
           );
         }
       } finally {
@@ -135,11 +123,8 @@ setRecords(personalRecords);
   }, []);
 
   const bookById = useMemo(
-    () =>
-      new Map(
-        books.map((book) => [String(book.book_id), book])
-      ),
-    [books]
+    () => new Map(books.map((book) => [String(book.book_id), book])),
+    [books],
   );
 
   const columns = [
@@ -211,9 +196,7 @@ setRecords(personalRecords);
   return (
     <div className="student-borrowings">
       <div className="student-borrowings-heading">
-        <Typography.Title level={2}>
-          My Borrowings
-        </Typography.Title>
+        <Typography.Title level={2}>My Borrowings</Typography.Title>
         <Typography.Paragraph>
           View your current loans and borrowing history.
         </Typography.Paragraph>
@@ -238,10 +221,7 @@ setRecords(personalRecords);
         />
       )}
 
-      <Card
-        className="student-borrowings-card"
-        title="Borrowing History"
-      >
+      <Card className="student-borrowings-card" title="Borrowing History">
         {records.length === 0 ? (
           <Empty description="No borrowing records to display" />
         ) : (
@@ -254,8 +234,7 @@ setRecords(personalRecords);
             columns={columns}
             dataSource={[...records].sort(
               (a, b) =>
-                new Date(b.date_borrowed || 0) -
-                new Date(a.date_borrowed || 0)
+                new Date(b.date_borrowed || 0) - new Date(a.date_borrowed || 0),
             )}
             pagination={{ pageSize: 8, responsive: true }}
             scroll={{ x: 550 }}

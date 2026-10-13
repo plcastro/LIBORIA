@@ -2,6 +2,7 @@ const { collection, getNextSequence } = require("../config/database");
 const crypto = require("crypto");
 const bcrypt = require("bcrypt");
 const User = require("../models/User");
+const { cookieName, sign, cookieOptions } = require('../middleware/auth');
 
 const toId = (value) => {
   const numberValue = Number(value);
@@ -49,22 +50,29 @@ const getUsers = async (req, res) => {
 // GET user by ID
 const getUserById = async (req, res) => {
   try {
-    const user = await findPublicUser(User, toId(req.params._id));
+    const userId = req.params.id || req.params._id;
+
+    const user = await User.findById(userId)
+      .select("_id username name email account_type")
+      .lean();
 
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    res.json(user);
+    return res.json(user);
   } catch (err) {
-    handleError(res, err);
+    console.error("Get user by ID error:", err);
+    return res.status(500).json({
+      error: "Failed to fetch user",
+    });
   }
 };
 
 // CREATE user (for admin)
 const createUser = async (req, res) => {
   try {
-    const { username, password, name, email } = req.body;
+    const { username, password, name, email, account_type } = req.body;
 
     if (!username || !password) {
       return res.status(400).json({
@@ -102,7 +110,7 @@ const createUser = async (req, res) => {
       password: hashedPassword,
       name: name?.trim() || null,
       email: email?.trim().toLowerCase() || null,
-      account_type: "student",
+      account_type: ['librarian', 'non-librarian'].includes(account_type) ? account_type : 'librarian',
     });
 
     return res.status(201).json({
@@ -115,7 +123,6 @@ const createUser = async (req, res) => {
         account_type: user.account_type,
       },
     });
-  
   } catch (err) {
     console.error("Create user error:", err);
     console.error("MongoDB code:", err.code);
@@ -144,17 +151,11 @@ const createUser = async (req, res) => {
 
 // REGISTER user (for public signup)
 
-
 const register = async (req, res) => {
   try {
     const { name, email, username, password } = req.body;
 
-    if (
-      !name?.trim() ||
-      !email?.trim() ||
-      !username?.trim() ||
-      !password
-    ) {
+    if (!name?.trim() || !email?.trim() || !username?.trim() || !password) {
       return res.status(400).json({
         error: "All fields are required",
       });
@@ -189,10 +190,7 @@ const register = async (req, res) => {
     }
 
     const duplicate = await User.findOne({
-      $or: [
-        { username: normalizedUsername },
-        { email: normalizedEmail },
-      ],
+      $or: [{ username: normalizedUsername }, { email: normalizedEmail }],
     });
 
     if (duplicate?.username === normalizedUsername) {
@@ -257,7 +255,7 @@ const updateUser = async (req, res) => {
     const update = {};
 
     if (username) update.username = username;
-    if (password) update.password = password;
+    if (password) update.password = await bcrypt.hash(password, 10);
     if (name !== undefined) update.name = name;
     if (email !== undefined) update.email = email;
     if (account_type) update.account_type = account_type;
@@ -283,12 +281,12 @@ const updateUser = async (req, res) => {
       }
     }
 
-    const result = await User.findOneAndUpdate(
+    const updatedUser = await User.findOneAndUpdate(
       { _id: userId },
       { $set: update },
       {
-        returnDocument: "after",
-        ...{
+        new: true,
+        projection: {
           _id: 0,
           _id: 1,
           username: 1,
@@ -298,7 +296,6 @@ const updateUser = async (req, res) => {
         },
       },
     );
-    const updatedUser = result.value || result;
 
     if (!updatedUser) {
       return res.status(404).json({ error: "User not found" });
@@ -441,6 +438,7 @@ const login = async (req, res) => {
       });
     }
 
+    res.cookie(cookieName, sign(user), cookieOptions());
     return res.json({
       message: "Login successful",
       user: {
@@ -479,12 +477,7 @@ const forgotPassword = async (req, res) => {
 
     user.reset_token = resetToken;
     user.reset_token_expiry = resetTokenExpiry;
-    console.log(resetToken);
     await user.save();
-
-    const savedUser = await User.findById(user._id).select(
-      "+reset_token +reset_token_expiry",
-    );
 
     const isDevelopment = process.env.NODE_ENV !== "production";
 
@@ -492,7 +485,7 @@ const forgotPassword = async (req, res) => {
       message: "Recovery request submitted successfully.",
       accountExists: true,
       ...(isDevelopment
-        ? { resetLink: `http://localhost:3000/reset-password/${resetToken}` }
+        ? { resetLink: `${process.env.CLIENT_ORIGIN}/reset/${resetToken}` }
         : {}),
     });
   } catch (err) {
@@ -510,24 +503,18 @@ const verifyResetToken = async (req, res) => {
         error: "Reset token is required",
       });
     }
-    console.log("Submitted token length:", token.length);
-    console.log("Current time:", new Date());
 
     const user = await User.findOne({
       reset_token: token,
+      reset_token_expiry: { $gt: new Date() },
     }).select("+reset_token +reset_token_expiry");
 
     if (!user) {
-      console.log("Token exists in database:", false);
-
       return res.status(400).json({
         error: "Token does not match any user",
       });
     }
-    console.log("Token exists in database:", true);
-    console.log("Token matches:", user.reset_token === token);
-    console.log("Token expiry:", user.reset_token_expiry);
-    console.log("Token expired:", user.reset_token_expiry <= new Date());
+
     return res.json({
       message: "Token is valid",
       user: {
@@ -653,6 +640,11 @@ const getBorrowingRecords = async (req, res) => {
 };
 
 module.exports = {
+  me: async (req, res) => {
+    const user = await User.findById(req.user.id).select('_id username name email account_type').lean();
+    return user ? res.json({ user }) : res.status(401).json({ error: 'Session user not found' });
+  },
+  logout: (req, res) => { res.clearCookie(cookieName, { path: '/', sameSite: 'lax', secure: process.env.NODE_ENV === 'production' }); res.json({ message: 'Logged out' }); },
   getUsers,
   getUserById,
   createUser,

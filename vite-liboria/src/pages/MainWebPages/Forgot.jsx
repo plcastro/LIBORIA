@@ -1,8 +1,7 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import "./login.css";
-
 import { useNavigate, Link as RouterLink } from "react-router-dom";
-import axios from "axios";
+import axios from "../../api";
 import { TextField, Link, Button } from "@mui/material";
 
 const Forgot = () => {
@@ -44,7 +43,7 @@ const Forgot = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:8000/api/users/forgot-password",
+        "/users/forgot-password",
         { email: email.trim().toLowerCase() },
         {
           headers: {
@@ -86,7 +85,7 @@ const Forgot = () => {
 
     try {
       await axios.post(
-        "http://localhost:8000/api/users/verify-reset-token",
+        "/users/verify-reset-token",
         { token: resetToken.trim() },
         {
           headers: {
@@ -99,7 +98,7 @@ const Forgot = () => {
 
       setTimeout(() => {
         navigate(`/reset/${encodeURIComponent(resetToken.trim())}`);
-      }, 500);
+      }, 0);
     } catch (err) {
       setTokenStatus(
         err.response?.data?.error || "Network error. Please try again.",
@@ -107,14 +106,6 @@ const Forgot = () => {
     } finally {
       setConfirmLoading(false);
     }
-  };
-
-  const handleBack = () => {
-    setShowTokenCard(false);
-    setResetToken("");
-    setTokenStatus("");
-    setError("");
-    setMessage("");
   };
 
   return (
