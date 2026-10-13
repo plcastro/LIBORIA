@@ -1,6 +1,6 @@
 import Table from "../../components/MuiTable.jsx";
 import Button from "../../components/MuiButton.jsx";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Input, Tag, Card, Row, Col, message } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
 import axios from "../../api";
@@ -9,7 +9,7 @@ const ViewRecords = () => {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [messageApi, contextHolder] = message.useMessage();
 
   // Fetch records from the database
@@ -41,12 +41,25 @@ const ViewRecords = () => {
     Promise.resolve().then(() => fetchRecords());
   }, [fetchRecords]);
 
-  // Filter records based on the search term
-  const filteredRecords = records.filter((record) =>
-    Object.values(record).some((value) =>
-      value?.toString().toLowerCase().includes(searchTerm.toLowerCase()),
-    ),
-  );
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchTerm.trim().toLowerCase());
+    }, 250);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  const filteredRecords = useMemo(() => {
+    if (!debouncedSearch) return records;
+
+    return records.filter((record) =>
+      Object.values(record).some((value) =>
+        String(value ?? "")
+          .toLowerCase()
+          .includes(debouncedSearch),
+      ),
+    );
+  }, [records, debouncedSearch]);
 
   const columns = [
     {

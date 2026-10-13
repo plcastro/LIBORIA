@@ -145,7 +145,9 @@ const Home = () => {
           <Divider>
             <h2 style={{ fontSize: "clamp(24px, 4vw, 40px)" }}>VISION</h2>
           </Divider>
-          <p>
+          <p
+            style={{ textAlign: "justify", fontSize: "clamp(14px, 2vw, 18px)" }}
+          >
             Our vision is to build a connected community of readers who believe
             in the power of sharing stories—because every book borrowed is a new
             world discovered.
