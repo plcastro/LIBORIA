@@ -16,7 +16,9 @@ const StaffList = () => {
   const [error, setError] = useState("");
   const [searchText, setSearchText] = useState("");
 
-  const currentUserId = JSON.parse(localStorage.getItem("currentUser"))?._id;
+  const currentUserId = JSON.parse(
+    localStorage.getItem("currentUser") || "{}"
+  )?._id;
 
   const loadAllStaff = async () => {
     setLoading(true);
@@ -24,7 +26,7 @@ const StaffList = () => {
 
     try {
       const { data: result } = await axios.get(
-        "http://localhost:8000/api/users",
+        "http://localhost:8000/api/users"
       );
 
       if (Array.isArray(result)) {
@@ -32,14 +34,15 @@ const StaffList = () => {
           result.map((item) => ({
             ...item,
             key: item._id,
-          })),
+          }))
         );
       } else {
-        setError(result.error || "Failed to load staff");
+        setError(result?.error || "Failed to load staff");
       }
     } catch (err) {
-      console.error(err);
-      setError("Network error");
+      console.error("Error loading staff:", err);
+      setError("Network error. Failed to load staff.");
+      messageApi.error("Failed to load staff.");
     } finally {
       setLoading(false);
     }
@@ -62,15 +65,19 @@ const StaffList = () => {
   const handleEdit = async (record) => {
     try {
       const { data: userData } = await axios.get(
-        `http://localhost:8000/api/users/${record._id}`,
+        `http://localhost:8000/api/users/${record._id}`
       );
 
       setSelectedStaff(userData);
       setModalMode("edit");
       setModalVisible(true);
     } catch (err) {
-      console.error(err);
-      showMessage("Network error");
+      console.error("Error fetching staff details:", err);
+
+      messageApi.error(
+        err.response?.data?.error ||
+          "Network error. Unable to load staff details."
+      );
     }
   };
 
@@ -81,13 +88,15 @@ const StaffList = () => {
   };
 
   const handleSave = () => {
-    loadAllStaff(); // reload table after add/edit/delete
+    loadAllStaff();
   };
 
-  // --- SEARCH ---
+  // Search staff
   const filteredData = data.filter((item) => {
-    if (!searchText) return true; // show all if empty
+    if (!searchText) return true;
+
     const text = searchText.toLowerCase();
+
     return (
       item.name?.toLowerCase().includes(text) ||
       item.email?.toLowerCase().includes(text) ||
@@ -97,16 +106,33 @@ const StaffList = () => {
   });
 
   const columns = [
-    { title: "Name", dataIndex: "name", key: "name" },
-    { title: "Email", dataIndex: "email", key: "email" },
-    { title: "Role", dataIndex: "account_type", key: "account_type" },
-    { title: "Username", dataIndex: "username", key: "username" },
+    {
+      title: "Name",
+      dataIndex: "name",
+      key: "name",
+    },
+    {
+      title: "Email",
+      dataIndex: "email",
+      key: "email",
+    },
+    {
+      title: "Role",
+      dataIndex: "account_type",
+      key: "account_type",
+    },
+    {
+      title: "Username",
+      dataIndex: "username",
+      key: "username",
+    },
     {
       title: "Action",
       key: "action",
       width: 150,
       render: (_, record) => {
         const isCurrentUser = record._id === currentUserId;
+
         return (
           <Space size="small">
             <Button
@@ -124,6 +150,7 @@ const StaffList = () => {
             >
               Edit
             </Button>
+
             <Button
               danger
               size="small"
@@ -150,6 +177,7 @@ const StaffList = () => {
   return (
     <>
       {contextHolder}
+
       <Card>
         <Row
           align="stretch"
@@ -160,7 +188,7 @@ const StaffList = () => {
             <Input
               type="search"
               placeholder="Search data"
-              prefix={<SearchOutlined />} // ✅ must wrap in JSX
+              prefix={<SearchOutlined />}
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
               style={{
@@ -191,10 +219,29 @@ const StaffList = () => {
           </Col>
         </Row>
 
+        {error && (
+          <div
+            role="alert"
+            style={{
+              color: "#ff4d4f",
+              marginBottom: 12,
+            }}
+          >
+            {error}
+            <Button type="link" onClick={loadAllStaff} disabled={loading}>
+              Retry
+            </Button>
+          </div>
+        )}
+
         <Table
           columns={columns}
           dataSource={filteredData}
+          loading={loading}
           pagination={false}
+          locale={{
+            emptyText: error ? "Unable to load staff" : "No staff found",
+          }}
           scroll={{
             y: filteredData.length > 10 ? 650 : undefined,
             x: "max-content",
