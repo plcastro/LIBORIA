@@ -1,0 +1,106 @@
+
+.student-layout {
+  min-height: 100vh;
+}
+
+.student-sider {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: auto;
+  background: #001529;
+}
+
+.student-logo {
+  height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+}
+
+.student-logo img {
+  display: block;
+  width: 100%;
+  max-width: 215px;
+  object-fit: contain;
+}
+
+.student-sider .ant-menu,
+.student-sider .ant-menu-dark {
+  background: #001529;
+}
+
+.student-logout {
+  padding: 12px;
+  margin-top: 24px;
+}
+
+.student-logout .ant-btn {
+  height: 44px;
+  color: white;
+  background: #082b43;
+  border-radius: 8px;
+}
+
+.student-logout .ant-btn:hover {
+  color: white !important;
+  background: #1677ff !important;
+}
+
+.student-main {
+  min-width: 0;
+  min-height: 100vh;
+}
+
+.student-header {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  height: 64px;
+  padding: 0 24px;
+  background: white;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 15%);
+}
+
+.student-header .ant-typography {
+  margin: 0;
+}
+
+.student-header-user {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.student-content {
+  min-width: 0;
+  background: #f5f5f5;
+}
+
+.ant-drawer .student-logo {
+  display: none;
+}
+
+.ant-drawer .ant-menu {
+  border-inline-end: 0;
+}
+
+@media (max-width: 767px) {
+  .student-header {
+    padding: 0 12px;
+  }
+
+  .student-header h3 {
+    font-size: 17px;
+  }
+
+  .student-header-user {
+    max-width: 90px;
+    font-size: 12px;
+  }
+}
