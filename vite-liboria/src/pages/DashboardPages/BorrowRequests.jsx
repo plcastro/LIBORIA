@@ -72,14 +72,16 @@ export default function BorrowRequests() {
         <Button danger type="primary" loading={workingId === rejecting?.request_id} onClick={() => review(rejecting, "reject", reason.trim())}>Reject Request</Button>
       </Space>}
     >
-      <Input.TextArea
-        aria-label="Reason for rejection (optional)"
-        placeholder="Reason (optional)"
-        value={reason}
-        maxLength={255}
-        showCount
-        onChange={(event) => setReason(event.target.value)}
-      />
+      <div style={{ paddingBottom: 24 }}>
+        <Input.TextArea
+          aria-label="Reason for rejection (optional)"
+          placeholder="Reason (optional)"
+          value={reason}
+          maxLength={255}
+          showCount
+          onChange={(event) => setReason(event.target.value)}
+        />
+      </div>
     </Modal>
   </Card>;
 }
