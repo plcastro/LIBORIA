@@ -15,10 +15,10 @@ import ViewRecords from "./pages/DashboardPages/ViewRecords";
 import StaffList from "./pages/DashboardPages/StaffList";
 import ProfilePage from "./pages/DashboardPages/ProfilePage";
 
-import StudentDashboardLayout from "./components/StudentDashboard/StudentDashboardLayout";
-import StudentDashboard from "./components/StudentDashboard/StudentDashboard";
-import StudentBooks from "./components/StudentDashboard/StudentBooks";
-import StudentBorrowings from "./components/StudentDashboard/StudentBorrowings";
+import StudentDashboardLayout from "./layout/StudentDashboardLayout";
+import StudentDashboard from "./pages/StudentDashboard/StudentDashboard";
+import StudentBooks from "./pages/StudentDashboard/StudentBooks";
+import StudentBorrowings from "./pages/StudentDashboard/StudentBorrowings";
 
 export default function App() {
   useEffect(() => {
