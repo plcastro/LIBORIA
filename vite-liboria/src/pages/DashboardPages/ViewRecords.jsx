@@ -1,38 +1,36 @@
 import React, { useState, useEffect } from "react";
-import { Input, Table, Tag, Card, Row, Col, message, Spin } from "antd";
+import { Input, Table, Tag, Card, Row, Col, message, Button } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
 import axios from "axios";
+
 const ViewRecords = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
   const [messageApi, contextHolder] = message.useMessage();
+
   // Fetch records from the database
   const fetchRecords = async () => {
     setLoading(true);
+    setError("");
 
     try {
-      const response = await axios.get("http://localhost:8000/api/records", {
-        timeout: 10000,
-      });
+      const { data } = await axios.get("http://localhost:8000/api/records");
 
-      console.log("Records API response:", response.data);
-
-      if (!Array.isArray(response.data)) {
-        throw new Error("Invalid records response: expected an array");
+      if (!Array.isArray(data)) {
+        throw new Error("Invalid records response");
       }
 
-      setRecords(response.data);
+      setRecords(data);
     } catch (err) {
-      console.error("Fetch records error:", err.message);
-      console.error("HTTP status:", err.response?.status);
-      console.error("Response data:", err.response?.data);
+      console.error("Error fetching records:", err);
 
-      messageApi.error(
-        err.code === "ECONNABORTED"
-          ? "Request timed out. Check your backend."
-          : "Failed to fetch records. Check the console.",
-      );
+      const errorMessage = "Failed to fetch records. Please try again.";
+
+      setError(errorMessage);
+      messageApi.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -42,6 +40,7 @@ const ViewRecords = () => {
     fetchRecords();
   }, []);
 
+  // Filter records based on the search term
   const filteredRecords = records.filter((record) =>
     Object.values(record).some((value) =>
       value?.toString().toLowerCase().includes(searchTerm.toLowerCase()),
@@ -80,7 +79,12 @@ const ViewRecords = () => {
       width: 200,
       ellipsis: true,
       render: (text) => (
-        <span style={{ whiteSpace: "normal", wordBreak: "break-word" }}>
+        <span
+          style={{
+            whiteSpace: "normal",
+            wordBreak: "break-word",
+          }}
+        >
           {text}
         </span>
       ),
@@ -96,14 +100,14 @@ const ViewRecords = () => {
       dataIndex: "date_borrowed",
       key: "date_borrowed",
       width: 150,
-      render: (date) => new Date(date).toLocaleDateString(),
+      render: (date) => (date ? new Date(date).toLocaleDateString() : "-"),
     },
     {
       title: "Due Date",
       dataIndex: "due_date",
       key: "due_date",
       width: 150,
-      render: (date) => new Date(date).toLocaleDateString(),
+      render: (date) => (date ? new Date(date).toLocaleDateString() : "-"),
     },
     {
       title: "Returned Date",
@@ -134,7 +138,7 @@ const ViewRecords = () => {
       render: (penalty) => (
         <span
           style={{
-            color: !penalty || penalty === "0.00" ? "#52c41a" : "#ff4d4f",
+            color: !penalty || Number(penalty) === 0 ? "#52c41a" : "#ff4d4f",
             fontWeight: "bold",
           }}
         >
@@ -149,10 +153,11 @@ const ViewRecords = () => {
       width: 100,
       render: (status, record) => {
         const isReturned = record.returned_date;
+
         const currentStatus = status || (isReturned ? "Returned" : "Borrowed");
 
-        // Define color based on status
-        let tagColor = "orange"; // default
+        let tagColor = "orange";
+
         if (currentStatus === "Returned") {
           tagColor = "green";
         } else if (currentStatus === "Borrowed") {
@@ -171,27 +176,46 @@ const ViewRecords = () => {
   return (
     <div style={{ minHeight: "100vh" }}>
       {contextHolder}
+
       <Card>
         <Row
           align="middle"
           justify="space-between"
           style={{ marginBottom: "20px" }}
         >
-          <Col xs={24} sm={12} md={12} lg={6}>
+          <Col xs={24} sm={12} md={10} lg={5}>
             <Input
               prefix={<SearchOutlined />}
               placeholder="Search records"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               style={{ height: 40 }}
+              allowClear
             />
           </Col>
         </Row>
+
+        {error && (
+          <div
+            role="alert"
+            style={{
+              color: "#ff4d4f",
+              marginBottom: 16,
+            }}
+          >
+            {error}
+
+            <Button type="link" onClick={fetchRecords} disabled={loading}>
+              Retry
+            </Button>
+          </div>
+        )}
+
         <Table
           columns={columns}
-          dataSource={filteredRecords.map((record) => ({
+          dataSource={filteredRecords.map((record, index) => ({
             ...record,
-            key: record.borrow_id,
+            key: record.borrow_id ?? record._id ?? index,
           }))}
           loading={loading}
           pagination={false}
@@ -200,7 +224,7 @@ const ViewRecords = () => {
             x: "max-content",
           }}
           locale={{
-            emptyText: "No records found",
+            emptyText: error ? "Unable to load records" : "No records found",
           }}
         />
       </Card>

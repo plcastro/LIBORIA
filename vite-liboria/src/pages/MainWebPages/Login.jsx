@@ -18,19 +18,17 @@ import { Visibility, VisibilityOff } from "@mui/icons-material";
 
 const Login = () => {
   const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     username: "",
     password: "",
   });
+
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
 
-  const handleClickShowPassword = () => {
-    setShowPassword((prev) => !prev);
-  };
-
+  // Load saved credentials when the component mounts
   useEffect(() => {
     const savedUsername = localStorage.getItem("rememberedUsername");
     const savedPassword = localStorage.getItem("rememberedPassword");
@@ -47,6 +45,7 @@ const Login = () => {
 
   const handleInputChange = (e) => {
     const { id, value } = e.target;
+
     setFormData((prevState) => ({
       ...prevState,
       [id]: value,
@@ -58,9 +57,9 @@ const Login = () => {
     setRememberMe(isChecked);
 
     if (!isChecked) {
-      localStorage.setItem("rememberMe", "false"); // triggers other tabs
-      sessionStorage.removeItem("rememberedUsername");
-      sessionStorage.removeItem("rememberedPassword");
+      localStorage.setItem("rememberMe", "false");
+      localStorage.removeItem("rememberedUsername");
+      localStorage.removeItem("rememberedPassword");
     } else {
       localStorage.setItem("rememberMe", "true");
     }
@@ -70,9 +69,8 @@ const Login = () => {
     e.preventDefault();
     setError("");
 
-    // Prevent empty fields
     if (!formData.username.trim() || !formData.password.trim()) {
-      setError("Username and password are required");
+      setError("Username and password are required.");
       return;
     }
 
@@ -83,7 +81,7 @@ const Login = () => {
         "http://localhost:8000/api/users/login",
         {
           username: formData.username.trim(),
-          password: formData.password.trim(),
+          password: formData.password,
         },
         {
           headers: {
@@ -92,32 +90,40 @@ const Login = () => {
         },
       );
 
-      const data = response.data;
+      const user = response.data.user;
 
-      if (response.status >= 200 && response.status < 300) {
-        sessionStorage.setItem("currentUser", JSON.stringify(data.user));
+      if (!user) {
+        setError("Login failed: user information was not returned.");
+        return;
+      }
 
-        if (rememberMe) {
-          sessionStorage.setItem(
-            "rememberedUsername",
-            formData.username.trim(),
-          );
-          sessionStorage.setItem(
-            "rememberedPassword",
-            formData.password.trim(),
-          );
-          localStorage.setItem("rememberMe", "true");
-        } else {
-          sessionStorage.removeItem("rememberedUsername");
-          sessionStorage.removeItem("rememberedPassword");
-          localStorage.removeItem("rememberMe");
-        }
+      // Save the logged-in user
+      sessionStorage.setItem("currentUser", JSON.stringify(user));
 
+      // Remember username and password if selected
+      if (rememberMe) {
+        localStorage.setItem("rememberedUsername", formData.username.trim());
+        localStorage.setItem("rememberedPassword", formData.password);
+        localStorage.setItem("rememberMe", "true");
+      } else {
+        localStorage.removeItem("rememberedUsername");
+        localStorage.removeItem("rememberedPassword");
+        localStorage.setItem("rememberMe", "false");
+      }
+
+      // Redirect based on account type
+      if (user.account_type === "student") {
+        navigate("/student/dashboard");
+      } else if (user.account_type === "librarian") {
         navigate("/dashboard/view/borrow");
+      } else {
+        sessionStorage.removeItem("currentUser");
+        setError(
+          "Unrecognized account type. Please contact the administrator.",
+        );
       }
     } catch (err) {
       console.error("Login error:", err);
-
       console.log("Status:", err.response?.status);
       console.log("Backend response:", err.response?.data);
 
