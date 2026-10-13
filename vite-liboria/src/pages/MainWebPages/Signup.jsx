@@ -2,8 +2,7 @@ import React, { useState } from "react";
 import "./login.css";
 import { Link, useNavigate } from "react-router-dom";
 import { message } from "antd";
-import axios from "axios";
-import { API_BASE_URL } from "../../utils/API_BASE";
+import axios from "../../api";
 export const Signup = () => {
   const [messageApi, contextHolder] = message.useMessage();
   const navigate = useNavigate();
@@ -68,7 +67,7 @@ export const Signup = () => {
     setLoading(true);
     try {
       const response = await axios.post(
-        API_BASE_URL + "/api/users/",
+        "/users/register",
         {
           name: formData.name,
           email: formData.email,

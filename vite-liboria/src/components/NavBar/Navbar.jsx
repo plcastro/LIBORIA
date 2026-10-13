@@ -1,7 +1,8 @@
+import Button from '../MuiButton.jsx';
 import React, { useState } from "react";
 import "./Navbar.css";
 import { NavLink } from "react-router-dom";
-import { Drawer, Button, Grid, Menu } from "antd";
+import { Drawer, Grid, Menu } from "antd";
 import MenuIcon from "@mui/icons-material/Menu";
 import logo_dark from "../../assets/liboria black.png";
 const Navbar = () => {

@@ -1,19 +1,8 @@
+import Button from "../MuiButton.jsx";
 import React, { useEffect, useState } from "react";
-import {
-  Modal,
-  Form,
-  Input,
-  InputNumber,
-  DatePicker,
-  Select,
-  Row,
-  Col,
-  Button,
-  message,
-} from "antd";
+import { Modal, Form, Input, InputNumber, DatePicker, Select, Row, Col, message } from "antd";
 import dayjs from "dayjs";
-import axios from "axios";
-import { API_BASE_URL } from "../../utils/API_BASE";
+import axios from "../../api";
 const ReturnBookModal = ({ open, onClose, initialValues, REASONS }) => {
   const [form] = Form.useForm();
   const [messageApi, contextHolder] = message.useMessage();
@@ -114,18 +103,18 @@ const ReturnBookModal = ({ open, onClose, initialValues, REASONS }) => {
       const status = violations.includes("Lost") ? "Lost" : "Returned";
 
       await axios.put(
-        `${API_BASE_URL}/api/borrowed-books/${initialValues.borrow_id}`,
+        `/borrowed-books/${initialValues.borrow_id}`,
         { status },
         { headers: { "Content-Type": "application/json" } },
       );
 
-      await axios.post(API_BASE_URL + "/api/returned-books", payload, {
+      await axios.post("/returned-books", payload, {
         headers: { "Content-Type": "application/json" },
       });
 
       if (!violations.includes("Lost")) {
         await axios.put(
-          `${API_BASE_URL}/api/books/${initialValues.book_id}`,
+          `/books/${initialValues.book_id}`,
           { incrementAvailable: 1 },
           { headers: { "Content-Type": "application/json" } },
         );

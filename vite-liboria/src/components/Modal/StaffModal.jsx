@@ -1,7 +1,7 @@
+import Button from "../MuiButton.jsx";
 import React, { useEffect, useState } from "react";
-import { Modal, Form, Input, Button, Space, message, Select } from "antd";
-import axios from "axios";
-import { API_BASE_URL } from "../../utils/API_BASE";
+import { Modal, Form, Input, Space, message, Select } from "antd";
+import axios from "../../api";
 const StaffModal = ({
   isVisible,
   mode,
@@ -64,12 +64,12 @@ const StaffModal = ({
       let response;
 
       if (isAddMode) {
-        response = await axios.post(API_BASE_URL + "/api/users", dataToSave, {
+        response = await axios.post("/users", dataToSave, {
           headers: { "Content-Type": "application/json" },
         });
       } else if (isEditMode) {
         response = await axios.put(
-          `${API_BASE_URL}/api/users/${selectedStaff._id}`,
+          `/users/${selectedStaff._id}`,
           dataToSave,
           { headers: { "Content-Type": "application/json" } },
         );
@@ -133,7 +133,7 @@ const StaffModal = ({
         return;
       }
 
-      await axios.delete(`${API_BASE_URL}/api/users/${selectedStaff._id}`);
+      await axios.delete(`/users/${selectedStaff._id}`);
 
       messageApi.success("User deleted successfully!");
       onSave();

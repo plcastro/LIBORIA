@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { Layout, Menu, Button, Drawer, Grid, Typography } from "antd";
+import { Layout, Menu, Drawer, Grid, Typography } from "antd";
+import Button from "../components/MuiButton.jsx";
+import api from "../api";
+import studentLogo from "../assets/liboria white.png";
 import {
   DashboardOutlined,
   BookOutlined,
@@ -68,15 +71,19 @@ const StudentDashboardLayout = () => {
     setDrawerOpen(false);
   };
 
-  const logout = () => {
-    sessionStorage.removeItem("currentUser");
-    navigate("/home", { replace: true });
+  const logout = async () => {
+    try {
+      await api.post("/users/logout");
+    } finally {
+      sessionStorage.removeItem("currentUser");
+      navigate("/home", { replace: true });
+    }
   };
 
   const sidebarContent = (
     <>
       <div className="student-logo">
-        <img src={require("../assets/liboria white.png")} alt="LIBORIA" />
+        <img src={studentLogo} alt="LIBORIA" />
       </div>
 
       <Menu

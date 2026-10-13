@@ -1,20 +1,7 @@
+import Table from "../../components/MuiTable.jsx";
 import React, { useEffect, useMemo, useState } from "react";
-import axios from "axios";
-import { API_BASE_URL } from "../../utils/API_BASE";
-import {
-  Alert,
-  Avatar,
-  Card,
-  Col,
-  Empty,
-  Row,
-  Skeleton,
-  Space,
-  Statistic,
-  Table,
-  Tag,
-  Typography,
-} from "antd";
+import axios from "../../api";
+import { Alert, Avatar, Card, Col, Empty, Row, Skeleton, Space, Statistic, Tag, Typography } from "antd";
 import {
   BookOutlined,
   CheckCircleOutlined,
@@ -25,7 +12,6 @@ import {
 } from "@ant-design/icons";
 import "./StudentDashboard.css";
 
-const API = API_BASE_URL + "/api";
 
 const formatDate = (value) => {
   if (!value) return "—";
@@ -69,10 +55,10 @@ const StudentDashboard = () => {
 
         const [userResult, borrowersResult, borrowingResult, booksResult] =
           await Promise.allSettled([
-            axios.get(`${API}/users/${storedUser._id}`),
-            axios.get(`${API}/borrowers`),
-            axios.get(`${API}/borrowed-books`),
-            axios.get(`${API}/books`),
+            axios.get(`/users/${storedUser._id}`),
+            axios.get(`/borrowers`),
+            axios.get(`/borrowed-books`),
+            axios.get(`/books`),
           ]);
 
         if (!active) return;

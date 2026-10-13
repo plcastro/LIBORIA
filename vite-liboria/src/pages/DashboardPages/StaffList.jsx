@@ -1,14 +1,15 @@
+import Table from "../../components/MuiTable.jsx";
+import Button from "../../components/MuiButton.jsx";
 import React, { useState, useEffect } from "react";
-import { Table, Button, Space, message, Row, Col, Input, Card } from "antd";
+import { Space, message, Row, Col, Input, Card } from "antd";
 import {
   EditOutlined,
   DeleteOutlined,
   PlusOutlined,
   SearchOutlined,
 } from "@ant-design/icons";
-import axios from "axios";
+import axios from "../../api";
 import StaffModal from "../../components/Modal/StaffModal";
-import { API_BASE_URL } from "../../utils/API_BASE";
 const StaffList = () => {
   const [messageApi, contextHolder] = message.useMessage();
   const [data, setData] = useState([]);
@@ -23,7 +24,7 @@ const StaffList = () => {
     setError("");
 
     try {
-      const { data: result } = await axios.get(API_BASE_URL + "/api/users");
+      const { data: result } = await axios.get("/users");
 
       if (Array.isArray(result)) {
         setData(
@@ -61,7 +62,7 @@ const StaffList = () => {
   const handleEdit = async (record) => {
     try {
       const { data: userData } = await axios.get(
-        `${API_BASE_URL}/api/users/${record._id}`,
+        `/users/${record._id}`,
       );
 
       setSelectedStaff(userData);

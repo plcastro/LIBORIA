@@ -1,8 +1,9 @@
+import Table from "../../components/MuiTable.jsx";
+import Button from "../../components/MuiButton.jsx";
 import React, { useState, useEffect } from "react";
-import { Input, Table, Tag, Card, Row, Col, message, Button } from "antd";
+import { Input, Tag, Card, Row, Col, message } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
-import axios from "axios";
-import { API_BASE_URL } from "../../utils/API_BASE";
+import axios from "../../api";
 const ViewRecords = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [records, setRecords] = useState([]);
@@ -17,7 +18,7 @@ const ViewRecords = () => {
     setError("");
 
     try {
-      const { data } = await axios.get(API_BASE_URL + "/api/records");
+      const { data } = await axios.get("/records");
 
       if (!Array.isArray(data)) {
         throw new Error("Invalid records response");

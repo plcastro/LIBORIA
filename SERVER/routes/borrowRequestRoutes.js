@@ -1,6 +1,8 @@
 
 const express = require("express");
 const router = express.Router();
+const { authenticate, authorize } = require('../middleware/auth');
+router.use(authenticate);
 
 const {
   createRequest,
@@ -10,10 +12,13 @@ const {
   rejectRequest,
 } = require("../controllers/borrowRequestController");
 
-router.post("/", createRequest);
-router.get("/", getAllRequests);
-router.get("/student/:userId", getStudentRequests);
-router.put("/:id/approve", approveRequest);
-router.put("/:id/reject", rejectRequest);
+router.post("/", authorize('student', 'non-librarian'), (req, res, next) => {
+  if (String(req.body.user_id) !== req.user.id) return res.status(403).json({ error: 'Access denied' });
+  next();
+}, createRequest);
+router.get("/", authorize('librarian'), getAllRequests);
+router.get("/student/:userId", authorize('student', 'non-librarian'), (req, res, next) => req.params.userId === req.user.id ? next() : res.status(403).json({ error: 'Access denied' }), getStudentRequests);
+router.put("/:id/approve", authorize('librarian'), approveRequest);
+router.put("/:id/reject", authorize('librarian'), rejectRequest);
 
 module.exports = router;

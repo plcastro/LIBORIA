@@ -1,9 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import axios from "../../api";
 import "./login.css";
 import "../../App.css";
-import { API_BASE_URL } from "../../utils/API_BASE";
 import {
   Button,
   TextField,
@@ -82,7 +81,7 @@ const Login = () => {
 
     try {
       const response = await axios.post(
-        API_BASE_URL + "/api/users/login",
+        "/users/login",
         {
           username: formData.username.trim(),
           password: formData.password,

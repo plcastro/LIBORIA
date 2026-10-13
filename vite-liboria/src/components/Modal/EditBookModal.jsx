@@ -1,17 +1,7 @@
 import React, { useState, useEffect } from "react";
-import {
-  Modal,
-  Input,
-  InputNumber,
-  message,
-  Form,
-  DatePicker,
-  Row,
-  Col,
-} from "antd";
+import { Modal, Input, InputNumber, message, Form, DatePicker, Row, Col } from "antd";
 import dayjs from "dayjs";
-import axios from "axios";
-import { API_BASE_URL } from "../../utils/API_BASE";
+import axios from "../../api";
 const EditBookModal = ({ modalOpen, setModalOpen, book, onBookUpdated }) => {
   const [messageApi, contextHolder] = message.useMessage();
   const [form] = Form.useForm();
@@ -45,7 +35,7 @@ const EditBookModal = ({ modalOpen, setModalOpen, book, onBookUpdated }) => {
         published_date: formData.published_date || null,
       };
 
-      await axios.put(`${API_BASE_URL}/api/books/${book.book_id}`, payload, {
+      await axios.put(`/books/${book.book_id}`, payload, {
         headers: { "Content-Type": "application/json" },
       });
 
