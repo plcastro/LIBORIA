@@ -17,7 +17,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { MenuBook, Search, ErrorOutline } from "@mui/icons-material";
+import { MenuBook, Search, ErrorIcon } from "@mui/icons-material";
 import "./StudentBook.css";
 
 const StudentBooks = () => {
@@ -104,7 +104,7 @@ const StudentBooks = () => {
 
       {error && (
         <Alert
-          icon={<ErrorOutline fontSize="inherit" />}
+          icon={<ErrorIcon fontSize="inherit" />}
           severity="error"
           className="student-books-error"
         >
