@@ -19,11 +19,16 @@ const Login = () => {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
-    username: localStorage.getItem("rememberMe") === "true" ? sessionStorage.getItem("rememberedUsername") || "" : "",
+    username:
+      localStorage.getItem("rememberMe") === "true"
+        ? sessionStorage.getItem("rememberedUsername") || ""
+        : "",
     password: "",
   });
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(() => localStorage.getItem("rememberMe") === "true");
+  const [rememberMe, setRememberMe] = useState(
+    () => localStorage.getItem("rememberMe") === "true",
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -231,7 +236,8 @@ const Login = () => {
           </div>
 
           <div className="signup-link">
-            Don't have an account? <Link to="/signup">Sign up here</Link>
+            Don't have an account?{" "}
+            <Link onClick={() => navigate("/signup")}>Sign up here</Link>
           </div>
         </form>
       </div>

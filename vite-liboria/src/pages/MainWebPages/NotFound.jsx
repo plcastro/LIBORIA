@@ -1,4 +1,4 @@
-import Button from '../../components/MuiButton.jsx';
+import Button from "../../components/MuiButton.jsx";
 import { useNavigate } from "react-router-dom";
 
 import notfoundimg from "../../assets/Book_torn page.png";
@@ -7,13 +7,16 @@ import "./NotFound.css";
 const NotFound = () => {
   const navigate = useNavigate();
   const pathname = window.location.pathname;
-  const backPageText = pathname.startsWith("/dashboard")
-    ? "Go Back"
-    : "Go Back to Home";
+  const backPageText =
+    pathname.startsWith("/dashboard") || pathname.startsWith("/student")
+      ? "Go Back"
+      : "Go Back to Home";
 
   const goBackToPrevPage = () => {
     if (pathname.startsWith("/dashboard")) {
       navigate("/dashboard/view/borrow");
+    } else if (pathname.startsWith("/student")) {
+      navigate("/student/dashboard");
     } else {
       navigate("/home");
     }
