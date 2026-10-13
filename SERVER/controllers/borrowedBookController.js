@@ -1,5 +1,10 @@
 const { collection, getNextSequence } = require("../config/database");
-const { activeStatus, getMaxBorrowedBooks, getBorrowUsage, limitMessage } = require("../services/borrowLimit");
+const {
+  activeStatus,
+  getMaxBorrowedBooks,
+  getBorrowUsage,
+  limitMessage,
+} = require("../services/borrowLimit");
 
 const toId = (value) => {
   const numberValue = Number(value);
@@ -45,8 +50,6 @@ const borrowDetailsPipeline = (match = {}) => [
       title: "$book.title",
       author_name: "$book.author_name",
       borrower_name: "$borrower.name",
-      year_level: "$borrower.year_level",
-      course: "$borrower.course",
     },
   },
 ];
@@ -56,12 +59,16 @@ const getBorrowedBooks = async (req, res) => {
   try {
     const borrowedBooks = await collection("borrowed_books");
     let match = {};
-    if (req.user.account_type !== 'librarian') {
-      const borrowers = await collection('borrowers');
-      const own = await borrowers.find({ user_id: req.user.id }, { projection: { borrower_id: 1 } }).toArray();
-      match = { borrower_id: { $in: own.map(item => item.borrower_id) } };
+    if (req.user.account_type !== "librarian") {
+      const borrowers = await collection("borrowers");
+      const own = await borrowers
+        .find({ user_id: req.user.id }, { projection: { borrower_id: 1 } })
+        .toArray();
+      match = { borrower_id: { $in: own.map((item) => item.borrower_id) } };
     }
-    const results = await borrowedBooks.aggregate(borrowDetailsPipeline(match)).toArray();
+    const results = await borrowedBooks
+      .aggregate(borrowDetailsPipeline(match))
+      .toArray();
     res.json(results);
   } catch (err) {
     handleError(res, err);
@@ -107,7 +114,9 @@ const borrowBook = async (req, res) => {
     });
 
     if (!book) {
-      return res.status(400).json({ error: "Book not available for borrowing" });
+      return res
+        .status(400)
+        .json({ error: "Book not available for borrowing" });
     }
 
     const duplicate = await borrowedBooks.findOne({
@@ -117,7 +126,9 @@ const borrowBook = async (req, res) => {
     });
 
     if (duplicate) {
-      return res.status(400).json({ error: "You have already borrowed this book" });
+      return res
+        .status(400)
+        .json({ error: "You have already borrowed this book" });
     }
 
     const activeBorrows = await borrowedBooks.countDocuments({
@@ -125,7 +136,9 @@ const borrowBook = async (req, res) => {
       status: activeStatus,
     });
 
-    const borrower = await collection("borrowers").findOne({ borrower_id: borrowerId });
+    const borrower = await collection("borrowers").findOne({
+      borrower_id: borrowerId,
+    });
     const used = borrower?.user_id
       ? (await getBorrowUsage(borrower.user_id, borrowerId)).used
       : activeBorrows;
@@ -137,11 +150,13 @@ const borrowBook = async (req, res) => {
 
     const bookUpdate = await books.updateOne(
       { book_id: bookId, available_copies: { $gt: 0 } },
-      { $inc: { available_copies: -1 } }
+      { $inc: { available_copies: -1 } },
     );
 
     if (bookUpdate.modifiedCount === 0) {
-      return res.status(400).json({ error: "Book not available for borrowing" });
+      return res
+        .status(400)
+        .json({ error: "Book not available for borrowing" });
     }
 
     const borrowId = await getNextSequence("borrowed_books");
@@ -158,7 +173,10 @@ const borrowBook = async (req, res) => {
     try {
       await borrowedBooks.insertOne(borrowRecord);
     } catch (err) {
-      await books.updateOne({ book_id: bookId }, { $inc: { available_copies: 1 } });
+      await books.updateOne(
+        { book_id: bookId },
+        { $inc: { available_copies: 1 } },
+      );
       throw err;
     }
 
@@ -184,7 +202,7 @@ const updateBorrowedBook = async (req, res) => {
 
     const result = await borrowedBooks.updateOne(
       { borrow_id: borrowId },
-      { $set: { status } }
+      { $set: { status } },
     );
 
     if (result.matchedCount === 0) {
@@ -215,11 +233,15 @@ const getBorrowedBooksByBorrower = async (req, res) => {
         borrowDetailsPipeline({
           borrower_id: borrowerId,
           status: activeStatus,
-        })
+        }),
       )
       .toArray();
 
-    res.json(results.sort((a, b) => String(a.due_date).localeCompare(String(b.due_date))));
+    res.json(
+      results.sort((a, b) =>
+        String(a.due_date).localeCompare(String(b.due_date)),
+      ),
+    );
   } catch (err) {
     handleError(res, err);
   }

@@ -40,8 +40,6 @@ const linkBorrower = async (user, session) => {
     borrower_id: borrowerId,
     user_id: userId,
     name,
-    year_level: "",
-    course: "",
     created_at: new Date(),
   };
   await borrowers.insertOne(borrower, options);

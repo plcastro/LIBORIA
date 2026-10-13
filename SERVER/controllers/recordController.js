@@ -32,7 +32,9 @@ const getAllRecords = async (req, res) => {
         },
         { $unwind: { path: "$book", preserveNullAndEmptyArrays: true } },
         { $unwind: { path: "$borrower", preserveNullAndEmptyArrays: true } },
-        { $unwind: { path: "$returnRecord", preserveNullAndEmptyArrays: true } },
+        {
+          $unwind: { path: "$returnRecord", preserveNullAndEmptyArrays: true },
+        },
         { $sort: { date_borrowed: -1, "returnRecord.returned_date": -1 } },
         {
           $project: {
@@ -48,8 +50,6 @@ const getAllRecords = async (req, res) => {
             title: "$book.title",
             author_name: "$book.author_name",
             borrower_name: "$borrower.name",
-            year_level: "$borrower.year_level",
-            course: "$borrower.course",
             returned_date: "$returnRecord.returned_date",
             violation: { $ifNull: ["$returnRecord.violation", "None"] },
             penalty: { $ifNull: ["$returnRecord.penalty", 0] },

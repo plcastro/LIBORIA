@@ -58,8 +58,7 @@ const returnDetailsPipeline = (match = {}) => [
       author_name: "$book.author_name",
       author: "$book.author_name",
       borrower_name: "$borrower.name",
-      year_level: "$borrower.year_level",
-      course: "$borrower.course",
+      
       email: "$borrower.email",
     },
   },

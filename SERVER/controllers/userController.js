@@ -649,8 +649,6 @@ const getBorrowingRecords = async (req, res) => {
             _id: 0,
             borrow_id: 1,
             borrower_name: "$borrower.name",
-            year_level: "$borrower.year_level",
-            course: "$borrower.course",
             book_title: "$book.title",
             date_borrowed: 1,
             due_date: 1,

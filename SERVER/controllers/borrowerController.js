@@ -43,12 +43,12 @@ const getBorrowerById = async (req, res) => {
 // CREATE borrower
 const createBorrower = async (req, res) => {
   try {
-    const { name, year_level, course, created_at } = req.body;
+    const { name, created_at } = req.body;
 
-    if (!name || !year_level || !course) {
+    if (!name ) {
       return res
         .status(400)
-        .json({ error: "Name, Year Level, and Course are all required" });
+        .json({ error: "Name is required" });
     }
 
     const borrowers = await collection("borrowers");
@@ -63,8 +63,6 @@ const createBorrower = async (req, res) => {
     const borrower = {
       borrower_id: await getNextSequence("borrowers"),
       name,
-      year_level,
-      course,
       created_at: created_at || new Date(),
     };
 
@@ -79,7 +77,7 @@ const createBorrower = async (req, res) => {
 const updateBorrower = async (req, res) => {
   try {
     const borrowerId = toId(req.params.id);
-    const { name, year_level, course } = req.body;
+    const { name } = req.body;
     const borrowers = await collection("borrowers");
 
     const duplicate = await borrowers.findOne({
@@ -93,7 +91,7 @@ const updateBorrower = async (req, res) => {
 
     const result = await borrowers.findOneAndUpdate(
       { borrower_id: borrowerId },
-      { $set: { name, year_level, course } },
+      { $set: { name } },
       { returnDocument: "after" }
     );
     const updatedBorrower = result.value || result;

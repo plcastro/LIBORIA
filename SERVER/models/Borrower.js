@@ -8,18 +8,6 @@ const borrowerSchema = new mongoose.Schema({
     trim: true,
   },
 
-  year_level: {
-    type: String,
-    required: true,
-    maxlength: 50,
-  },
-
-  course: {
-    type: String,
-    required: true,
-    maxlength: 100,
-  },
-
   created_at: {
     type: Date,
     default: Date.now,

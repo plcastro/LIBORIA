@@ -24,8 +24,6 @@ const BorrowBookModal = ({ open, onClose, onSubmit, initialValues }) => {
 
       form.setFieldsValue({
         name: "",
-        year_level: "",
-        course: "",
         created_at: today,
         due_date: dueDate,
         book_title: initialValues.book_title || "",
@@ -35,39 +33,13 @@ const BorrowBookModal = ({ open, onClose, onSubmit, initialValues }) => {
     }
   }, [open, initialValues, form]);
 
-  const handleNameBlur = async () => {
-    const name = String(form.getFieldValue("name") || "").trim();
-    if (!name) return;
-
-    try {
-      const { data: borrowers } = await axios.get("/borrowers");
-
-      const borrower = borrowers.find(
-        (b) => b.name.toLowerCase() === name.toLowerCase(),
-      );
-
-      if (borrower) {
-        form.setFieldsValue({
-          year_level: borrower.year_level,
-          course: borrower.course,
-        });
-        messageApi.info("Borrower found - auto-filled details.");
-      } else {
-        form.setFieldsValue({ year_level: "", course: "" });
-        messageApi.warning("New borrower detected - please fill out details.");
-      }
-    } catch (err) {
-      console.error("Error fetching borrower:", err);
-    }
-  };
   const handleBorrow = async () => {
     try {
       const formData = await form.validateFields();
       const name = formData.name.trim();
       const borrowerPayload = {
         name,
-        year_level: formData.year_level,
-        course: formData.course,
+
         created_at: formData.created_at.format("YYYY-MM-DD"),
       };
 
@@ -157,58 +129,9 @@ const BorrowBookModal = ({ open, onClose, onSubmit, initialValues }) => {
           <Row gutter={[24, 8]}>
             <Col {...colProps}>
               <Form.Item name="name" label="Name" rules={[{ required: true }]}>
-                <Input onBlur={handleNameBlur} autoComplete="off" />
+                <Input autoComplete="off" />
               </Form.Item>
             </Col>
-
-            <Col {...colProps}>
-              <Form.Item
-                name="year_level"
-                label="Year Level"
-                rules={[{ required: true }]}
-              >
-                <Select
-                  placeholder="Select year level"
-                  defaultValue="1st Year"
-                  options={[
-                    { value: "1st Year", label: "1st Year" },
-                    { value: "2nd Year", label: "2nd Year" },
-                    { value: "3rd Year", label: "3rd Year" },
-                    { value: "4th Year", label: "4th Year" },
-                  ]}
-                />
-              </Form.Item>
-            </Col>
-
-            <Col {...colProps}>
-              <Form.Item
-                name="course"
-                label="Course"
-                rules={[{ required: true }]}
-              >
-                <Select
-                  placeholder="Select course"
-                  defaultValue="BS Information Technology"
-                  options={[
-                    {
-                      value: "BS Information Technology",
-                      label: "BS Information Technology",
-                    },
-                    {
-                      value: "BS Tourism Management",
-                      label: "BS Tourism Management",
-                    },
-                    { value: "BS Psychology", label: "BS Psychology" },
-                    { value: "BS Nursing", label: "BS Nursing" },
-                    {
-                      value: "BS Medical Technology",
-                      label: "BS Medical Technology",
-                    },
-                  ]}
-                />
-              </Form.Item>
-            </Col>
-
             <Col {...colProps}>
               <Form.Item name="book_title" label="Book Title">
                 <Input disabled />
