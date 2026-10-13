@@ -1,29 +1,33 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { SearchOutlined, PlusOutlined } from "@ant-design/icons";
-import { Input, Row, Col, Button, Table, message, Card } from "antd";
+import {
+  InputAdornment,
+  TextField,
+  Button,
+  Paper,
+  Box,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TablePagination,
+  CircularProgress,
+  Snackbar,
+  Alert,
+} from "@mui/material";
+
+import SearchOutlinedIcon from "@mui/icons-material/SearchOutlined";
+import AddIcon from "@mui/icons-material/Add";
+
 import AddBookModal from "../../components/Modal/AddBookModal";
 import EditBookModal from "../../components/Modal/EditBookModal";
 import DeleteBookModal from "../../components/Modal/DeleteBookModal";
 import BorrowBookModal from "../../components/Modal/BorrowBookModal";
 import "../../App.css";
-const topOptions = [
-  { label: "topLeft", value: "topLeft" },
-  { label: "topCenter", value: "topCenter" },
-  { label: "topRight", value: "topRight" },
-  { label: "none", value: "none" },
-];
-const bottomOptions = [
-  { label: "bottomLeft", value: "bottomLeft" },
-  { label: "bottomCenter", value: "bottomCenter" },
-  { label: "bottomRight", value: "bottomRight" },
-  { label: "none", value: "none" },
-];
 
 const DisplayBook = () => {
-  const [top, setTop] = useState("topLeft");
-  const [bottom, setBottom] = useState("bottomRight");
-  const [messageApi, contextHolder] = message.useMessage();
   const [books, setBooks] = useState([]);
   const [filteredBooks, setFilteredBooks] = useState([]);
   const [searchValue, setSearchValue] = useState("");
@@ -35,36 +39,42 @@ const DisplayBook = () => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [borrowModalOpen, setBorrowModalOpen] = useState(false);
 
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(3);
+
+  const [notification, setNotification] = useState({
+    open: false,
+    message: "",
+    severity: "success",
+  });
+
+  const showMessage = (message, severity = "success") => {
+    setNotification({
+      open: true,
+      message,
+      severity,
+    });
+  };
+
+  const handleCloseMessage = (_, reason) => {
+    if (reason === "clickaway") return;
+
+    setNotification((prev) => ({
+      ...prev,
+      open: false,
+    }));
+  };
+
   // Fetch all books
   const fetchBooks = async () => {
     setLoading(true);
+
     try {
       const { data } = await axios.get("http://localhost:8000/api/books");
       setBooks(data);
     } catch (err) {
       console.error(err);
-      message.error("Failed to load books");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Search books
-  const handleSearch = async (query) => {
-    if (!query) {
-      fetchBooks();
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const { data } = await axios.get(
-        `http://localhost:8000/api/books/search?q=${encodeURIComponent(query)}`,
-      );
-      setFilteredBooks(data);
-    } catch (err) {
-      console.error(err);
-      message.error("Failed to search books");
+      showMessage("Failed to load books", "error");
     } finally {
       setLoading(false);
     }
@@ -76,18 +86,22 @@ const DisplayBook = () => {
 
   // Filter books on search
   useEffect(() => {
-    if (!searchValue) {
+    if (!searchValue.trim()) {
       setFilteredBooks(books);
     } else {
+      const query = searchValue.toLowerCase();
+
       const filtered = books.filter((book) =>
         Object.values(book).some(
           (value) =>
-            typeof value === "string" &&
-            value.toLowerCase().includes(searchValue.toLowerCase()),
+            typeof value === "string" && value.toLowerCase().includes(query),
         ),
       );
+
       setFilteredBooks(filtered);
     }
+
+    setPage(0);
   }, [searchValue, books]);
 
   // Open delete modal
@@ -102,13 +116,11 @@ const DisplayBook = () => {
       await axios.delete(`http://localhost:8000/api/books/${book.book_id}`);
 
       setBooks((prev) => prev.filter((b) => b.book_id !== book.book_id));
-      setFilteredBooks((prev) =>
-        prev.filter((b) => b.book_id !== book.book_id),
-      );
-      messageApi.success("Book deleted successfully");
+
+      showMessage("Book deleted successfully");
     } catch (err) {
       console.error(err);
-      message.error(err.response?.data?.error || err.message);
+      showMessage(err.response?.data?.error || err.message, "error");
     } finally {
       setDeleteModalOpen(false);
     }
@@ -127,182 +139,291 @@ const DisplayBook = () => {
   const handleBookCreated = () => {
     fetchBooks();
     setAddModalOpen(false);
-    messageApi.success("Book added successfully");
+    showMessage("Book added successfully");
   };
 
   const handleBookUpdated = () => {
     fetchBooks();
     setEditModalOpen(false);
-    messageApi.success("Book updated successfully");
+    showMessage("Book updated successfully");
   };
 
   const handleBookBorrowed = () => {
-    fetchBooks(); // Refresh to update available copies
+    fetchBooks();
     setBorrowModalOpen(false);
-    messageApi.success("Book borrowed successfully");
+    showMessage("Book borrowed successfully");
   };
 
-  const columns = [
-    {
-      title: "_",
-      dataIndex: "image",
-      key: "image",
-      width: 150,
-      render: (_, record) => (
-        <img
-          src={record.image || "https://via.placeholder.com/60"}
-          alt={record.title}
-          style={{
-            width: 100,
-            height: 140,
-            objectFit: "cover",
-            borderRadius: 4,
-          }}
-        />
-      ),
-    },
+  const handleChangePage = (_, newPage) => {
+    setPage(newPage);
+  };
 
-    {
-      title: "Book Title",
-      dataIndex: "title",
-      key: "title",
-      width: 250,
-      render: (_, record) => (
-        <span style={{ whiteSpace: "normal", wordBreak: "break-word" }}>
-          {record.title}
-        </span>
-      ),
-    },
-    {
-      title: "Author Name",
-      dataIndex: "author_name",
-      key: "author_name",
-      width: 200,
-    },
-    { title: "Category", dataIndex: "category", key: "category", width: 150 },
-    {
-      title: "Total Copies",
-      dataIndex: "total_copies",
-      key: "total_copies",
-      align: "center",
-      width: 150,
-    },
-    {
-      title: "Available Copies",
-      key: "available_copies",
-      align: "center",
-      width: 150,
-      render: (_, record) => (
-        <span
-          style={{
-            color: record.available_copies === 0 ? "#ff4d4f" : "#52c41a",
-            fontWeight: record.available_copies === 0 ? "bold" : "normal",
-          }}
-        >
-          {record.available_copies}
-        </span>
-      ),
-    },
-    {
-      title: "Action",
-      key: "action",
-      align: "center",
-      render: (_, record) => (
-        <div>
-          <Button
-            onClick={() => {
-              if (record.available_copies === 0) return;
-              handleBorrow(record);
-            }}
-            style={{
-              width: "max-content",
-              color: "#fff",
-              backgroundColor:
-                record.available_copies === 0 ? "#999" : "#009148ff",
-              marginRight: 16,
-              cursor: record.available_copies === 0 ? "not-allowed" : "pointer",
-            }}
-          >
-            {record.available_copies === 0 ? "Unavailable" : "Borrow"}
-          </Button>
-          <Button
-            onClick={() => handleUpdateBook(record)}
-            style={{
-              width: "max-content",
-              backgroundColor: "#002ae6ff",
-              color: "#fff",
-              marginRight: 16,
-              cursor: "pointer",
-            }}
-          >
-            Edit
-          </Button>
-          <Button
-            onClick={() => handleDeleteBook(record)}
-            style={{
-              width: "max-content",
-              color: "#fff",
-              backgroundColor: "#ff4d4f",
-              cursor: "pointer",
-            }}
-          >
-            Delete
-          </Button>
-        </div>
-      ),
-    },
-  ];
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  const displayedBooks = filteredBooks.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage,
+  );
 
   return (
     <>
-      {contextHolder}
-      <Card>
-        <Row
-          align="stretch"
-          justify="space-between"
-          style={{ marginBottom: 12 }}
+      <Paper
+        elevation={1}
+        sx={{
+          p: 2,
+          borderRadius: 1,
+          width: "100%",
+          boxSizing: "border-box",
+        }}
+      >
+        {/* Search and Add Book */}
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "stretch",
+            justifyContent: "space-between",
+            gap: 2,
+            mb: 1.5,
+            flexWrap: "wrap",
+          }}
         >
-          <Col xs={24} sm={12} md={12} lg={6}>
-            <Input
-              prefix={<SearchOutlined />}
-              placeholder="Search book"
-              value={searchValue}
-              onChange={(e) => setSearchValue(e.target.value)}
-              style={{ height: 40, marginBottom: 5 }}
-            />
-          </Col>
+          <TextField
+            placeholder="Search book"
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.target.value)}
+            size="small"
+            sx={{
+              width: {
+                xs: "100%",
+                sm: 300,
+              },
+              height: 40,
+            }}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchOutlinedIcon />
+                  </InputAdornment>
+                ),
+              },
+            }}
+          />
 
           <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            style={{
-              margin: 0,
-              backgroundColor: "#1600a3",
-              border: "none",
-              height: 40,
-              padding: "8px 16px",
-              fontWeight: 500,
-            }}
+            variant="contained"
+            startIcon={<AddIcon />}
             onClick={() => setAddModalOpen(true)}
+            sx={{
+              backgroundColor: "#1600a3",
+              height: 40,
+              px: 2,
+              fontWeight: 500,
+              whiteSpace: "nowrap",
+              "&:hover": {
+                backgroundColor: "#000000",
+              },
+            }}
           >
             Add Book
           </Button>
-        </Row>
+        </Box>
 
-        <Table
-          columns={columns}
-          dataSource={filteredBooks}
-          rowKey="id"
-          loading={loading}
-          pagination={{
-            placement: ["bottomRight"],
-            pageSize: 3,
+        <TableContainer
+          sx={{
+            maxHeight: "75vh",
+            width: "100%",
           }}
-          scroll={{
-            y: 550,
-          }}
+        >
+          <Table
+            stickyHeader
+            sx={{
+              minWidth: 1100,
+              "& .MuiTableCell-root": {
+                verticalAlign: "middle",
+              },
+            }}
+          >
+            <TableHead>
+              <TableRow>
+                <TableCell sx={{ width: 150, fontWeight: 600 }}>_</TableCell>
+
+                <TableCell sx={{ width: 250, fontWeight: 600 }}>
+                  Book Title
+                </TableCell>
+
+                <TableCell sx={{ width: 200, fontWeight: 600 }}>
+                  Author Name
+                </TableCell>
+
+                <TableCell sx={{ width: 150, fontWeight: 600 }}>
+                  Category
+                </TableCell>
+
+                <TableCell align="center" sx={{ width: 150, fontWeight: 600 }}>
+                  Total Copies
+                </TableCell>
+
+                <TableCell align="center" sx={{ width: 150, fontWeight: 600 }}>
+                  Available Copies
+                </TableCell>
+
+                <TableCell
+                  align="center"
+                  sx={{ fontWeight: 600, minWidth: 300 }}
+                >
+                  Action
+                </TableCell>
+              </TableRow>
+            </TableHead>
+
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={7} align="center" sx={{ py: 5 }}>
+                    <CircularProgress size={28} />
+                  </TableCell>
+                </TableRow>
+              ) : displayedBooks.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} align="center" sx={{ py: 5 }}>
+                    No books found.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                displayedBooks.map((record) => (
+                  <TableRow key={record.book_id} hover>
+                    <TableCell>
+                      <Box
+                        component="img"
+                        src={record.image || "https://via.placeholder.com/60"}
+                        alt={record.title || "Book cover"}
+                        sx={{
+                          width: 100,
+                          height: 140,
+                          objectFit: "cover",
+                          borderRadius: 1,
+                          display: "block",
+                        }}
+                      />
+                    </TableCell>
+
+                    <TableCell
+                      sx={{
+                        whiteSpace: "normal",
+                        overflowWrap: "anywhere",
+                      }}
+                    >
+                      {record.title}
+                    </TableCell>
+
+                    <TableCell>{record.author_name}</TableCell>
+
+                    <TableCell>{record.category}</TableCell>
+
+                    <TableCell align="center">{record.total_copies}</TableCell>
+
+                    <TableCell
+                      align="center"
+                      sx={{
+                        color:
+                          record.available_copies === 0 ? "#ff4d4f" : "#52c41a",
+                        fontWeight:
+                          record.available_copies === 0 ? "bold" : "normal",
+                      }}
+                    >
+                      {record.available_copies}
+                    </TableCell>
+
+                    <TableCell align="center">
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: 1,
+                          flexWrap: "wrap",
+                        }}
+                      >
+                        <Button
+                          variant="contained"
+                          size="small"
+                          disabled={record.available_copies === 0}
+                          onClick={() => handleBorrow(record)}
+                          sx={{
+                            backgroundColor:
+                              record.available_copies === 0
+                                ? "#999"
+                                : "#009148",
+                            whiteSpace: "nowrap",
+                            "&:hover": {
+                              backgroundColor: "#00783b",
+                            },
+                            "&.Mui-disabled": {
+                              backgroundColor: "#999",
+                              color: "#fff",
+                            },
+                          }}
+                        >
+                          {record.available_copies === 0
+                            ? "Unavailable"
+                            : "Borrow"}
+                        </Button>
+
+                        <Button
+                          variant="contained"
+                          size="small"
+                          onClick={() => handleUpdateBook(record)}
+                          sx={{
+                            backgroundColor: "#002ae6",
+                            whiteSpace: "nowrap",
+                            "&:hover": {
+                              backgroundColor: "#001fbd",
+                            },
+                          }}
+                        >
+                          Edit
+                        </Button>
+
+                        <Button
+                          variant="contained"
+                          size="small"
+                          onClick={() => handleDeleteBook(record)}
+                          sx={{
+                            backgroundColor: "#ff4d4f",
+                            whiteSpace: "nowrap",
+                            "&:hover": {
+                              backgroundColor: "#d9363e",
+                            },
+                          }}
+                        >
+                          Delete
+                        </Button>
+                      </Box>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+
+        {/* Pagination */}
+        <TablePagination
+          component="div"
+          count={filteredBooks.length}
+          page={page}
+          onPageChange={handleChangePage}
+          rowsPerPage={rowsPerPage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+          rowsPerPageOptions={[3, 5, 10, 25]}
+          labelRowsPerPage="Rows per page:"
         />
 
+        {/* Modals */}
         <AddBookModal
           modal2Open={addModalOpen}
           setModal2Open={setAddModalOpen}
@@ -314,7 +435,7 @@ const DisplayBook = () => {
             modalOpen={editModalOpen}
             setModalOpen={setEditModalOpen}
             book={selectedBook}
-            onBookUpdated={handleUpdateBook}
+            onBookUpdated={handleBookUpdated}
           />
         )}
 
@@ -322,10 +443,12 @@ const DisplayBook = () => {
           <BorrowBookModal
             open={borrowModalOpen}
             onClose={() => setBorrowModalOpen(false)}
-            initialValues={{ ...selectedBook, book_title: selectedBook.title }}
-            onSubmit={(data) => {
-              message.success(`Borrowed: ${data.book_title}`);
-              setBorrowModalOpen(false);
+            initialValues={{
+              ...selectedBook,
+              book_title: selectedBook.title,
+            }}
+            onSubmit={async () => {
+              await handleBookBorrowed();
             }}
           />
         )}
@@ -338,7 +461,24 @@ const DisplayBook = () => {
             onDelete={handleConfirmDelete}
           />
         )}
-      </Card>
+      </Paper>
+
+      {/* MUI notification */}
+      <Snackbar
+        open={notification.open}
+        autoHideDuration={3000}
+        onClose={handleCloseMessage}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+      >
+        <Alert
+          onClose={handleCloseMessage}
+          severity={notification.severity}
+          variant="filled"
+          sx={{ width: "100%" }}
+        >
+          {notification.message}
+        </Alert>
+      </Snackbar>
     </>
   );
 };
