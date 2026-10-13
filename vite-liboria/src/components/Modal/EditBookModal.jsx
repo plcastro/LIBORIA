@@ -55,7 +55,7 @@ const EditBookModal = ({ modalOpen, setModalOpen, book, onBookUpdated }) => {
       messageApi.success("Book updated successfully");
       setTimeout(() => {
         window.location.reload();
-      }, 500);
+      }, 0);
     } catch (err) {
       console.error(err);
       messageApi.error(err.response?.data?.error || "Failed to update book");

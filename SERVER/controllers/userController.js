@@ -49,15 +49,22 @@ const getUsers = async (req, res) => {
 // GET user by ID
 const getUserById = async (req, res) => {
   try {
-    const user = await findPublicUser(User, toId(req.params._id));
+    const userId = req.params.id || req.params._id;
+
+    const user = await User.findById(userId)
+      .select("_id username name email account_type")
+      .lean();
 
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    res.json(user);
+    return res.json(user);
   } catch (err) {
-    handleError(res, err);
+    console.error("Get user by ID error:", err);
+    return res.status(500).json({
+      error: "Failed to fetch user",
+    });
   }
 };
 
@@ -115,7 +122,6 @@ const createUser = async (req, res) => {
         account_type: user.account_type,
       },
     });
-  
   } catch (err) {
     console.error("Create user error:", err);
     console.error("MongoDB code:", err.code);
@@ -144,17 +150,11 @@ const createUser = async (req, res) => {
 
 // REGISTER user (for public signup)
 
-
 const register = async (req, res) => {
   try {
     const { name, email, username, password } = req.body;
 
-    if (
-      !name?.trim() ||
-      !email?.trim() ||
-      !username?.trim() ||
-      !password
-    ) {
+    if (!name?.trim() || !email?.trim() || !username?.trim() || !password) {
       return res.status(400).json({
         error: "All fields are required",
       });
@@ -189,10 +189,7 @@ const register = async (req, res) => {
     }
 
     const duplicate = await User.findOne({
-      $or: [
-        { username: normalizedUsername },
-        { email: normalizedEmail },
-      ],
+      $or: [{ username: normalizedUsername }, { email: normalizedEmail }],
     });
 
     if (duplicate?.username === normalizedUsername) {
@@ -510,24 +507,17 @@ const verifyResetToken = async (req, res) => {
         error: "Reset token is required",
       });
     }
-    console.log("Submitted token length:", token.length);
-    console.log("Current time:", new Date());
 
     const user = await User.findOne({
       reset_token: token,
     }).select("+reset_token +reset_token_expiry");
 
     if (!user) {
-      console.log("Token exists in database:", false);
-
       return res.status(400).json({
         error: "Token does not match any user",
       });
     }
-    console.log("Token exists in database:", true);
-    console.log("Token matches:", user.reset_token === token);
-    console.log("Token expiry:", user.reset_token_expiry);
-    console.log("Token expired:", user.reset_token_expiry <= new Date());
+
     return res.json({
       message: "Token is valid",
       user: {

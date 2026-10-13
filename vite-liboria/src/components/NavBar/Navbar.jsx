@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import "./Navbar.css";
 import { NavLink } from "react-router-dom";
 import { Drawer, Button, Grid, Menu } from "antd";
-import { MenuOutlined } from "@ant-design/icons";
+import MenuIcon from "@mui/icons-material/Menu";
 import logo_dark from "../../assets/liboria black.png";
 const Navbar = () => {
   const [open, setOpen] = useState(false);
@@ -30,7 +30,7 @@ const Navbar = () => {
         <>
           <Button
             type="text"
-            icon={<MenuOutlined style={{ fontSize: "24px", color: "black" }} />}
+            icon={<MenuIcon style={{ fontSize: "24px", color: "black" }} />}
             onClick={() => setOpen(true)}
           />
           <Drawer
