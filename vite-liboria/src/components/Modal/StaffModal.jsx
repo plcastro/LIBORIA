@@ -21,7 +21,7 @@ const StaffModal = ({
   const [isPreviewConfirmOpen, setIsPreviewConfirmOpen] = useState(false);
   const [previewData, setPreviewData] = useState(null);
   const [submittable, setSubmittable] = useState(false);
-  const loggedInUserId = JSON.parse(localStorage.getItem("currentUser"))?._id;
+  const loggedInUserId = JSON.parse(sessionStorage.getItem("currentUser"))?._id;
   const values = Form.useWatch([], form);
 
   useEffect(() => {

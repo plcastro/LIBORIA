@@ -16,9 +16,7 @@ const StaffList = () => {
   const [error, setError] = useState("");
   const [searchText, setSearchText] = useState("");
 
-  const currentUserId = JSON.parse(
-    localStorage.getItem("currentUser") || "{}",
-  )?._id;
+  const currentUserId = JSON.parse(sessionStorage.getItem("currentUser"))?._id;
 
   const loadAllStaff = async () => {
     setLoading(true);

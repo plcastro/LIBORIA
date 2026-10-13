@@ -7,7 +7,7 @@ import axios from "axios";
 const ProfilePage = () => {
   const [user, setUser] = useState({});
 
-  const currentUserId = JSON.parse(localStorage.getItem("currentUser"))?._id;
+  const currentUserId = JSON.parse(sessionStorage.getItem("currentUser"))?._id;
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 

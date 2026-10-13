@@ -17,7 +17,7 @@ const DeleteBookModal = ({ open, setOpen, book, onDelete }) => {
       messageApi.success("Book deleted successfully");
       setTimeout(() => {
         window.location.reload();
-      }, 500);
+      }, 0);
     } catch (err) {
       console.error(err);
       messageApi.error(err.response?.data?.error || "Failed to delete book");

@@ -29,8 +29,8 @@ const Login = () => {
 
   // Load saved credentials when the component mounts
   useEffect(() => {
-    const savedUsername = localStorage.getItem("rememberedUsername");
-    const savedPassword = localStorage.getItem("rememberedPassword");
+    const savedUsername = sessionStorage.getItem("rememberedUsername");
+    const savedPassword = sessionStorage.getItem("rememberedPassword");
     const savedRememberMe = localStorage.getItem("rememberMe") === "true";
 
     if (savedRememberMe && savedUsername) {
@@ -61,8 +61,8 @@ const Login = () => {
 
     if (!isChecked) {
       localStorage.setItem("rememberMe", "false");
-      localStorage.removeItem("rememberedUsername");
-      localStorage.removeItem("rememberedPassword");
+      sessionStorage.removeItem("rememberedUsername");
+      sessionStorage.removeItem("rememberedPassword");
     } else {
       localStorage.setItem("rememberMe", "true");
     }
@@ -94,7 +94,8 @@ const Login = () => {
       );
 
       const user = response.data.user;
-
+      console.log("Login response user:", user);
+      console.log("Login response user ID:", user?._id);
       if (!user) {
         setError("Login failed: user information was not returned.");
         return;
