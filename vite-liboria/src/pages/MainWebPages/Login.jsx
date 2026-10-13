@@ -1,6 +1,5 @@
-import React from "react";
 import { useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "./login.css";
 import "../../App.css";
@@ -23,7 +22,7 @@ const Login = () => {
     username: "",
     password: "",
   });
-
+  const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -42,6 +41,10 @@ const Login = () => {
       setRememberMe(true);
     }
   }, []);
+
+  const handleClickShowPassword = () => {
+    setShowPassword((prev) => !prev);
+  };
 
   const handleInputChange = (e) => {
     const { id, value } = e.target;
@@ -97,17 +100,15 @@ const Login = () => {
         return;
       }
 
-      // Save the logged-in user
       sessionStorage.setItem("currentUser", JSON.stringify(user));
 
-      // Remember username and password if selected
       if (rememberMe) {
-        localStorage.setItem("rememberedUsername", formData.username.trim());
-        localStorage.setItem("rememberedPassword", formData.password);
+        sessionStorage.setItem("rememberedUsername", formData.username.trim());
+        sessionStorage.setItem("rememberedPassword", formData.password);
         localStorage.setItem("rememberMe", "true");
       } else {
-        localStorage.removeItem("rememberedUsername");
-        localStorage.removeItem("rememberedPassword");
+        sessionStorage.removeItem("rememberedUsername");
+        sessionStorage.removeItem("rememberedPassword");
         localStorage.setItem("rememberMe", "false");
       }
 
