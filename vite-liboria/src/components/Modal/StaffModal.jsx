@@ -70,15 +70,17 @@ const StaffModal = ({
       let response;
 
       if (isAddMode) {
-        response = await axios.post("/users", { ...dataToSave, account_type: "librarian" }, {
+        response = await axios.post(
+          "/users",
+          { ...dataToSave, account_type: "librarian" },
+          {
+            headers: { "Content-Type": "application/json" },
+          },
+        );
+      } else if (isEditMode) {
+        response = await axios.put(`/users/${selectedStaff._id}`, dataToSave, {
           headers: { "Content-Type": "application/json" },
         });
-      } else if (isEditMode) {
-        response = await axios.put(
-          `/users/${selectedStaff._id}`,
-          dataToSave,
-          { headers: { "Content-Type": "application/json" } },
-        );
       }
 
       onSave(response?.data);
@@ -86,7 +88,7 @@ const StaffModal = ({
 
       resetTransientState();
       messageApi.success(
-        isAddMode ? "Staff added successfully!" : "Staff updated successfully!",
+        isAddMode ? "User added successfully!" : "User updated successfully!",
       );
     } catch (err) {
       console.error(err);
@@ -267,7 +269,10 @@ const StaffModal = ({
               </>
             )}
             <Form.Item label="Role">
-              <Input value={isAddMode ? "Librarian" : selectedStaff?.account_type} disabled />
+              <Input
+                value={isAddMode ? "Librarian" : selectedStaff?.account_type}
+                disabled
+              />
             </Form.Item>
 
             <Form.Item>
@@ -348,7 +353,8 @@ const StaffModal = ({
               <strong>Username:</strong> {previewData.username}
             </p>
             <p>
-              <strong>Role:</strong> {isAddMode ? "librarian" : selectedStaff?.account_type}
+              <strong>Role:</strong>{" "}
+              {isAddMode ? "librarian" : selectedStaff?.account_type}
             </p>
             <div
               style={{
