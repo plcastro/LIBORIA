@@ -1,12 +1,11 @@
 import Button from "../MuiButton.jsx";
-import React, { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Modal, Form, Input, InputNumber, DatePicker, Select, Row, Col, message } from "antd";
 import dayjs from "dayjs";
 import axios from "../../api";
 const ReturnBookModal = ({ open, onClose, initialValues, REASONS }) => {
   const [form] = Form.useForm();
   const [messageApi, contextHolder] = message.useMessage();
-  const [errors, setErrors] = useState({});
   const colProps = { xs: 24, md: 12 };
 
   // Calculate penalty based on returned date and violations
@@ -67,6 +66,7 @@ const ReturnBookModal = ({ open, onClose, initialValues, REASONS }) => {
   };
 
   const handleFinish = async () => {
+    const formData = form.getFieldsValue();
     const nextErrors = {};
     if (!formData.returnedDate) {
       nextErrors.returnedDate = "Returned date is required";
@@ -80,7 +80,6 @@ const ReturnBookModal = ({ open, onClose, initialValues, REASONS }) => {
       nextErrors.inCash = "Amount paid cannot be negative.";
     }
 
-    setErrors(nextErrors);
     if (Object.keys(nextErrors).length) {
       messageApi.error(Object.values(nextErrors)[0]);
       return;
@@ -94,31 +93,15 @@ const ReturnBookModal = ({ open, onClose, initialValues, REASONS }) => {
 
       const payload = {
         borrow_id: initialValues.borrow_id,
-        returned_date: dateValue(formData.returnedDate).format("YYYY-MM-DD"),
+        returned_date: formData.returnedDate.format("YYYY-MM-DD"),
         violation: violations,
         penalty: formData.penalty || 0,
         amount_paid: formData.inCash || 0,
       };
 
-      const status = violations.includes("Lost") ? "Lost" : "Returned";
-
-      await axios.put(
-        `/borrowed-books/${initialValues.borrow_id}`,
-        { status },
-        { headers: { "Content-Type": "application/json" } },
-      );
-
       await axios.post("/returned-books", payload, {
         headers: { "Content-Type": "application/json" },
       });
-
-      if (!violations.includes("Lost")) {
-        await axios.put(
-          `/books/${initialValues.book_id}`,
-          { incrementAvailable: 1 },
-          { headers: { "Content-Type": "application/json" } },
-        );
-      }
 
       messageApi.success(
         violations.includes("Lost")

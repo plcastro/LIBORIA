@@ -1,5 +1,4 @@
 import Button from '../../components/MuiButton.jsx';
-import React from "react";
 import { useNavigate } from "react-router-dom";
 
 import notfoundimg from "../../assets/Book_torn page.png";

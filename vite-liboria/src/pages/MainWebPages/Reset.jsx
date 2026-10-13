@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import "./login.css";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "../../api";
@@ -27,34 +27,20 @@ const Reset = () => {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // Verify token when component loads
   useEffect(() => {
-    if (token) {
-      verifyToken(token);
-    }
-  }, [token]);
-
-  const verifyToken = async (token) => {
-    try {
-      const response = await axios.post(
-        "/users/verify-reset-token",
-        { token },
-        { headers: { "Content-Type": "application/json" } },
-      );
-
-      const data = response.data;
-
-      if (response.status >= 200 && response.status < 300) {
-        setTokenValid(true);
-        if (data.currentPassword) {
-          setCurrentPassword(data.currentPassword);
-        }
-      }
-    } catch (err) {
+    if (!token) return;
+    let active = true;
+    axios.post("/users/verify-reset-token", { token }).then(({ data }) => {
+      if (!active) return;
+      setTokenValid(true);
+      if (data.currentPassword) setCurrentPassword(data.currentPassword);
+    }).catch((err) => {
+      if (!active) return;
       setError(err.response?.data?.error || "Network error. Please try again.");
       setTokenValid(false);
-    }
-  };
+    });
+    return () => { active = false; };
+  }, [token]);
 
   const validate = () => {
     if (!formData.newPassword || !formData.confirmPassword) {
@@ -83,7 +69,7 @@ const Reset = () => {
     setMessage("");
 
     // Only run client-side validation if we have currentPassword
-    if (currentPassword && !validate()) return;
+    if (!validate()) return;
 
     setLoading(true);
     try {
@@ -95,8 +81,6 @@ const Reset = () => {
         },
         { headers: { "Content-Type": "application/json" } },
       );
-
-      const data = response.data;
 
       if (response.status >= 200 && response.status < 300) {
         setMessage("Password reset successfully! Redirecting to login...");

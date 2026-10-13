@@ -1,8 +1,8 @@
 import Table from "../../components/MuiTable.jsx";
 import Button from "../../components/MuiButton.jsx";
-import React, { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Tag, Input, Card, message } from "antd";
-import { ReloadOutlined, SearchOutlined } from "@ant-design/icons";
+import { SearchOutlined } from "@ant-design/icons";
 import ReturnBookModal from "../../components/Modal/ReturnBookModal";
 import axios from "../../api";
 const REASONS = [
@@ -31,7 +31,7 @@ const ReturnBooks = () => {
   };
 
   // ✅ Fetch borrowed books list (only display logic)
-  const fetchBorrowedBooks = async () => {
+  const fetchBorrowedBooks = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -45,11 +45,11 @@ const ReturnBooks = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [messageApi]);
 
   useEffect(() => {
-    fetchBorrowedBooks();
-  }, []);
+    Promise.resolve().then(() => fetchBorrowedBooks());
+  }, [fetchBorrowedBooks]);
 
   //Filter search
   const filteredData = borrowedBooks.filter((record) =>

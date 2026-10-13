@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import "./login.css";
 import { useNavigate, Link as RouterLink } from "react-router-dom";
 import axios from "../../api";
@@ -106,14 +106,6 @@ const Forgot = () => {
     } finally {
       setConfirmLoading(false);
     }
-  };
-
-  const handleBack = () => {
-    setShowTokenCard(false);
-    setResetToken("");
-    setTokenStatus("");
-    setError("");
-    setMessage("");
   };
 
   return (

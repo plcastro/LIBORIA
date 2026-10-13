@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useState } from "react";
 import { Layout, Menu, Drawer, Grid, Typography } from "antd";
 import Button from "../components/MuiButton.jsx";
 import api from "../api";
@@ -23,18 +23,15 @@ const StudentDashboardLayout = () => {
   const screens = useBreakpoint();
   const isMobile = !screens.md;
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [user, setUser] = useState(null);
-
-  useEffect(() => {
+  const [user] = useState(() => {
     try {
-      const storedUser = JSON.parse(
+      return JSON.parse(
         sessionStorage.getItem("currentUser") || "null",
       );
-      setUser(storedUser);
     } catch {
-      setUser(null);
+      return null;
     }
-  }, []);
+  });
 
   const menuItems = [
     {

@@ -1,5 +1,5 @@
 import Button from "../MuiButton.jsx";
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { Modal, Form, Input, DatePicker, Row, Col, Select, message } from "antd";
 import dayjs from "dayjs";
 import axios from "../../api";
@@ -27,7 +27,7 @@ const BorrowBookModal = ({ open, onClose, onSubmit, initialValues }) => {
   }, [open, initialValues, form]);
 
   const handleNameBlur = async () => {
-    const name = formData.name.trim();
+    const name = String(form.getFieldValue("name") || "").trim();
     if (!name) return;
 
     try {
@@ -40,14 +40,13 @@ const BorrowBookModal = ({ open, onClose, onSubmit, initialValues }) => {
       );
 
       if (borrower) {
-        setFormData((prev) => ({
-          ...prev,
+        form.setFieldsValue({
           year_level: borrower.year_level,
           course: borrower.course,
-        }));
+        });
         messageApi.info("Borrower found - auto-filled details.");
       } else {
-        setFormData((prev) => ({ ...prev, year_level: "", course: "" }));
+        form.setFieldsValue({ year_level: "", course: "" });
         messageApi.warning("New borrower detected - please fill out details.");
       }
     } catch (err) {
@@ -55,15 +54,14 @@ const BorrowBookModal = ({ open, onClose, onSubmit, initialValues }) => {
     }
   };
   const handleBorrow = async () => {
-    if (!validate()) return;
-
     try {
+      const formData = await form.validateFields();
       const name = formData.name.trim();
       const borrowerPayload = {
         name,
         year_level: formData.year_level,
         course: formData.course,
-        created_at: dateValue(formData.created_at).format("YYYY-MM-DD"),
+        created_at: formData.created_at.format("YYYY-MM-DD"),
       };
 
       const { data: borrowers } = await axios.get(
@@ -94,8 +92,8 @@ const BorrowBookModal = ({ open, onClose, onSubmit, initialValues }) => {
       const borrowPayload = {
         borrower_id: borrower.borrower_id,
         book_id: initialValues.book_id,
-        date_borrowed: dateValue(formData.created_at).format("YYYY-MM-DD"),
-        due_date: dateValue(formData.due_date).format("YYYY-MM-DD"),
+        date_borrowed: formData.created_at.format("YYYY-MM-DD"),
+        due_date: formData.due_date.format("YYYY-MM-DD"),
         status: "Borrowed",
       };
 
@@ -107,7 +105,7 @@ const BorrowBookModal = ({ open, onClose, onSubmit, initialValues }) => {
 
       onSubmit(borrowRes.data);
       onClose();
-      setFormData(initialForm);
+      form.resetFields();
       messageApi.success(`Borrowed ${initialValues.book_title} successfully!`);
       window.location.reload();
     } catch (err) {

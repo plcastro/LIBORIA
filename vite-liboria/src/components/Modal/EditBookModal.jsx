@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Modal, Input, InputNumber, message, Form, DatePicker, Row, Col } from "antd";
 import dayjs from "dayjs";
 import axios from "../../api";
@@ -23,16 +23,15 @@ const EditBookModal = ({ modalOpen, setModalOpen, book, onBookUpdated }) => {
   }, [book, form]);
 
   const handleOk = async () => {
-    if (!validate()) return;
-
     try {
+      const formData = await form.validateFields();
       setLoading(true);
 
       const payload = {
         ...formData,
         total_copies: Number(formData.total_copies),
         available_copies: Number(formData.available_copies),
-        published_date: formData.published_date || null,
+        published_date: formData.published_date?.format("YYYY-MM-DD") || null,
       };
 
       await axios.put(`/books/${book.book_id}`, payload, {
