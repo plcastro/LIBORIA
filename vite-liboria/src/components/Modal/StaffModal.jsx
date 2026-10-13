@@ -283,7 +283,7 @@ const StaffModal = ({
                   onClick={handlePrimaryClick}
                   style={{ backgroundColor: "#000", color: "#fff", width: 232 }}
                 >
-                  {isEditMode ? "Save Changes" : "Add Staff"}
+                  {isEditMode ? "Save Changes" : "Add User"}
                 </Button>
                 <Button onClick={handleCancelClick} style={{ width: 232 }}>
                   Cancel
