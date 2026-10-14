@@ -208,7 +208,7 @@ const StaffList = () => {
                 fontWeight: 500,
               }}
             >
-              Add Staff
+              Add User
             </Button>
           </Col>
         </Row>
