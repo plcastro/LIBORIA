@@ -81,6 +81,27 @@ const borrowedBookRoutes = require("./routes/borrowedBookRoutes");
 const returnedBookRoutes = require("./routes/returnedBookRoutes");
 const borrowRequestRoutes = require("./routes/borrowRequestRoutes");
 
+// Allow a brief MongoDB reconnect before handling API requests.
+app.use("/api", (req, res, next) => {
+  const connection = mongoose.connection;
+
+  if (connection.readyState === 1) {
+    return next();
+  }
+
+  const onConnected = () => {
+    clearTimeout(timeout);
+    connection.removeListener("connected", onConnected);
+    next();
+  };
+  const timeout = setTimeout(() => {
+    connection.removeListener("connected", onConnected);
+    res.status(503).json({ error: "Database unavailable" });
+  }, 5000);
+
+  connection.once("connected", onConnected);
+});
+
 // Public user routes, including login and signup
 app.use("/api/users", userRoutes);
 

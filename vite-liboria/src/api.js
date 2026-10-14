@@ -18,4 +18,21 @@ api.interceptors.response.use(
   },
 );
 
+api.interceptors.response.use(
+  response => response,
+  async error => {
+    const config = error.config;
+    const retryCount = config?._retryCount || 0;
+    const isTransient = !error.response || [502, 503, 504].includes(error.response.status);
+
+    if (config?.method?.toLowerCase() === 'get' && isTransient && !axios.isCancel(error) && retryCount < 2) {
+      config._retryCount = retryCount + 1;
+      await new Promise(resolve => setTimeout(resolve, retryCount === 0 ? 500 : 1500));
+      return api(config);
+    }
+
+    return Promise.reject(error);
+  },
+);
+
 export default api;
