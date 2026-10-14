@@ -30,7 +30,6 @@ const ReturnBooks = () => {
     setSelectedRecord(null);
   };
 
-  // ✅ Fetch borrowed books list (only display logic)
   const fetchBorrowedBooks = useCallback(async () => {
     setLoading(true);
     setError(null);

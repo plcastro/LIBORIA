@@ -30,16 +30,23 @@ const Reset = () => {
   useEffect(() => {
     if (!token) return;
     let active = true;
-    axios.post("/users/verify-reset-token", { token }).then(({ data }) => {
-      if (!active) return;
-      setTokenValid(true);
-      if (data.currentPassword) setCurrentPassword(data.currentPassword);
-    }).catch((err) => {
-      if (!active) return;
-      setError(err.response?.data?.error || "Network error. Please try again.");
-      setTokenValid(false);
-    });
-    return () => { active = false; };
+    axios
+      .post("/users/verify-reset-token", { token })
+      .then(({ data }) => {
+        if (!active) return;
+        setTokenValid(true);
+        if (data.currentPassword) setCurrentPassword(data.currentPassword);
+      })
+      .catch((err) => {
+        if (!active) return;
+        setError(
+          err.response?.data?.error || "Network error. Please try again.",
+        );
+        setTokenValid(false);
+      });
+    return () => {
+      active = false;
+    };
   }, [token]);
 
   const validate = () => {
@@ -55,12 +62,12 @@ const Reset = () => {
       setError("Passwords do not match.");
       return false;
     }
-    // Only validate if we have the current password from the backend
+
     if (currentPassword && formData.newPassword === currentPassword) {
       setError("New password cannot be the same as your current password.");
       return false;
     }
-    return true; // Fixed: removed duplicate return statement
+    return true;
   };
 
   const handleSubmit = async (e) => {
@@ -68,7 +75,6 @@ const Reset = () => {
     setError("");
     setMessage("");
 
-    // Only run client-side validation if we have currentPassword
     if (!validate()) return;
 
     setLoading(true);
@@ -102,7 +108,6 @@ const Reset = () => {
     }
   };
 
-  // Show error if token is invalid
   if (token && !tokenValid) {
     return (
       <div className="reset-password-container">

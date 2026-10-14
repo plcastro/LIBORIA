@@ -86,7 +86,6 @@ const StaffList = () => {
     loadAllStaff();
   };
 
-  // Search users
   const filteredData = data.filter((item) => {
     if (!searchText) return true;
 

@@ -12,7 +12,7 @@ const ViewRecords = () => {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [messageApi, contextHolder] = message.useMessage();
 
-  // Fetch records from the database
+
   const fetchRecords = useCallback(async () => {
     setLoading(true);
     setError("");
