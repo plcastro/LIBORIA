@@ -74,7 +74,6 @@ const getBorrowedBooks = async (req, res) => {
   }
 };
 
-// GET borrowed book by ID
 const getBorrowedBookById = async (req, res) => {
   try {
     const borrowedBooks = await collection("borrowed_books");
@@ -92,7 +91,6 @@ const getBorrowedBookById = async (req, res) => {
   }
 };
 
-// BORROW a book with all validations
 const borrowBook = async (req, res) => {
   try {
     const bookId = toId(req.body?.book_id);
@@ -192,7 +190,6 @@ const borrowBook = async (req, res) => {
   }
 };
 
-// UPDATE borrowed book (extend due date, update status, etc.)
 const updateBorrowedBook = async (req, res) => {
   try {
     const borrowId = toId(req.params.id);
@@ -222,7 +219,6 @@ const updateBorrowedBook = async (req, res) => {
   }
 };
 
-// GET currently borrowed books by borrower
 const getBorrowedBooksByBorrower = async (req, res) => {
   try {
     const borrowedBooks = await collection("borrowed_books");

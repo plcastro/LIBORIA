@@ -6,6 +6,11 @@ const borrowedBookSchema = new mongoose.Schema({
     ref: "Borrower",
     required: true,
   },
+  borrow_id: {
+    type: Number,
+    required: true,
+    unique: true,
+  },
 
   book_id: {
     type: mongoose.Schema.Types.ObjectId,
