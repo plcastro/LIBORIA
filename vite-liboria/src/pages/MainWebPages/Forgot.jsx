@@ -15,7 +15,6 @@ const Forgot = () => {
   const [loading, setLoading] = useState(false);
   const [confirmLoading, setConfirmLoading] = useState(false);
 
-  // Controls which card is displayed
   const [showTokenCard, setShowTokenCard] = useState(false);
 
   const validate = () => {
@@ -52,8 +51,6 @@ const Forgot = () => {
         },
       );
 
-      // Only show the token verification card if the backend
-      // confirms that the account exists.
       if (response.data.accountExists === true) {
         setShowTokenCard(true);
       } else {

@@ -52,13 +52,11 @@ const EditProfile = ({ initialData, isVisible, onClose, onSave }) => {
   const onFinish = async (values) => {
     const { currPassword, password, confirmPassword } = values;
 
-    // Validate password confirmation
     if (password !== confirmPassword) {
       messageApi.error("Password and Confirm password do not match!");
       return;
     }
 
-    // Get the logged-in user
     let user;
 
     try {
@@ -75,7 +73,6 @@ const EditProfile = ({ initialData, isVisible, onClose, onSave }) => {
       return;
     }
 
-    // Prevent using the current password as the new password
     if (password === currPassword) {
       messageApi.error("New password cannot be the same as current password.");
       return;
@@ -101,15 +98,12 @@ const EditProfile = ({ initialData, isVisible, onClose, onSave }) => {
         response.data?.message || "Password changed successfully.",
       );
 
-      // Clear the password fields
       form.resetFields();
 
-      // Notify the parent component
       if (onSave) {
         onSave(response.data);
       }
 
-      // Close the modal
       if (onClose) {
         onClose();
       }

@@ -1,7 +1,19 @@
 import Table from "../../components/MuiTable.jsx";
 import { useEffect, useMemo, useState } from "react";
 import axios from "../../api";
-import { Alert, Avatar, Card, Col, Empty, Row, Skeleton, Space, Statistic, Tag, Typography } from "antd";
+import {
+  Alert,
+  Avatar,
+  Card,
+  Col,
+  Empty,
+  Row,
+  Skeleton,
+  Space,
+  Statistic,
+  Tag,
+  Typography,
+} from "antd";
 import {
   BookOutlined,
   CheckCircleOutlined,
@@ -11,7 +23,6 @@ import {
   UserOutlined,
 } from "@ant-design/icons";
 import "./StudentDashboard.css";
-
 
 const formatDate = (value) => {
   if (!value) return "—";
@@ -54,18 +65,22 @@ const StudentDashboard = () => {
           return;
         }
 
-        const [userResult, borrowersResult, borrowingResult, booksResult, requestsResult] =
-          await Promise.allSettled([
-            axios.get(`/users/${storedUser._id}`),
-            axios.get(`/borrowers`),
-            axios.get(`/borrowed-books`),
-            axios.get(`/books`),
-            axios.get(`/borrow-requests/student/${storedUser._id}`),
-          ]);
+        const [
+          userResult,
+          borrowersResult,
+          borrowingResult,
+          booksResult,
+          requestsResult,
+        ] = await Promise.allSettled([
+          axios.get(`/users/${storedUser._id}`),
+          axios.get(`/borrowers`),
+          axios.get(`/borrowed-books`),
+          axios.get(`/books`),
+          axios.get(`/borrow-requests/student/${storedUser._id}`),
+        ]);
 
         if (!active) return;
 
-        // Load the logged-in user's information.
         const apiUser =
           userResult.status === "fulfilled"
             ? userResult.value.data
@@ -74,19 +89,38 @@ const StudentDashboard = () => {
         const normalizedUser = apiUser?.user || apiUser;
 
         setUser(normalizedUser);
-        for (const [label, result] of [["user", userResult], ["borrowers", borrowersResult], ["loans", borrowingResult], ["books", booksResult], ["requests", requestsResult]]) {
-          if (result.status === "rejected") console.error(`Unable to load ${label}:`, result.reason.response?.status, result.reason.response?.data || result.reason);
+        for (const [label, result] of [
+          ["user", userResult],
+          ["borrowers", borrowersResult],
+          ["loans", borrowingResult],
+          ["books", booksResult],
+          ["requests", requestsResult],
+        ]) {
+          if (result.status === "rejected")
+            console.error(
+              `Unable to load ${label}:`,
+              result.reason.response?.status,
+              result.reason.response?.data || result.reason,
+            );
         }
-        if (requestsResult.status === "fulfilled") setRequests(requestsResult.value.data);
+        if (requestsResult.status === "fulfilled")
+          setRequests(requestsResult.value.data);
         if (borrowingResult.status === "fulfilled") {
           const data = borrowingResult.value.data;
-          setBorrowings(Array.isArray(data) ? data : data.borrowings || data.borrowedBooks || []);
+          setBorrowings(
+            Array.isArray(data)
+              ? data
+              : data.borrowings || data.borrowedBooks || [],
+          );
         }
         if (booksResult.status === "fulfilled") {
           const data = booksResult.value.data;
           setBooks(Array.isArray(data) ? data : data.books || []);
         }
-        if (borrowingResult.status !== "fulfilled" && requestsResult.status !== "fulfilled") {
+        if (
+          borrowingResult.status !== "fulfilled" &&
+          requestsResult.status !== "fulfilled"
+        ) {
           setError("Unable to load your loans and borrow requests.");
         } else if (borrowingResult.status !== "fulfilled") {
           setError("Unable to load your borrowing history.");
@@ -96,10 +130,15 @@ const StudentDashboard = () => {
         if (borrowersResult.status === "fulfilled") {
           const data = borrowersResult.value.data;
           const borrowers = Array.isArray(data) ? data : data.borrowers || [];
-          const matches = borrowers.filter((borrower) => String(borrower.user_id) === String(storedUser._id));
-          if (matches.length !== 1) setLinkNotice(matches.length > 1
-            ? "Multiple borrower records are linked to your account. Please contact the librarian."
-            : "Your borrower record could not be linked. Please contact the librarian.");
+          const matches = borrowers.filter(
+            (borrower) => String(borrower.user_id) === String(storedUser._id),
+          );
+          if (matches.length !== 1)
+            setLinkNotice(
+              matches.length > 1
+                ? "Multiple borrower records are linked to your account. Please contact the librarian."
+                : "Your borrower record could not be linked. Please contact the librarian.",
+            );
         }
       } catch (err) {
         console.error("Student dashboard error:", err);
@@ -124,12 +163,10 @@ const StudentDashboard = () => {
     };
   }, []);
 
-  // Map book IDs to book information.
   const bookById = useMemo(() => {
     return new Map(books.map((book) => [String(book.book_id), book]));
   }, [books]);
 
-  // Currently borrowed books.
   const activeBorrowings = useMemo(() => {
     return borrowings.filter((record) =>
       ["borrowed", "overdue"].includes(
@@ -138,7 +175,6 @@ const StudentDashboard = () => {
     );
   }, [borrowings]);
 
-  // Books whose due date has passed and which are not returned.
   const overdueBorrowings = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -149,12 +185,13 @@ const StudentDashboard = () => {
 
       const dueDate = new Date(record.due_date);
 
-      return String(record.status || "").toLowerCase() === "overdue" ||
-        (!Number.isNaN(dueDate.getTime()) && dueDate < today);
+      return (
+        String(record.status || "").toLowerCase() === "overdue" ||
+        (!Number.isNaN(dueDate.getTime()) && dueDate < today)
+      );
     });
   }, [activeBorrowings]);
 
-  // Completed borrowing records.
   const returnedCount = useMemo(() => {
     return borrowings.filter((record) =>
       ["returned", "lost"].includes(String(record.status || "").toLowerCase()),
@@ -239,7 +276,11 @@ const StudentDashboard = () => {
       <div className="student-welcome">
         <div>
           <Typography.Title level={2}>
-            Welcome{user?.name || user?.username ? `, ${user.name || user.username}` : ""}!
+            Welcome
+            {user?.name || user?.username
+              ? `, ${user.name || user.username}`
+              : ""}
+            !
           </Typography.Title>
 
           <Typography.Paragraph>
@@ -316,17 +357,54 @@ const StudentDashboard = () => {
       </Row>
 
       {/* Recent borrowing activity */}
-      <Card className="student-recent-card" title={`Recent Borrow Requests (${requests.filter((request) => request.status === "Pending").length} pending)`}>
-        {requests.length === 0 ? <Empty description="No borrow requests to display" /> : (
+      <Card
+        className="student-recent-card"
+        title={`Recent Borrow Requests (${requests.filter((request) => request.status === "Pending").length} pending)`}
+      >
+        {requests.length === 0 ? (
+          <Empty description="No borrow requests to display" />
+        ) : (
           <Table
             rowKey="request_id"
             dataSource={requests}
             pagination={{ pageSize: 5 }}
             columns={[
-              { title: "Book", dataIndex: "book_title", key: "book_title", render: (title, request) => title || `Book #${request.book_id}` },
-              { title: "Requested", dataIndex: "requested_at", key: "requested_at", render: formatDate },
-              { title: "Status", dataIndex: "status", key: "status", render: (status) => <Tag color={status === "Approved" ? "success" : status === "Rejected" ? "error" : "processing"}>{status}</Tag> },
-              { title: "Reason", dataIndex: "rejection_reason", key: "rejection_reason", render: (reason) => reason || "—" },
+              {
+                title: "Book",
+                dataIndex: "book_title",
+                key: "book_title",
+                render: (title, request) => title || `Book #${request.book_id}`,
+              },
+              {
+                title: "Requested",
+                dataIndex: "requested_at",
+                key: "requested_at",
+                render: formatDate,
+              },
+              {
+                title: "Status",
+                dataIndex: "status",
+                key: "status",
+                render: (status) => (
+                  <Tag
+                    color={
+                      status === "Approved"
+                        ? "success"
+                        : status === "Rejected"
+                          ? "error"
+                          : "processing"
+                    }
+                  >
+                    {status}
+                  </Tag>
+                ),
+              },
+              {
+                title: "Reason",
+                dataIndex: "rejection_reason",
+                key: "rejection_reason",
+                render: (reason) => reason || "—",
+              },
             ]}
           />
         )}

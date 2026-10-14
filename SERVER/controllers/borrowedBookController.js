@@ -54,7 +54,6 @@ const borrowDetailsPipeline = (match = {}) => [
   },
 ];
 
-// GET all borrowed books with details
 const getBorrowedBooks = async (req, res) => {
   try {
     const borrowedBooks = await collection("borrowed_books");

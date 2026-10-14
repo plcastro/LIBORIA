@@ -8,13 +8,11 @@ const ReturnBookModal = ({ open, onClose, onReturned, initialValues, REASONS }) 
   const [messageApi, contextHolder] = message.useMessage();
   const colProps = { xs: 24, md: 12 };
 
-  // Calculate penalty based on returned date and violations
   const recalculatePenalty = () => {
     const returnedDate = form.getFieldValue("returnedDate") || dayjs();
     const dueDate = dayjs(initialValues?.due_date);
     let violations = form.getFieldValue("violation") || [];
 
-    // Automatically add/remove "Late Return"
     if (returnedDate.isAfter(dueDate)) {
       if (!violations.includes("Late Return")) violations.push("Late Return");
     } else {
@@ -23,7 +21,6 @@ const ReturnBookModal = ({ open, onClose, onReturned, initialValues, REASONS }) 
 
     form.setFieldsValue({ violation: violations });
 
-    // Calculate penalty
     const daysLate = returnedDate.isAfter(dueDate)
       ? returnedDate.diff(dueDate, "day")
       : 0;

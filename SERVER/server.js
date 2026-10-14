@@ -26,7 +26,6 @@ const isAllowedOrigin = (origin) => {
   return allowedOrigins.includes(origin.replace(/\/+$/, ""));
 };
 
-// CORS configuration
 app.use(
   cors({
     origin(origin, callback) {
@@ -46,7 +45,6 @@ app.use(
 
 app.use(express.json());
 
-// Validate non-GET requests
 app.use((req, res, next) => {
   if (["GET", "HEAD", "OPTIONS"].includes(req.method)) {
     return next();
@@ -60,7 +58,6 @@ app.use((req, res, next) => {
     });
   }
 
-  // Require the custom header for requests carrying the session cookie.
   if (
     req.headers.cookie?.includes("liboria_session=") &&
     req.headers["x-liboria-request"] !== "1"
@@ -73,7 +70,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// Import routes
 const userRoutes = require("./routes/userRoutes");
 const bookRoutes = require("./routes/bookRoutes");
 const borrowerRoutes = require("./routes/borrowerRoutes");
@@ -81,7 +77,6 @@ const borrowedBookRoutes = require("./routes/borrowedBookRoutes");
 const returnedBookRoutes = require("./routes/returnedBookRoutes");
 const borrowRequestRoutes = require("./routes/borrowRequestRoutes");
 
-// Allow a brief MongoDB reconnect before handling API requests.
 app.use("/api", (req, res, next) => {
   const connection = mongoose.connection;
 
@@ -102,10 +97,8 @@ app.use("/api", (req, res, next) => {
   connection.once("connected", onConnected);
 });
 
-// Public user routes, including login and signup
 app.use("/api/users", userRoutes);
 
-// Authentication for the remaining API routes
 app.use("/api", authenticate);
 
 app.use("/api/books", bookRoutes);
@@ -115,7 +108,6 @@ app.use("/api/returned-books", returnedBookRoutes);
 app.use("/api/records", require("./routes/recordRoutes"));
 app.use("/api/borrow-requests", borrowRequestRoutes);
 
-// Error handler
 app.use((err, req, res, next) => {
   console.error("Server error:", err.message);
 
@@ -134,7 +126,6 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Connect to MongoDB and start the server
 connectToDatabase()
   .then(() => {
     const port = Number(process.env.PORT || 8000);

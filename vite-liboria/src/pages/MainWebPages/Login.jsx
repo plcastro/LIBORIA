@@ -98,7 +98,6 @@ const Login = () => {
         localStorage.setItem("rememberMe", "false");
       }
 
-      // Redirect based on account type
       if (["student", "non-librarian"].includes(user.account_type)) {
         navigate("/student/dashboard");
       } else if (user.account_type === "librarian") {

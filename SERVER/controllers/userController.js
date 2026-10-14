@@ -3,9 +3,17 @@ const crypto = require("crypto");
 const bcrypt = require("bcrypt");
 const User = require("../models/User");
 const mongoose = require("mongoose");
-const { ensureBorrowerForUser, ensureBorrowerIndex } = require("../services/borrowerLink");
+const {
+  ensureBorrowerForUser,
+  ensureBorrowerIndex,
+} = require("../services/borrowerLink");
 const { pickSelfProfileFields } = require("../services/selfProfile");
-const { cookieName, sign, cookieOptions, clearCookieOptions } = require('../middleware/auth');
+const {
+  cookieName,
+  sign,
+  cookieOptions,
+  clearCookieOptions,
+} = require("../middleware/auth");
 
 const toId = (value) => {
   const numberValue = Number(value);
@@ -30,7 +38,6 @@ const findPublicUser = async (users, _id) =>
     },
   );
 
-// GET all users
 const getUsers = async (req, res) => {
   try {
     const results = await User.find(
@@ -50,7 +57,6 @@ const getUsers = async (req, res) => {
   }
 };
 
-// GET user by ID
 const getUserById = async (req, res) => {
   try {
     const userId = req.params.id || req.params._id;
@@ -78,7 +84,8 @@ const updateOwnProfile = async (req, res) => {
     if (error) return res.status(400).json({ error });
 
     const duplicateConditions = [];
-    if (fields.username) duplicateConditions.push({ username: fields.username });
+    if (fields.username)
+      duplicateConditions.push({ username: fields.username });
     if (fields.email) duplicateConditions.push({ email: fields.email });
     if (duplicateConditions.length) {
       const duplicate = await User.findOne({
@@ -87,9 +94,10 @@ const updateOwnProfile = async (req, res) => {
       }).select("username email");
       if (duplicate) {
         return res.status(409).json({
-          error: duplicate.username === fields.username
-            ? "Username already exists"
-            : "Email already exists",
+          error:
+            duplicate.username === fields.username
+              ? "Username already exists"
+              : "Email already exists",
         });
       }
     }
@@ -102,13 +110,16 @@ const updateOwnProfile = async (req, res) => {
     if (!user) return res.status(404).json({ error: "User not found" });
     return res.json(user);
   } catch (err) {
-    if (err.code === 11000) return res.status(409).json({ error: "Username or email already exists" });
-    if (err.name === "ValidationError") return res.status(400).json({ error: err.message });
+    if (err.code === 11000)
+      return res
+        .status(409)
+        .json({ error: "Username or email already exists" });
+    if (err.name === "ValidationError")
+      return res.status(400).json({ error: err.message });
     return handleError(res, err);
   }
 };
 
-// CREATE user (for admin)
 const createUser = async (req, res) => {
   try {
     const { username, password, name, email, account_type } = req.body || {};
@@ -119,7 +130,6 @@ const createUser = async (req, res) => {
       });
     }
 
-    // Check for duplicate username
     const existingUsername = await User.findOne({ username });
 
     if (existingUsername) {
@@ -128,7 +138,6 @@ const createUser = async (req, res) => {
       });
     }
 
-    // Check for duplicate email, if provided
     if (email) {
       const existingEmail = await User.findOne({ email });
 
@@ -140,7 +149,7 @@ const createUser = async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    // Generate a sequential user ID
+
     const userid = await getNextSequence("users");
 
     const user = await User.create({
@@ -149,7 +158,9 @@ const createUser = async (req, res) => {
       password: hashedPassword,
       name: name?.trim() || null,
       email: email?.trim().toLowerCase() || null,
-      account_type: ['librarian', 'non-librarian'].includes(account_type) ? account_type : 'librarian',
+      account_type: ["librarian", "non-librarian"].includes(account_type)
+        ? account_type
+        : "librarian",
     });
 
     return res.status(201).json({
@@ -187,8 +198,6 @@ const createUser = async (req, res) => {
     });
   }
 };
-
-// REGISTER user (for public signup)
 
 const register = async (req, res) => {
   try {
@@ -251,14 +260,19 @@ const register = async (req, res) => {
     try {
       await session.withTransaction(async () => {
         const userid = await getNextSequence("users", session);
-        [user] = await User.create([{
-          userid,
-          name: normalizedName,
-          email: normalizedEmail,
-          username: normalizedUsername,
-          password: hashedPassword,
-          account_type: "student",
-        }], { session });
+        [user] = await User.create(
+          [
+            {
+              userid,
+              name: normalizedName,
+              email: normalizedEmail,
+              username: normalizedUsername,
+              password: hashedPassword,
+              account_type: "student",
+            },
+          ],
+          { session },
+        );
         await ensureBorrowerForUser(user, session);
       });
     } finally {
@@ -295,7 +309,6 @@ const register = async (req, res) => {
   }
 };
 
-// UPDATE user (including account_type)
 const updateUser = async (req, res) => {
   try {
     const userId = toId(req.params.id);
@@ -303,15 +316,29 @@ const updateUser = async (req, res) => {
     const update = {};
     const existingUser = await User.findById(userId).select("account_type");
     if (!existingUser) return res.status(404).json({ error: "User not found" });
-    if (account_type && !["student", "non-librarian", "librarian"].includes(account_type)) {
+    if (
+      account_type &&
+      !["student", "non-librarian", "librarian"].includes(account_type)
+    ) {
       return res.status(400).json({ error: "Invalid account type" });
     }
-    if (account_type === "librarian" && existingUser.account_type !== "librarian") {
-      return res.status(403).json({ error: "Librarian accounts must be created from Staff List" });
+    if (
+      account_type === "librarian" &&
+      existingUser.account_type !== "librarian"
+    ) {
+      return res
+        .status(403)
+        .json({ error: "Librarian accounts must be created from Staff List" });
     }
-    if (existingUser.account_type === "librarian" && account_type && account_type !== "librarian" &&
-        await User.countDocuments({ account_type: "librarian" }) <= 1) {
-      return res.status(409).json({ error: "The last librarian cannot be demoted" });
+    if (
+      existingUser.account_type === "librarian" &&
+      account_type &&
+      account_type !== "librarian" &&
+      (await User.countDocuments({ account_type: "librarian" })) <= 1
+    ) {
+      return res
+        .status(409)
+        .json({ error: "The last librarian cannot be demoted" });
     }
 
     if (username) update.username = username;
@@ -452,15 +479,18 @@ const updateUserPassword = async (req, res) => {
   }
 };
 
-// DELETE user
 const deleteUser = async (req, res) => {
   try {
     const userId = toId(req.params.id);
     const existingUser = await User.findById(userId).select("account_type");
     if (!existingUser) return res.status(404).json({ error: "User not found" });
-    if (existingUser.account_type === "librarian" &&
-        await User.countDocuments({ account_type: "librarian" }) <= 1) {
-      return res.status(409).json({ error: "The last librarian cannot be deleted" });
+    if (
+      existingUser.account_type === "librarian" &&
+      (await User.countDocuments({ account_type: "librarian" })) <= 1
+    ) {
+      return res
+        .status(409)
+        .json({ error: "The last librarian cannot be deleted" });
     }
     const result = await User.deleteOne({ _id: userId });
 
@@ -474,7 +504,6 @@ const deleteUser = async (req, res) => {
   }
 };
 
-// LOGIN user
 const login = async (req, res) => {
   try {
     const { username, password } = req.body || {};
@@ -522,7 +551,6 @@ const login = async (req, res) => {
   }
 };
 
-// FORGOT PASSWORD - Generate reset token (Development version with test link)
 const forgotPassword = async (req, res) => {
   try {
     const email = req.body?.email?.trim().toLowerCase();
@@ -544,6 +572,7 @@ const forgotPassword = async (req, res) => {
 
     user.reset_token = resetToken;
     user.reset_token_expiry = resetTokenExpiry;
+    console.log(user.reset_token); //testing purposes only
     await user.save();
 
     const isDevelopment = process.env.NODE_ENV !== "production";
@@ -560,7 +589,6 @@ const forgotPassword = async (req, res) => {
   }
 };
 
-// VERIFY RESET TOKEN - Check if token is valid
 const verifyResetToken = async (req, res) => {
   try {
     const token = req.body?.token?.trim();
@@ -594,7 +622,6 @@ const verifyResetToken = async (req, res) => {
   }
 };
 
-// RESET PASSWORD - Update password using reset token
 const resetPassword = async (req, res) => {
   try {
     const token = req.body?.token?.trim();
@@ -645,7 +672,6 @@ const resetPassword = async (req, res) => {
   }
 };
 
-// GET all borrowing records with related data
 const getBorrowingRecords = async (req, res) => {
   try {
     const borrowedBooks = await collection("borrowed_books");
@@ -706,10 +732,17 @@ const getBorrowingRecords = async (req, res) => {
 
 module.exports = {
   me: async (req, res) => {
-    const user = await User.findById(req.user.id).select('_id userid username name email account_type').lean();
-    return user ? res.json({ user }) : res.status(401).json({ error: 'Session user not found' });
+    const user = await User.findById(req.user.id)
+      .select("_id userid username name email account_type")
+      .lean();
+    return user
+      ? res.json({ user })
+      : res.status(401).json({ error: "Session user not found" });
   },
-  logout: (req, res) => { res.clearCookie(cookieName, clearCookieOptions()); res.json({ message: 'Logged out' }); },
+  logout: (req, res) => {
+    res.clearCookie(cookieName, clearCookieOptions());
+    res.json({ message: "Logged out" });
+  },
   getUsers,
   getUserById,
   updateOwnProfile,

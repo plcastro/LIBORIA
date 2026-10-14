@@ -55,13 +55,19 @@ const Sidebar = () => {
     };
   }, []);
 
-  // Update selected menu based on the current path
-  const selectedCurrent = location.pathname.includes("/dashboard/view/borrow") ? "1"
-    : location.pathname.includes("/dashboard/view/requests") ? "6"
-    : location.pathname.includes("/dashboard/view/return") ? "2"
-    : location.pathname.includes("/dashboard/view/records") ? "3"
-    : location.pathname.includes("/dashboard/view/staff") ? "4"
-    : location.pathname.includes("/dashboard/view/profile") ? "5" : current;
+  const selectedCurrent = location.pathname.includes("/dashboard/view/borrow")
+    ? "1"
+    : location.pathname.includes("/dashboard/view/requests")
+      ? "6"
+      : location.pathname.includes("/dashboard/view/return")
+        ? "2"
+        : location.pathname.includes("/dashboard/view/records")
+          ? "3"
+          : location.pathname.includes("/dashboard/view/staff")
+            ? "4"
+            : location.pathname.includes("/dashboard/view/profile")
+              ? "5"
+              : current;
 
   const onClickMenu = ({ key }) => {
     setCurrent(key);

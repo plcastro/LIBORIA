@@ -1,6 +1,5 @@
 const { collection, getNextSequence } = require("../config/database");
 
-
 const toId = (value) => {
   const numberValue = Number(value);
   return Number.isNaN(numberValue) ? value : numberValue;
@@ -11,18 +10,20 @@ const handleError = (res, err) => {
   return res.status(500).json({ error: "Internal Server Error" });
 };
 
-// GET all borrowers
 const getBorrowers = async (req, res) => {
   try {
     const borrowers = await collection("borrowers");
-    const results = await borrowers.find(req.user.account_type === 'librarian' ? {} : { user_id: req.user.id }).toArray();
+    const results = await borrowers
+      .find(
+        req.user.account_type === "librarian" ? {} : { user_id: req.user.id },
+      )
+      .toArray();
     res.json(results);
   } catch (err) {
     handleError(res, err);
   }
 };
 
-// GET borrower by ID
 const getBorrowerById = async (req, res) => {
   try {
     const borrowers = await collection("borrowers");
@@ -40,20 +41,20 @@ const getBorrowerById = async (req, res) => {
   }
 };
 
-// CREATE borrower
 const createBorrower = async (req, res) => {
   try {
     const { name, created_at } = req.body;
 
-    if (!name ) {
-      return res
-        .status(400)
-        .json({ error: "Name is required" });
+    if (!name) {
+      return res.status(400).json({ error: "Name is required" });
     }
 
     const borrowers = await collection("borrowers");
     const existingBorrower = await borrowers.findOne({
-      name: { $regex: `^${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, $options: "i" },
+      name: {
+        $regex: `^${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`,
+        $options: "i",
+      },
     });
 
     if (existingBorrower) {
@@ -73,7 +74,6 @@ const createBorrower = async (req, res) => {
   }
 };
 
-// UPDATE borrower
 const updateBorrower = async (req, res) => {
   try {
     const borrowerId = toId(req.params.id);
@@ -92,7 +92,7 @@ const updateBorrower = async (req, res) => {
     const result = await borrowers.findOneAndUpdate(
       { borrower_id: borrowerId },
       { $set: { name } },
-      { returnDocument: "after" }
+      { returnDocument: "after" },
     );
     const updatedBorrower = result.value || result;
 
@@ -106,11 +106,12 @@ const updateBorrower = async (req, res) => {
   }
 };
 
-// DELETE borrower
 const deleteBorrower = async (req, res) => {
   try {
     const borrowers = await collection("borrowers");
-    const result = await borrowers.deleteOne({ borrower_id: toId(req.params.id) });
+    const result = await borrowers.deleteOne({
+      borrower_id: toId(req.params.id),
+    });
 
     if (result.deletedCount === 0) {
       return res.status(404).json({ error: "Borrower not found" });

@@ -64,7 +64,6 @@ const DisplayBook = () => {
     }));
   };
 
-  // Fetch all books
   const fetchBooks = async () => {
     setLoading(true);
 
@@ -83,7 +82,6 @@ const DisplayBook = () => {
     fetchBooks();
   }, []);
 
-  // Filter books on search
   useEffect(() => {
     if (!searchValue.trim()) {
       setFilteredBooks(books);
@@ -103,13 +101,11 @@ const DisplayBook = () => {
     setPage(0);
   }, [searchValue, books]);
 
-  // Open delete modal
   const handleDeleteBook = (book) => {
     setSelectedBook(book);
     setDeleteModalOpen(true);
   };
 
-  // Confirm delete
   const handleConfirmDelete = async (book) => {
     try {
       await axios.delete(`/books/${book.book_id}`);
@@ -298,7 +294,7 @@ const DisplayBook = () => {
                     <TableCell>
                       <Box
                         component="img"
-                        src={record.image || "https://via.placeholder.com/60"}
+                        src={record.image || "https:via.placeholder.com/60"}
                         alt={record.title || "Book cover"}
                         sx={{
                           width: 100,

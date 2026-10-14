@@ -19,7 +19,6 @@ const connectToDatabase = async () => {
   }
 };
 
-// Get a MongoDB collection using the active Mongoose connection
 const collection = (name) => {
   if (mongoose.connection.readyState !== 1) {
     throw new Error("MongoDB is not connected");
@@ -28,7 +27,6 @@ const collection = (name) => {
   return mongoose.connection.db.collection(name);
 };
 
-// Generate sequential IDs using a counters collection
 const getNextSequence = async (sequenceName, session) => {
   const counters = collection("counters");
 

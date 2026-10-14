@@ -19,7 +19,7 @@ const linkBorrower = async (user, session) => {
   const borrowers = collection("borrowers");
   const userId = String(user._id);
   const options = { session };
-  // A write to this counter serializes concurrent link attempts when the index is unavailable.
+
   const borrowerId = await getNextSequence("borrowers", session);
   const existing = await borrowers.findOne({ user_id: userId }, options);
   if (existing) return existing;

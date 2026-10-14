@@ -34,7 +34,7 @@ const DeleteBookModal = ({ open, setOpen, book, onDelete }) => {
         okText="Yes, Delete"
         okType="danger"
         cancelText="Cancel"
-        confirmLoading={loading} // disables OK while loading
+        confirmLoading={loading}
         centered
       >
         {book && (

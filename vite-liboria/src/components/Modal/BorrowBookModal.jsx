@@ -93,7 +93,6 @@ const BorrowBookModal = ({ open, onClose, onSubmit, initialValues }) => {
     }
   };
 
-  // Limit 14 days
   const disabledDate = (current) => {
     const borrowDate = form.getFieldValue("created_at") || dayjs();
     const minDate = borrowDate.add(1, "day");

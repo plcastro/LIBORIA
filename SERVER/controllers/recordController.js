@@ -1,6 +1,5 @@
 const { collection } = require("../config/database");
 
-// GET all borrowing and return records (combined view)
 const getAllRecords = async (req, res) => {
   try {
     const borrowedBooks = await collection("borrowed_books");

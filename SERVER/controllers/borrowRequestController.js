@@ -1,15 +1,20 @@
-
 const { collection, getNextSequence } = require("../config/database");
 const User = require("../models/User");
 const mongoose = require("mongoose");
-const { ensureBorrowerForUser, ensureBorrowerIndex } = require("../services/borrowerLink");
-const { activeStatus, getBorrowUsage, getMaxBorrowedBooks, limitMessage } = require("../services/borrowLimit");
+const {
+  ensureBorrowerForUser,
+  ensureBorrowerIndex,
+} = require("../services/borrowerLink");
+const {
+  activeStatus,
+  getBorrowUsage,
+  getMaxBorrowedBooks,
+  limitMessage,
+} = require("../services/borrowLimit");
 
 const toId = (value) => {
   const numberValue = Number(value);
-  return value !== "" && !Number.isNaN(numberValue)
-    ? numberValue
-    : value;
+  return value !== "" && !Number.isNaN(numberValue) ? numberValue : value;
 };
 
 const handleError = (res, err) => {
@@ -17,7 +22,6 @@ const handleError = (res, err) => {
   return res.status(500).json({ error: "Internal Server Error" });
 };
 
-// Student submits a request for one book.
 const createRequest = async (req, res) => {
   try {
     const { user_id, book_id } = req.body || {};
@@ -28,9 +32,11 @@ const createRequest = async (req, res) => {
       });
     }
 
-    const user = await User.findById(user_id).select("_id name username account_type");
+    const user = await User.findById(user_id).select(
+      "_id name username account_type",
+    );
 
-    if (!user || !['student', 'non-librarian'].includes(user.account_type)) {
+    if (!user || !["student", "non-librarian"].includes(user.account_type)) {
       return res.status(403).json({
         error: "A valid student account is required",
       });
@@ -115,39 +121,40 @@ const getStudentLimit = async (req, res) => {
   }
 };
 
-// Get all requests for librarian review.
 const getAllRequests = async (req, res) => {
   try {
     const requests = await collection("borrow_requests");
 
-    const results = await requests.aggregate([
-      {
-        $lookup: {
-          from: "books",
-          localField: "book_id",
-          foreignField: "book_id",
-          as: "book",
+    const results = await requests
+      .aggregate([
+        {
+          $lookup: {
+            from: "books",
+            localField: "book_id",
+            foreignField: "book_id",
+            as: "book",
+          },
         },
-      },
-      { $unwind: { path: "$book", preserveNullAndEmptyArrays: true } },
-      { $sort: { requested_at: -1 } },
-      {
-        $project: {
-          _id: 0,
-          request_id: 1,
-          user_id: 1,
-          student_name: 1,
-          book_id: 1,
-          status: 1,
-          requested_at: 1,
-          reviewed_at: 1,
-          rejection_reason: 1,
-          borrow_id: 1,
-          book_title: "$book.title",
-          available_copies: "$book.available_copies",
+        { $unwind: { path: "$book", preserveNullAndEmptyArrays: true } },
+        { $sort: { requested_at: -1 } },
+        {
+          $project: {
+            _id: 0,
+            request_id: 1,
+            user_id: 1,
+            student_name: 1,
+            book_id: 1,
+            status: 1,
+            requested_at: 1,
+            reviewed_at: 1,
+            rejection_reason: 1,
+            borrow_id: 1,
+            book_title: "$book.title",
+            available_copies: "$book.available_copies",
+          },
         },
-      },
-    ]).toArray();
+      ])
+      .toArray();
 
     return res.json(results);
   } catch (err) {
@@ -155,7 +162,6 @@ const getAllRequests = async (req, res) => {
   }
 };
 
-// Get one student's requests.
 const getStudentRequests = async (req, res) => {
   try {
     const userId = req.params.userId;
@@ -166,33 +172,35 @@ const getStudentRequests = async (req, res) => {
 
     const requests = await collection("borrow_requests");
 
-    const results = await requests.aggregate([
-      { $match: { user_id: String(userId) } },
-      {
-        $lookup: {
-          from: "books",
-          localField: "book_id",
-          foreignField: "book_id",
-          as: "book",
+    const results = await requests
+      .aggregate([
+        { $match: { user_id: String(userId) } },
+        {
+          $lookup: {
+            from: "books",
+            localField: "book_id",
+            foreignField: "book_id",
+            as: "book",
+          },
         },
-      },
-      { $unwind: { path: "$book", preserveNullAndEmptyArrays: true } },
-      { $sort: { requested_at: -1 } },
-      {
-        $project: {
-          _id: 0,
-          request_id: 1,
-          book_id: 1,
-          status: 1,
-          requested_at: 1,
-          reviewed_at: 1,
-          rejection_reason: 1,
-          borrow_id: 1,
-          book_title: "$book.title",
-          book_author: "$book.author_name",
+        { $unwind: { path: "$book", preserveNullAndEmptyArrays: true } },
+        { $sort: { requested_at: -1 } },
+        {
+          $project: {
+            _id: 0,
+            request_id: 1,
+            book_id: 1,
+            status: 1,
+            requested_at: 1,
+            reviewed_at: 1,
+            rejection_reason: 1,
+            borrow_id: 1,
+            book_title: "$book.title",
+            book_author: "$book.author_name",
+          },
         },
-      },
-    ]).toArray();
+      ])
+      .toArray();
 
     return res.json(results);
   } catch (err) {
@@ -200,7 +208,6 @@ const getStudentRequests = async (req, res) => {
   }
 };
 
-// Librarian approves a pending request.
 const approveRequest = async (req, res) => {
   const requestId = toId(req.params.id);
   const session = await mongoose.startSession();
@@ -211,43 +218,99 @@ const approveRequest = async (req, res) => {
       const requests = collection("borrow_requests");
       const books = collection("books");
       const borrowedBooks = collection("borrowed_books");
-      const request = await requests.findOne({ request_id: requestId }, { session });
-      if (!request) { outcome = { status: 404, error: "Request not found" }; return; }
-      if (request.status !== "Pending") { outcome = { status: 409, error: "Only pending requests can be approved" }; return; }
-      const user = await User.findById(request.user_id).session(session).select("_id name username account_type");
-      if (!user) { outcome = { status: 404, error: "Student account not found" }; return; }
+      const request = await requests.findOne(
+        { request_id: requestId },
+        { session },
+      );
+      if (!request) {
+        outcome = { status: 404, error: "Request not found" };
+        return;
+      }
+      if (request.status !== "Pending") {
+        outcome = {
+          status: 409,
+          error: "Only pending requests can be approved",
+        };
+        return;
+      }
+      const user = await User.findById(request.user_id)
+        .session(session)
+        .select("_id name username account_type");
+      if (!user) {
+        outcome = { status: 404, error: "Student account not found" };
+        return;
+      }
       const borrower = await ensureBorrowerForUser(user, session);
-      const usage = await getBorrowUsage(user._id, borrower.borrower_id, session);
+      const usage = await getBorrowUsage(
+        user._id,
+        borrower.borrower_id,
+        session,
+      );
       if (usage.active >= getMaxBorrowedBooks()) {
         outcome = { status: 409, error: limitMessage(usage.limit) };
         return;
       }
-      const activeLoan = await borrowedBooks.findOne({ borrower_id: borrower.borrower_id, book_id: request.book_id, status: activeStatus }, { session });
-      if (activeLoan) { outcome = { status: 409, error: "This student already borrowed this book" }; return; }
-      const bookUpdate = await books.updateOne({ book_id: request.book_id, available_copies: { $gt: 0 } }, { $inc: { available_copies: -1 } }, { session });
-      if (bookUpdate.modifiedCount !== 1) { outcome = { status: 400, error: "No copies are currently available" }; return; }
+      const activeLoan = await borrowedBooks.findOne(
+        {
+          borrower_id: borrower.borrower_id,
+          book_id: request.book_id,
+          status: activeStatus,
+        },
+        { session },
+      );
+      if (activeLoan) {
+        outcome = {
+          status: 409,
+          error: "This student already borrowed this book",
+        };
+        return;
+      }
+      const bookUpdate = await books.updateOne(
+        { book_id: request.book_id, available_copies: { $gt: 0 } },
+        { $inc: { available_copies: -1 } },
+        { session },
+      );
+      if (bookUpdate.modifiedCount !== 1) {
+        outcome = { status: 400, error: "No copies are currently available" };
+        return;
+      }
       const borrowId = await getNextSequence("borrowed_books", session);
       const dateBorrowed = new Date();
       const dueDate = new Date(dateBorrowed);
       dueDate.setDate(dueDate.getDate() + 14);
-      await borrowedBooks.insertOne({
-        borrow_id: borrowId,
-        borrower_id: borrower.borrower_id,
-        book_id: request.book_id,
-        date_borrowed: dateBorrowed,
-        due_date: dueDate,
-        status: "Borrowed",
-        created_at: new Date(),
-      }, { session });
-      const result = await requests.updateOne(
-        { request_id: requestId, status: "Pending" },
-        { $set: { status: "Approved", reviewed_at: new Date(), borrow_id: borrowId } },
+      await borrowedBooks.insertOne(
+        {
+          borrow_id: borrowId,
+          borrower_id: borrower.borrower_id,
+          book_id: request.book_id,
+          date_borrowed: dateBorrowed,
+          due_date: dueDate,
+          status: "Borrowed",
+          created_at: new Date(),
+        },
         { session },
       );
-      if (result.modifiedCount !== 1) throw new Error("Request status changed during approval");
-      outcome = { status: 200, message: "Request approved and book marked as borrowed", borrow_id: borrowId };
+      const result = await requests.updateOne(
+        { request_id: requestId, status: "Pending" },
+        {
+          $set: {
+            status: "Approved",
+            reviewed_at: new Date(),
+            borrow_id: borrowId,
+          },
+        },
+        { session },
+      );
+      if (result.modifiedCount !== 1)
+        throw new Error("Request status changed during approval");
+      outcome = {
+        status: 200,
+        message: "Request approved and book marked as borrowed",
+        borrow_id: borrowId,
+      };
     });
-    if (outcome.error) return res.status(outcome.status).json({ error: outcome.error });
+    if (outcome.error)
+      return res.status(outcome.status).json({ error: outcome.error });
     return res.json({ message: outcome.message, borrow_id: outcome.borrow_id });
   } catch (err) {
     return handleError(res, err);
@@ -256,7 +319,6 @@ const approveRequest = async (req, res) => {
   }
 };
 
-// Librarian rejects a pending request.
 const rejectRequest = async (req, res) => {
   try {
     const requestId = toId(req.params.id);
@@ -271,7 +333,7 @@ const rejectRequest = async (req, res) => {
           reviewed_at: new Date(),
           rejection_reason: reason || "Request rejected by librarian",
         },
-      }
+      },
     );
 
     if (result.matchedCount === 0) {

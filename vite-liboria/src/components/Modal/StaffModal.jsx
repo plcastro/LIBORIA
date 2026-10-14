@@ -315,7 +315,7 @@ const StaffModal = ({
                   color: "#fff",
                   border: "none",
                 }}
-                disabled={selectedStaff?._id === loggedInUserId} // disable if same user
+                disabled={selectedStaff?._id === loggedInUserId}
               >
                 Yes, Delete
               </Button>

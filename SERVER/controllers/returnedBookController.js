@@ -58,24 +58,24 @@ const returnDetailsPipeline = (match = {}) => [
       author_name: "$book.author_name",
       author: "$book.author_name",
       borrower_name: "$borrower.name",
-      
+
       email: "$borrower.email",
     },
   },
 ];
 
-// GET all returned books with details
 const getReturnedBooks = async (req, res) => {
   try {
     const returnedBooks = await collection("returned_books");
-    const results = await returnedBooks.aggregate(returnDetailsPipeline()).toArray();
+    const results = await returnedBooks
+      .aggregate(returnDetailsPipeline())
+      .toArray();
     res.json(results);
   } catch (err) {
     handleError(res, err);
   }
 };
 
-// GET returned book by ID
 const getReturnedBookById = async (req, res) => {
   try {
     const returnedBooks = await collection("returned_books");
@@ -93,7 +93,6 @@ const getReturnedBookById = async (req, res) => {
   }
 };
 
-// RETURN a book (mark as returned)
 const returnBook = async (req, res) => {
   try {
     const borrowId = toId(req.body?.borrow_id);
@@ -131,7 +130,9 @@ const returnBook = async (req, res) => {
       penaltyValue > 0 &&
       amountPaidValue < penaltyValue
     ) {
-      return res.status(400).json({ error: "Amount paid must cover the penalty" });
+      return res
+        .status(400)
+        .json({ error: "Amount paid must cover the penalty" });
     }
 
     const returnId = await getNextSequence("returned_books");
@@ -148,13 +149,17 @@ const returnBook = async (req, res) => {
     if (!violationsArray.includes("Lost")) {
       await books.updateOne(
         { book_id: borrowRecord.book_id },
-        { $inc: { available_copies: 1 } }
+        { $inc: { available_copies: 1 } },
       );
     }
 
     await borrowedBooks.updateOne(
       { borrow_id: borrowId },
-      { $set: { status: violationsArray.includes("Lost") ? "Lost" : "Returned" } }
+      {
+        $set: {
+          status: violationsArray.includes("Lost") ? "Lost" : "Returned",
+        },
+      },
     );
 
     res.status(201).json({
@@ -168,7 +173,6 @@ const returnBook = async (req, res) => {
   }
 };
 
-// UPDATE returned book record
 const updateReturnedBook = async (req, res) => {
   try {
     const returnId = toId(req.params.id);
@@ -179,11 +183,13 @@ const updateReturnedBook = async (req, res) => {
       { return_id: returnId },
       {
         $set: {
-          violation: Array.isArray(violation) ? violation.join(", ") : violation,
+          violation: Array.isArray(violation)
+            ? violation.join(", ")
+            : violation,
           penalty: Number(penalty) || 0,
           amount_paid: Number(amount_paid) || 0,
         },
-      }
+      },
     );
 
     if (result.matchedCount === 0) {
@@ -200,7 +206,6 @@ const updateReturnedBook = async (req, res) => {
   }
 };
 
-// DELETE returned book record
 const deleteReturnedBook = async (req, res) => {
   try {
     const returnId = toId(req.params.id);
@@ -223,11 +228,11 @@ const deleteReturnedBook = async (req, res) => {
 
     await borrowedBooks.updateOne(
       { borrow_id: returnRecord.borrow_id },
-      { $set: { status: "Borrowed" }, $unset: { returned_date: "" } }
+      { $set: { status: "Borrowed" }, $unset: { returned_date: "" } },
     );
     await books.updateOne(
       { book_id: borrowRecord.book_id },
-      { $inc: { available_copies: -1 } }
+      { $inc: { available_copies: -1 } },
     );
     await returnedBooks.deleteOne({ return_id: returnId });
 
@@ -237,7 +242,6 @@ const deleteReturnedBook = async (req, res) => {
   }
 };
 
-// GET return statistics
 const getReturnStats = async (req, res) => {
   try {
     const returnedBooks = await collection("returned_books");
@@ -271,7 +275,6 @@ const getReturnStats = async (req, res) => {
   }
 };
 
-// GET returns by date range
 const getReturnsByDateRange = async (req, res) => {
   try {
     const { start_date, end_date } = req.query;
@@ -287,7 +290,7 @@ const getReturnsByDateRange = async (req, res) => {
       .aggregate(
         returnDetailsPipeline({
           returned_date: { $gte: start_date, $lte: end_date },
-        })
+        }),
       )
       .toArray();
 
@@ -297,7 +300,6 @@ const getReturnsByDateRange = async (req, res) => {
   }
 };
 
-// GET outstanding penalties (where penalty > amount_paid)
 const getOutstandingPenalties = async (req, res) => {
   try {
     const returnedBooks = await collection("returned_books");

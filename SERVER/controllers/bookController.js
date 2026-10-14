@@ -22,7 +22,6 @@ const handleError = (res, err) => {
   });
 };
 
-// GET all books
 const getBooks = async (req, res) => {
   try {
     const books = collection("books");
@@ -34,7 +33,6 @@ const getBooks = async (req, res) => {
   }
 };
 
-// GET book by ID
 const getBookById = async (req, res) => {
   try {
     const books = await collection("books");
@@ -50,7 +48,6 @@ const getBookById = async (req, res) => {
   }
 };
 
-// CREATE book with case-insensitive title check
 const createBook = async (req, res) => {
   try {
     const {
@@ -126,7 +123,6 @@ const createBook = async (req, res) => {
   }
 };
 
-// UPDATE book
 const updateBook = async (req, res) => {
   try {
     const bookId = toId(req.params.id);
@@ -181,7 +177,6 @@ const updateBook = async (req, res) => {
   }
 };
 
-// DELETE book
 const deleteBook = async (req, res) => {
   try {
     const bookId = toId(req.params.id);
@@ -210,7 +205,6 @@ const deleteBook = async (req, res) => {
   }
 };
 
-// SEARCH books
 const searchBooks = async (req, res) => {
   try {
     const { q = "" } = req.query;
